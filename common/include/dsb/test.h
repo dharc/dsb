@@ -26,42 +26,15 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
  */
-#ifndef _NID_H_
-#define _NID_H_
+#ifndef _DSB_TEST_H_
+#define _DSB_TEST_H_
 
-enum NIDType
-{
-	NID_SPECIAL=0,
-	NID_INTEGER,
-	NID_REAL,
-	NID_CHARACTER,
-	NID_LABEL,
-	NID_USER=1000
-};
+#define CHECK(A) if (!(A)) { dsb_test_checkfailed(__LINE__,__func__,"__FILE__"); } else { dsb_test_checkpassed(); }
+#define DONE dsb_test_done(__func__);
 
-struct NID
-{
-	enum NIDType type;
+void dsb_test_done();
+void dsb_test_checkfailed(int line, const char *function, const char *file);
+void dsb_test_checkpassed();
+void dsb_test(void (*test)(void));
 
-	union
-	{
-		struct
-		{
-			unsigned int a;
-			unsigned int b;
-		};
-		unsigned long long ll;
-		double dbl;
-		unsigned short chr;
-	};
-};
-
-int dsb_nid_init();
-int dsb_nid_final();
-int dsb_nid_allocate(struct NID *nid);
-int dsb_nid_free(const struct NID *nid);
-int dsb_nid_compare(const struct NID *a, const struct NID *b);
-int dsb_nid_toStr(const struct NID *nid, char *str, int len);
-int dsb_nid_fromStr(const char *str, struct NID *nid);
-
-#endif //_NID_H_
+#endif //_DSB_TEST_H_

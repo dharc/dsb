@@ -1,0 +1,21 @@
+cmake_minimum_required (VERSION 2.8)
+project (dsb)
+
+# Need to include staged files and libs
+include_directories(${PROJECT_SOURCE_DIR}/common/include)
+
+set(dsb_VERSION_MAJOR "0")
+set(dsb_VERSION_MINOR "1")
+set(dsb_VERSION_PATCH "1")
+
+set(CMAKE_CC_FLAGS "-g -Wall")
+
+set(COMMONSOURCE common/src/nid.c common/src/test.c)
+
+add_library(dsbcommon ${COMMONSOURCE})
+add_executable(nid-test tests/nid-test.c)
+target_link_libraries(nid-test dsbcommon)
+
+install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.a" DESTINATION lib)
+install(DIRECTORY common/include DESTINATION include USE_SOURCE_PERMISSIONS)
+

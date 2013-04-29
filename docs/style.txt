@@ -1,0 +1,41 @@
+================================================================================
+	DSB Code Style Notes
+	Nicolas Pope
+	29/04/2013
+================================================================================
+
+= Comments =
+All functions declared in headers must be documented using doxygen comments.
+
+Use // for inline comments and /* */ for doxygen and file comments.
+
+
+= Indentation =
+Use single tab.
+
+
+= Braces =
+New line for braces.
+
+
+= Typedef =
+Don't use typedef.
+
+
+= Defines =
+Reduce defines to a minimum. Should only be used to control build process or
+specify array sizes.
+
+
+= Function Names =
+Use dsb_COMPONENT_ACTION where COMPONENT is usually the file name and ACTION is
+the action performed by that function. All lower case.
+
+
+= Struct Names =
+Use upper case and camel case.
+
+
+= Constant Names (and Defines) =
+All upper case. Includes enums.
+
