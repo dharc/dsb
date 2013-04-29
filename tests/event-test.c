@@ -1,4 +1,9 @@
-/* 
+/*
+ * event-test.c
+ *
+ *  Created on: 29 Apr 2013
+ *      Author: nick
+
 Copyright (c) 2013, dharc ltd.
 All rights reserved.
 
@@ -26,17 +31,34 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
  */
-#ifndef _HARC_H_
-#define _HARC_H_
 
-#include "dsb/nid.h"
+#include "dsb/test.h"
+#include "dsb/event.h"
 
-struct HARC
+void test_event_allocate()
 {
-	struct NID a;
-	struct NID b;
-};
+	struct Event *evt;
+	struct Event *evt2;
 
-struct NID *dsb_harc_major(const struct HARC *harc); 
+	CHECK(dsb_event_init() == 0);
+	evt = dsb_event_allocate();
+	CHECK(evt != 0);
+	evt2 = dsb_event_allocate();
+	CHECK(evt != evt2);
+	//CHECK((evt2 - evt) == sizeof(struct Event));
+	CHECK(dsb_event_final() == 0);
 
-#endif
+	DONE;
+}
+
+void test_event_params()
+{
+	DONE;
+}
+
+int main(int argc, char *argv[])
+{
+	dsb_test(test_event_allocate);
+	dsb_test(test_event_params);
+	return 0;
+}

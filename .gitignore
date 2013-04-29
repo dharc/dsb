@@ -4,3 +4,6 @@ cmake_install.cmake
 CMakeFiles/
 Makefile
 CMakeCache.txt
+event-test
+.cproject
+.project

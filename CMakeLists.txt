@@ -10,11 +10,15 @@ set(dsb_VERSION_PATCH "1")
 
 set(CMAKE_CC_FLAGS "-g -Wall")
 
-set(COMMONSOURCE common/src/nid.c common/src/test.c)
+set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c)
 
 add_library(dsbcommon ${COMMONSOURCE})
+
 add_executable(nid-test tests/nid-test.c)
 target_link_libraries(nid-test dsbcommon)
+
+add_executable(event-test tests/event-test.c)
+target_link_libraries(event-test dsbcommon)
 
 install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.a" DESTINATION lib)
 install(DIRECTORY common/include DESTINATION include USE_SOURCE_PERMISSIONS)
