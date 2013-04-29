@@ -1,4 +1,5 @@
 #include "dsb/event.h"
+#include <malloc.h>
 
 #define EVENT_POOL_SIZE	10000
 

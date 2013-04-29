@@ -37,9 +37,13 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/event.h"
 #include "dsb/nid.h"
 
-int math_handler(const struct Event *evt)
+int math_handler1_called = 0;
+
+int math_handler1(const struct Event *evt)
 {
 	CHECK(evt->dest.a.ll == 55);
+	math_handler1_called = 1;
+	return 0;
 }
 
 void test_router_simple()
@@ -59,20 +63,16 @@ void test_router_simple()
 	high.type = NID_INTEGER;
 	high.ll = 0xEFFFFFFFFFFFFFFF;
 
-	CHECK(dsb_route_map(&low,&high,math_handler) == 0);
+	CHECK(dsb_route_map(&low,&high,math_handler1) == 0);
+	CHECK(dsb_route(&evt) == 0);
+	CHECK(math_handler1_called == 1);
 
-	DONE;
-}
-
-void test_event_params()
-{
 	DONE;
 }
 
 int main(int argc, char *argv[])
 {
-	dsb_test(test_event_allocate);
-	dsb_test(test_event_params);
+	dsb_test(test_router_simple);
 	return 0;
 }
 
