@@ -37,7 +37,14 @@ either expressed or implied, of the FreeBSD Project.
 
 struct Event;
 
-int dsb_proc_send(struct Event *evt);
+int dsb_proc_init();
+int dsb_proc_final();
 
+/**
+ * Send an Event to be queued and processed.
+ * @param evt Event to send.
+ * @return SUCCESS, ERR_NOROUTE or ERR_INVALIDEVENT
+ */
+int dsb_proc_send(struct Event *evt);
 
 #endif /* PROCESSOR_H_ */

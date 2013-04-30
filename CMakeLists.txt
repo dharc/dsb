@@ -8,9 +8,9 @@ set(dsb_VERSION_MAJOR "0")
 set(dsb_VERSION_MINOR "1")
 set(dsb_VERSION_PATCH "1")
 
-set(CMAKE_C_FLAGS "-g -Wall")
+set(CMAKE_C_FLAGS "-DLINUX -DTHREADED -g -Wall")
 
-set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/router.c common/src/errors.c)
+set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/router.c common/src/errors.c common/src/processor.c common/src/dsb.c)
 
 add_library(dsbcommon ${COMMONSOURCE})
 

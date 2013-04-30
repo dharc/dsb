@@ -88,9 +88,9 @@ int dsb_route(const struct Event *evt)
 	{
 		//TODO Select correct destination NID from HARC.
 		//Compare destination with low and high for each handler.
-		if (dsb_nid_compare(&(route_table[i].l),&(evt->dest.a)) <= 0)
+		if (dsb_nid_compare(&(route_table[i].l),&(evt->d1)) <= 0)
 		{
-			if (dsb_nid_compare(&(route_table[i].h),&(evt->dest.a)) >= 0)
+			if (dsb_nid_compare(&(route_table[i].h),&(evt->d1)) >= 0)
 			{
 				if (route_table[i].handler != 0)
 				{
@@ -105,5 +105,5 @@ int dsb_route(const struct Event *evt)
 	}
 
 	//Failed to find a matching handler.
-	return ERR_ROUTE_UNKNOWN;
+	return ERR_NOROUTE;
 }

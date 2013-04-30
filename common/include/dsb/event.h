@@ -29,9 +29,9 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef _EVENT_H_
 #define _EVENT_H_
 
-#include "dsb/harc.h"
-
 #define MAX_EVENT_PARAMS	2
+
+#include "dsb/nid.h"
 
 enum EventType
 {
@@ -43,14 +43,24 @@ enum EventType
 	EVENT_INVALID
 };
 
+#define EVTFLAG_NONE		0
+#define EVTFLAG_FREE		1
+#define EVTFLAG_DONE		2
+
 /**
  * DSB Event base structure.
  */
 struct Event
 {
 	enum EventType type;
-	struct HARC dest;
+	struct NID d1; 				//Destination 1
+	struct NID d2;				//Destination 2
 	struct NID p[MAX_EVENT_PARAMS];
+
+	//Not sent over network
+	unsigned int flags;
+	void *data;					//User data (used by callback)
+	void (*cb)(struct Event *);	//Callback upon completion.
 };
 
 

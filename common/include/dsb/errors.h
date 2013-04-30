@@ -42,9 +42,10 @@ enum
 	ERR_REINIT,			//Multiple init
 	ERR_NOINIT,			//Not initialised
 	ERR_ROUTE_SLOT,		//No spare slots
-	ERR_ROUTE_UNKNOWN,	//No handler for event
+	ERR_NOROUTE,		//No handler for event
 	ERR_ROUTE_MISSING,	//Missing handler for event
-	ERR_NID_FREE		//Can't free NID.
+	ERR_NID_FREE,		//Can't free NID.
+	ERR_INVALIDEVENT	//Event type is unknown.
 };
 
 /**

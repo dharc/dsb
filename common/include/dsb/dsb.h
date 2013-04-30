@@ -1,5 +1,5 @@
 /*
- * errors.c
+ * dsb.h
  *
  *  Created on: 30 Apr 2013
  *      Author: nick
@@ -32,20 +32,15 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
+#ifndef DSB_H_
+#define DSB_H_
+
+#include "dsb/nid.h"
+#include "dsb/event.h"
 #include "dsb/errors.h"
+#include "dsb/wrap.h"
 
-const char *dsb_error_str(int err)
-{
-	switch(err)
-	{
-	case SUCCESS:				return "Success";
-	case ERR_NOINIT:			return "Not Initialised";
-	case ERR_REINIT:			return "Multiple Initialisation";
-	case ERR_ROUTE_SLOT:		return "No spare router slots";
-	case ERR_NOROUTE:			return "No known route for event";
-	case ERR_ROUTE_MISSING:		return "Missing handler in route table";
-	case ERR_INVALIDEVENT:		return "Invalid event type";
-	default:					return "Unknown Error";
-	}
-}
+int dsb_init();
+int dsb_final();
 
+#endif /* DSB_H_ */

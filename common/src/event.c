@@ -2,6 +2,11 @@
 #include "dsb/errors.h"
 #include <malloc.h>
 
+#if defined(LINUX) && defined(THREADED)
+#include <pthread.h>
+pthread_mutex_t evt_pool_mtx = PTHREAD_MUTEX_INITIALIZER;
+#endif //LINUX THREADED
+
 #define EVENT_POOL_SIZE	10000
 
 struct Event *event_heap = 0;		//Single block for cache efficiency
@@ -44,16 +49,34 @@ int dsb_event_final()
 
 struct Event *dsb_event_allocate()
 {
+	struct Event *res;
+
+	#if defined(LINUX) && defined(THREADED)
+	pthread_mutex_lock(&evt_pool_mtx);
+	#endif
+
 	//NOTE: No safety checks
-	//TODO Must be thread safe
-	return event_pool[event_lastalloc++];
+	res = event_pool[event_lastalloc++];
+
+	#if defined(LINUX) && defined(THREADED)
+	pthread_mutex_unlock(&evt_pool_mtx);
+	#endif
+
+	return res;
 }
 
 void dsb_event_free(struct Event *evt)
 {
+	#if defined(LINUX) && defined(THREADED)
+	pthread_mutex_lock(&evt_pool_mtx);
+	#endif
+
 	//NOTE: No safety checks
-	//TODO Must be thread safe
 	event_pool[--event_lastalloc] = evt;
+
+	#if defined(LINUX) && defined(THREADED)
+	pthread_mutex_unlock(&evt_pool_mtx);
+	#endif
 }
 
 

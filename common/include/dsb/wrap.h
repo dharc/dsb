@@ -1,5 +1,5 @@
 /*
- * errors.c
+ * wrap.h
  *
  *  Created on: 30 Apr 2013
  *      Author: nick
@@ -32,20 +32,18 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/errors.h"
+/*
+ * This file contains API wrapper functions to help generate events to
+ * manipulate the hypergraph.
+ */
 
-const char *dsb_error_str(int err)
-{
-	switch(err)
-	{
-	case SUCCESS:				return "Success";
-	case ERR_NOINIT:			return "Not Initialised";
-	case ERR_REINIT:			return "Multiple Initialisation";
-	case ERR_ROUTE_SLOT:		return "No spare router slots";
-	case ERR_NOROUTE:			return "No known route for event";
-	case ERR_ROUTE_MISSING:		return "Missing handler in route table";
-	case ERR_INVALIDEVENT:		return "Invalid event type";
-	default:					return "Unknown Error";
-	}
-}
+#ifndef WRAP_H_
+#define WRAP_H_
 
+struct HARC;
+struct NID;
+
+int dsb_get(const struct HARC *harc, struct NID *r);
+int dsb_set(const struct HARC *harc, const struct NID *v);
+
+#endif /* WRAP_H_ */
