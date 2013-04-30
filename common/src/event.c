@@ -1,4 +1,5 @@
 #include "dsb/event.h"
+#include "dsb/errors.h"
 #include <malloc.h>
 
 #define EVENT_POOL_SIZE	10000
@@ -21,10 +22,10 @@ int dsb_event_init()
 		{
 			event_pool[i] = &event_heap[i];
 		}
-		return 0;
+		return SUCCESS;
 	}
 	//Has already been called so error.
-	return 1;
+	return ERR_REINIT;
 }
 
 int dsb_event_final()
@@ -37,7 +38,7 @@ int dsb_event_final()
 	}
 
 	//Was not initialised
-	return 1;
+	return ERR_NOINIT;
 }
 
 
@@ -58,5 +59,5 @@ void dsb_event_free(struct Event *evt)
 
 int dsb_event_params(const struct Event *evt)
 {
-	return 0;
+	return SUCCESS;
 }

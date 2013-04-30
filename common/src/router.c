@@ -33,23 +33,77 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/router.h"
+#include "dsb/nid.h"
+#include "dsb/event.h"
+#include "dsb/errors.h"
+
+struct RouterEntry
+{
+	int (*handler)(const struct Event *);
+	struct NID l;
+	struct NID h;
+};
+
+#define MAX_HANDLERS	20
+
+struct RouterEntry route_table[MAX_HANDLERS];
 
 int dsb_route_init(void)
 {
-	return 0;
+	int i;
+	for (i=0; i<MAX_HANDLERS; i++)
+	{
+		route_table[i].handler = 0;
+	}
+	return SUCCESS;
 }
 
 int dsb_route_final(void)
 {
-	return 0;
+	return SUCCESS;
 }
 
 int dsb_route_map(const struct NID *l, const struct NID *h, int (*handler)(const struct Event *))
 {
-	return 0;
+	//TODO Consider making threadsafe.
+	int ff;
+	for (ff=0; ff<MAX_HANDLERS; ff++)
+	{
+		if (route_table[ff].handler == 0) break;
+	}
+
+	if (ff == MAX_HANDLERS-1) return ERR_ROUTE_SLOT;
+
+	route_table[ff].l = *l;
+	route_table[ff].h = *h;
+	route_table[ff].handler = handler;
+
+	return SUCCESS;
 }
 
 int dsb_route(const struct Event *evt)
 {
-	return 0;
+	int i;
+	for (i=0; i<MAX_HANDLERS; i++)
+	{
+		//TODO Select correct destination NID from HARC.
+		//Compare destination with low and high for each handler.
+		if (dsb_nid_compare(&(route_table[i].l),&(evt->dest.a)) <= 0)
+		{
+			if (dsb_nid_compare(&(route_table[i].h),&(evt->dest.a)) >= 0)
+			{
+				if (route_table[i].handler != 0)
+				{
+					return route_table[i].handler(evt);
+				}
+				else
+				{
+					return ERR_ROUTE_MISSING;
+				}
+			}
+		}
+	}
+
+	//Failed to find a matching handler.
+	return ERR_ROUTE_UNKNOWN;
 }

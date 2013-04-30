@@ -1,7 +1,7 @@
 /*
- * router-test.c
+ * errors.h
  *
- *  Created on: 29 Apr 2013
+ *  Created on: 30 Apr 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,54 +32,27 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/test.h"
-#include "dsb/router.h"
-#include "dsb/event.h"
-#include "dsb/nid.h"
+#ifndef ERRORS_H_
+#define ERRORS_H_
 
-int math_handler1_called = 0;
 
-int math_handler1(const struct Event *evt)
+enum
 {
-	CHECK(evt->dest.a.ll == 55);
-	math_handler1_called = 1;
-	return 0;
-}
+	SUCCESS=0,
+	ERR_REINIT,			//Multiple init
+	ERR_NOINIT,			//Not initialised
+	ERR_ROUTE_SLOT,		//No spare slots
+	ERR_ROUTE_UNKNOWN,	//No handler for event
+	ERR_ROUTE_MISSING,	//Missing handler for event
+	ERR_NID_FREE		//Can't free NID.
+};
 
-void test_router_simple()
-{
-	struct Event evt;
-	struct NID low;
-	struct NID high;
+/**
+ * Convert DSB error number to a string.
+ * @param err Error number.
+ * @return String for the error.
+ */
+const char *dsb_error_str(int err);
 
-	evt.type = EVENT_GET;
-	evt.dest.a.type = NID_INTEGER;
-	evt.dest.a.ll = 55;
-	evt.dest.b.type = NID_INTEGER;
-	evt.dest.b.ll = 56;
 
-	low.type = NID_INTEGER;
-	low.ll = 0;
-	high.type = NID_INTEGER;
-	high.ll = 0x7FFFFFFFFFFFFFFF;
-
-	CHECK(dsb_route_init() == 0);
-
-	CHECK(dsb_route_map(&low,&high,math_handler1) == 0);
-	CHECK(dsb_route(&evt) == 0);
-	CHECK(math_handler1_called == 1);
-
-	evt.dest.a.type = NID_REAL;
-	CHECK(dsb_route(&evt) != 0);
-
-	CHECK(dsb_route_final() == 0);
-
-	DONE;
-}
-
-int main(int argc, char *argv[])
-{
-	dsb_test(test_router_simple);
-	return 0;
-}
-
+#endif /* ERRORS_H_ */

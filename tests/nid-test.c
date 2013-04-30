@@ -24,6 +24,19 @@ void test_nid_compare()
 	DONE;
 }
 
+void test_nid_compareextreme()
+{
+	struct NID a;
+	struct NID b;
+
+	a.type = NID_INTEGER;
+	a.ll = 55;
+	b.type = NID_INTEGER;
+	b.ll = 0x7FFFFFFFFFFFFFFF;
+	CHECK(dsb_nid_compare(&a,&b) < 0);
+	DONE;
+}
+
 void test_nid_allocate()
 {
 	struct NID a;
@@ -41,6 +54,7 @@ void test_nid_allocate()
 int main(int argc, char *argv[])
 {
 	dsb_test(test_nid_compare);
+	dsb_test(test_nid_compareextreme);
 	dsb_test(test_nid_allocate);
 	return 0;
 }
