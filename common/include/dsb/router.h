@@ -50,14 +50,14 @@ int dsb_route_final(void);
  * @param handler Handler function.
  * @return SUCCESS or ERR_ROUTE_SLOT.
  */
-int dsb_route_map(const struct NID *l, const struct NID *h, int (*handler)(const struct Event *));
+int dsb_route_map(const struct NID *l, const struct NID *h, int (*handler)(struct Event *));
 
 /**
  * Route event to correct handler. Should not be called manually.
  * @param evt The event to route.
  * @return SUCCESS, ERR_NOROUTE or ERR_ROUTE_MISSING.
  */
-int dsb_route(const struct Event *evt);
+int dsb_route(struct Event *evt);
 
 
 #endif /* ROUTER_H_ */

@@ -84,3 +84,4 @@ int dsb_event_params(const struct Event *evt)
 {
 	return SUCCESS;
 }
+

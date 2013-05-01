@@ -39,7 +39,7 @@ either expressed or implied, of the FreeBSD Project.
 
 struct RouterEntry
 {
-	int (*handler)(const struct Event *);
+	int (*handler)(struct Event *);
 	struct NID l;
 	struct NID h;
 };
@@ -63,7 +63,7 @@ int dsb_route_final(void)
 	return SUCCESS;
 }
 
-int dsb_route_map(const struct NID *l, const struct NID *h, int (*handler)(const struct Event *))
+int dsb_route_map(const struct NID *l, const struct NID *h, int (*handler)(struct Event *))
 {
 	//TODO Consider making threadsafe.
 	int ff;
@@ -81,7 +81,7 @@ int dsb_route_map(const struct NID *l, const struct NID *h, int (*handler)(const
 	return SUCCESS;
 }
 
-int dsb_route(const struct Event *evt)
+int dsb_route(struct Event *evt)
 {
 	int i;
 	for (i=0; i<MAX_HANDLERS; i++)

@@ -45,6 +45,7 @@ enum
 	ERR_NOROUTE,		//No handler for event
 	ERR_ROUTE_MISSING,	//Missing handler for event
 	ERR_NID_FREE,		//Can't free NID.
+	ERR_NOTSENT,		//Event hasn't been sent.
 	ERR_INVALIDEVENT	//Event type is unknown.
 };
 

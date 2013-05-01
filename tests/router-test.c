@@ -39,7 +39,7 @@ either expressed or implied, of the FreeBSD Project.
 
 int math_handler1_called = 0;
 
-int math_handler1(const struct Event *evt)
+int math_handler1(struct Event *evt)
 {
 	CHECK(evt->d1.ll == 55);
 	math_handler1_called = 1;

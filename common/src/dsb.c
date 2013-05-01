@@ -33,6 +33,8 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/dsb.h"
+#include "dsb/router.h"
+#include "dsb/processor.h"
 
 int dsb_init()
 {

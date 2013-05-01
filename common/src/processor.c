@@ -37,11 +37,46 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/router.h"
 
-int dsb_proc_send(struct Event *evt)
+int dsb_proc_send(struct Event *evt, int async)
 {
-	switch(evt->type)
+	int ret;
+
+	evt->flags |= EVTFLAG_SENT;
+
+	switch(evt->type >> 8)
 	{
-	case EVENT_GET:		return dsb_route(evt);
-	default:			return ERR_INVALIDEVENT;
+	case EVENT_GETTERS:
+		ret = dsb_route(evt);
+		if (ret != SUCCESS) break;
+		if (async != 0)
+		{
+			ret = dsb_proc_wait(evt);
+		}
+		break;
+
+
+	default:
+		ret = ERR_INVALIDEVENT;
+		break;
 	}
+
+	if (evt->flags & EVTFLAG_FREE)
+	{
+		dsb_event_free(evt);
+	}
+	return ret;
+}
+
+int dsb_proc_wait(const struct Event *evt)
+{
+	if (!(evt->flags & EVTFLAG_SENT))
+	{
+		return ERR_NOTSENT;
+	}
+	while (!(evt->flags & EVTFLAG_DONE))
+	{
+		//Process other events etc.
+	}
+
+	return SUCCESS;
 }
