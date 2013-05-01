@@ -43,7 +43,15 @@ either expressed or implied, of the FreeBSD Project.
 struct HARC;
 struct NID;
 
-int dsb_get(const struct HARC *harc, struct NID *r);
-int dsb_set(const struct HARC *harc, const struct NID *v);
+int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r);
+int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v);
+int dsb_define(
+			const struct NID *d1,
+			const struct NID *d2,
+			const struct NID *def,
+			void (*f)(const struct NID*,const struct NID*,const struct NID*)
+			);
+int dsb_new(struct NID *n);
+int dsb_delete(struct NID *n);
 
 #endif /* WRAP_H_ */

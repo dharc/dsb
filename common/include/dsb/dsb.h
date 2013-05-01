@@ -43,4 +43,7 @@ either expressed or implied, of the FreeBSD Project.
 int dsb_init();
 int dsb_final();
 
+int dsb_send(struct Event *evt, int async);
+int dsb_wait(struct Event *evt);
+
 #endif /* DSB_H_ */

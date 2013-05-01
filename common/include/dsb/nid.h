@@ -73,22 +73,6 @@ int dsb_nid_init();
 int dsb_nid_final();
 
 /**
- * Fill NID structure with a new unique value. If networked, the value will
- * be unique across the machines.
- * @param nid Pointer to struct to fill.
- * @return 0 on success.
- */
-int dsb_nid_allocate(struct NID *nid);
-
-/**
- * Release a NID for reuse. Currently does nothing, there is no way to free
- * an allocated NID and it may be undesirable to ever do so.
- * @param nid NID to free.
- * @return 0
- */
-int dsb_nid_free(const struct NID *nid);
-
-/**
  * Compare two NIDs. If both are equal then 0 is returned, otherwise if a < b
  * then a negative number is returned, otherwise a positive number.
  * @param a First NID
