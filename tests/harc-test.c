@@ -1,7 +1,7 @@
 /*
- * processor.c
+ * harc-test.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 7 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,51 +32,87 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "processor.h"
-#include "dsb/event.h"
-#include "dsb/errors.h"
-#include "router.h"
+#include "dsb/test.h"
+#include "dsb/harc.h"
+#include "dsb/nid.h"
 
-int dsb_proc_send(struct Event *evt, int async)
+void test_harc_gen()
 {
-	int ret;
+	struct HARC res;
+	struct NID n1;
+	struct NID n2;
 
-	evt->flags |= EVTFLAG_SENT;
+	n1.type = NID_INTEGER;
+	n1.ll = 55;
+	n2.type = NID_INTEGER;
+	n2.ll = 66;
+	CHECK(dsb_harc_gen(&n1,&n2,&res) == 0);
+	CHECK(res.a1 == NID_INTEGER);
+	CHECK(res.a2 == NID_INTEGER);
+	CHECK(res.b == 55);
+	CHECK(res.c == 66);
 
-	switch(evt->type >> 8)
-	{
-	case EVENT_GETTERS:
-		ret = dsb_route(evt);
-		if (ret != SUCCESS) break;
-		if (async != 0)
-		{
-			ret = dsb_proc_wait(evt);
-		}
-		break;
+	n1.ll = 77;
+	CHECK(dsb_harc_gen(&n1,&n2,&res) == 0);
+	CHECK(res.b == 66);
+	CHECK(res.c == 77);
 
-
-	default:
-		ret = ERR_INVALIDEVENT;
-		break;
-	}
-
-	if (evt->flags & EVTFLAG_FREE)
-	{
-		dsb_event_free(evt);
-	}
-	return ret;
+	n1.ll = 66;
+	CHECK(dsb_harc_gen(&n1,&n2,&res) == 0);
+	CHECK(res.b == 66);
+	CHECK(res.c == 66);
+	DONE;
 }
 
-int dsb_proc_wait(const struct Event *evt)
+void test_harc_compare()
 {
-	if (!(evt->flags & EVTFLAG_SENT))
-	{
-		return ERR_NOTSENT;
-	}
-	while (!(evt->flags & EVTFLAG_DONE))
-	{
-		//Process other events etc.
-	}
+	struct HARC h1;
+	struct HARC h2;
 
-	return SUCCESS;
+	h1.a = 0;
+	h1.b = 0;
+	h1.c = 0;
+	h2.a = 0;
+	h2.b = 0;
+	h2.c = 0;
+	CHECK(dsb_harc_compare(&h1,&h2) == 0);
+
+	h2.a = 0;
+	h2.b = 0;
+	h2.c = 1;
+	CHECK(dsb_harc_compare(&h1,&h2) < 0);
+
+	h2.a = 0;
+	h2.b = 1;
+	h2.c = 0;
+	CHECK(dsb_harc_compare(&h1,&h2) < 0);
+
+	h2.a = 1;
+	h2.b = 0;
+	h2.c = 0;
+	CHECK(dsb_harc_compare(&h1,&h2) < 0);
+
+	h1.a = 2;
+	h1.b = 0;
+	h1.c = 0;
+	CHECK(dsb_harc_compare(&h1,&h2) > 0);
+
+	h1.a = 1;
+	h1.b = 1;
+	h1.c = 0;
+	CHECK(dsb_harc_compare(&h1,&h2) > 0);
+
+	h1.a = 1;
+	h1.b = 0;
+	h1.c = 1;
+	CHECK(dsb_harc_compare(&h1,&h2) > 0);
+	DONE;
 }
+
+int main(int argc, char *argv[])
+{
+	dsb_test(test_harc_gen);
+	dsb_test(test_harc_compare);
+	return 0;
+}
+

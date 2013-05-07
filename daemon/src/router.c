@@ -1,4 +1,9 @@
-/* 
+/*
+ * router.c
+ *
+ *  Created on: 29 Apr 2013
+ *      Author: nick
+
 Copyright (c) 2013, dharc ltd.
 All rights reserved.
 
@@ -26,47 +31,79 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
  */
-#ifndef _HARC_H_
-#define _HARC_H_
 
-struct NID;
+#include "dsb/router.h"
+#include "dsb/nid.h"
+#include "dsb/event.h"
+#include "dsb/errors.h"
+#include "dsb/harc.h"
 
-/**
- * The tail of a hyperarc can be used to identify that hyperarc. A tail is
- * generated from two Node identifiers.
- */
-struct HARC
+struct RouterEntry
 {
-	union {
-	unsigned long long a;
-	struct {
-		unsigned int a1;
-		unsigned int a2;
-	};
-	};
-	unsigned long long b;
-	unsigned long long c;
+	int (*handler)(struct Event *);
+	struct HARC l;
+	struct HARC h;
 };
 
-/**
- * Generate a hyperarc tail structure from two nodes. The order of the two
- * tail nodes is not significant. The tail structure is then used to
- * identify a hyperarc and so is used to route events to the hyperarc.
- * @param First tail node.
- * @param Second tail node.
- * @param HARC structure to populate.
- * @return SUCCESS.
- */
-int dsb_harc_gen(const struct NID *, const struct NID *, struct HARC *);
+#define MAX_HANDLERS	20
 
-/**
- * Compare two hyperarcs for equality. If the first is less than the second
- * -1 is returned. If they are equal 0 is returned and if the first is greater
- * then 1 is returned.
- * @param First hyperarc tail.
- * @param Second hyperarc tail.
- * @return Result of comparison: -1, 0 or 1.
- */
-int dsb_harc_compare(const struct HARC *, const struct HARC *);
+struct RouterEntry route_table[MAX_HANDLERS];
 
-#endif
+int dsb_route_init(void)
+{
+	int i;
+	for (i=0; i<MAX_HANDLERS; i++)
+	{
+		route_table[i].handler = 0;
+	}
+	return SUCCESS;
+}
+
+int dsb_route_final(void)
+{
+	return SUCCESS;
+}
+
+int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(struct Event *))
+{
+	//TODO Consider making threadsafe.
+	int ff;
+	for (ff=0; ff<MAX_HANDLERS; ff++)
+	{
+		if (route_table[ff].handler == 0) break;
+	}
+
+	if (ff == MAX_HANDLERS-1) return ERR_ROUTE_SLOT;
+
+	route_table[ff].l = *l;
+	route_table[ff].h = *h;
+	route_table[ff].handler = handler;
+
+	return SUCCESS;
+}
+
+int dsb_route(struct Event *evt)
+{
+	int i;
+	for (i=0; i<MAX_HANDLERS; i++)
+	{
+		//Compare destination with low and high for each handler.
+		if (dsb_harc_compare(&(route_table[i].l),&(evt->dest)) <= 0)
+		{
+			if (dsb_harc_compare(&(route_table[i].h),&(evt->dest)) >= 0)
+			{
+				if (route_table[i].handler != 0)
+				{
+					return route_table[i].handler(evt);
+				}
+				else
+				{
+					return ERR_ROUTE_MISSING;
+				}
+			}
+		}
+	}
+
+	//Failed to find a matching handler.
+	return ERR_NOROUTE;
+}

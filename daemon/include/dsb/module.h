@@ -1,4 +1,9 @@
-/* 
+/*
+ * module.h
+ *
+ *  Created on: 7 May 2013
+ *      Author: nick
+
 Copyright (c) 2013, dharc ltd.
 All rights reserved.
 
@@ -26,47 +31,44 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
  */
-#ifndef _HARC_H_
-#define _HARC_H_
 
-struct NID;
+#ifndef MODULE_H_
+#define MODULE_H_
 
-/**
- * The tail of a hyperarc can be used to identify that hyperarc. A tail is
- * generated from two Node identifiers.
- */
-struct HARC
+struct Module
 {
-	union {
-	unsigned long long a;
-	struct {
-		unsigned int a1;
-		unsigned int a2;
-	};
-	};
-	unsigned long long b;
-	unsigned long long c;
+	int (*init)(struct NID *);
+	int (*update)();
+	int (*final)();
 };
 
 /**
- * Generate a hyperarc tail structure from two nodes. The order of the two
- * tail nodes is not significant. The tail structure is then used to
- * identify a hyperarc and so is used to route events to the hyperarc.
- * @param First tail node.
- * @param Second tail node.
- * @param HARC structure to populate.
- * @return SUCCESS.
+ * Used to register internal compiled modules. Will return an error if the
+ * module structure is missing required parts or if the module has already
+ * been registered. Not to be used for external modules.
+ * @param name The name of the internal module.
+ * @param Structure containing module init, update and final functions.
+ * @return SUCCESS, ERR_MODEXISTS, ERR_INVALID.
  */
-int dsb_harc_gen(const struct NID *, const struct NID *, struct HARC *);
+int dsb_module_register(const char *name, const struct Module *);
 
 /**
- * Compare two hyperarcs for equality. If the first is less than the second
- * -1 is returned. If they are equal 0 is returned and if the first is greater
- * then 1 is returned.
- * @param First hyperarc tail.
- * @param Second hyperarc tail.
- * @return Result of comparison: -1, 0 or 1.
+ * Search for and then load a named module. It will search first for internal
+ * registered modules and then the file system for the module library (.so)
+ * file.
+ * @param name Name of the module to load.
+ * @param base An option base node to module configuration.
+ * @return SUCCESS, ERR_NOMOD, ERR_INVALID.
  */
-int dsb_harc_compare(const struct HARC *, const struct HARC *);
+int dsb_module_load(const char *name, const struct NID *base);
 
-#endif
+int dsb_module_unload(const char *name);
+
+/**
+ * Search for a named module and validate but do not load it.
+ * @param name Name of module.
+ * @return SUCCESS means module was found, ERR_NOMOD means it wasn't.
+ */
+int dsb_module_exists(const char *name);
+
+#endif /* MODULE_H_ */

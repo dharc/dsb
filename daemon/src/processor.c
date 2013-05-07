@@ -1,7 +1,7 @@
 /*
- * router.c
+ * processor.c
  *
- *  Created on: 29 Apr 2013
+ *  Created on: 30 Apr 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,78 +32,51 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "router.h"
-#include "dsb/nid.h"
+#include "dsb/processor.h"
 #include "dsb/event.h"
 #include "dsb/errors.h"
-#include "dsb/harc.h"
+#include "dsb/router.h"
 
-struct RouterEntry
+int dsb_proc_send(struct Event *evt, int async)
 {
-	int (*handler)(struct Event *);
-	struct HARC l;
-	struct HARC h;
-};
+	int ret;
 
-#define MAX_HANDLERS	20
+	evt->flags |= EVTFLAG_SENT;
 
-struct RouterEntry route_table[MAX_HANDLERS];
-
-int dsb_route_init(void)
-{
-	int i;
-	for (i=0; i<MAX_HANDLERS; i++)
+	switch(evt->type >> 8)
 	{
-		route_table[i].handler = 0;
-	}
-	return SUCCESS;
-}
-
-int dsb_route_final(void)
-{
-	return SUCCESS;
-}
-
-int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(struct Event *))
-{
-	//TODO Consider making threadsafe.
-	int ff;
-	for (ff=0; ff<MAX_HANDLERS; ff++)
-	{
-		if (route_table[ff].handler == 0) break;
-	}
-
-	if (ff == MAX_HANDLERS-1) return ERR_ROUTE_SLOT;
-
-	route_table[ff].l = *l;
-	route_table[ff].h = *h;
-	route_table[ff].handler = handler;
-
-	return SUCCESS;
-}
-
-int dsb_route(struct Event *evt)
-{
-	int i;
-	for (i=0; i<MAX_HANDLERS; i++)
-	{
-		//Compare destination with low and high for each handler.
-		if (dsb_harc_compare(&(route_table[i].l),&(evt->dest)) <= 0)
+	case EVENT_GETTERS:
+		ret = dsb_route(evt);
+		if (ret != SUCCESS) break;
+		if (async != 0)
 		{
-			if (dsb_harc_compare(&(route_table[i].h),&(evt->dest)) >= 0)
-			{
-				if (route_table[i].handler != 0)
-				{
-					return route_table[i].handler(evt);
-				}
-				else
-				{
-					return ERR_ROUTE_MISSING;
-				}
-			}
+			ret = dsb_proc_wait(evt);
 		}
+		break;
+
+
+	default:
+		ret = ERR_INVALIDEVENT;
+		break;
 	}
 
-	//Failed to find a matching handler.
-	return ERR_NOROUTE;
+	if (evt->flags & EVTFLAG_FREE)
+	{
+		dsb_event_free(evt);
+	}
+	return ret;
+}
+
+int dsb_proc_wait(const struct Event *evt)
+{
+	if (!(evt->flags & EVTFLAG_SENT))
+	{
+		return ERR_NOTSENT;
+	}
+	while (!(evt->flags & EVTFLAG_DONE))
+	{
+		//Process other events etc.
+	}
+
+	return SUCCESS;
 }

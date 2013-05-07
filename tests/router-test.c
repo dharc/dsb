@@ -41,7 +41,7 @@ int math_handler1_called = 0;
 
 int math_handler1(struct Event *evt)
 {
-	CHECK(evt->d1.ll == 55);
+	CHECK(evt->dest.b == 55);
 	math_handler1_called = 1;
 	return 0;
 }
@@ -49,19 +49,23 @@ int math_handler1(struct Event *evt)
 void test_router_simple()
 {
 	struct Event evt;
-	struct NID low;
-	struct NID high;
+	struct HARC low;
+	struct HARC high;
 
 	evt.type = EVENT_GET;
-	evt.d1.type = NID_INTEGER;
-	evt.d1.ll = 55;
-	evt.d2.type = NID_INTEGER;
-	evt.d2.ll = 56;
+	evt.dest.a1 = NID_INTEGER;
+	evt.dest.b = 55;
+	evt.dest.a2 = 0;
+	evt.dest.c = 0;
 
-	low.type = NID_INTEGER;
-	low.ll = 0;
-	high.type = NID_INTEGER;
-	high.ll = 0x7FFFFFFFFFFFFFFF;
+	low.a1 = NID_INTEGER;
+	low.a2 = 0;
+	low.b = 0;
+	low.c = 0;
+	high.a1 = NID_INTEGER;
+	high.a2 = 0;
+	high.b = 0x7FFFFFFFFFFFFFFF;
+	high.c = 0;
 
 	CHECK(dsb_route_init() == 0);
 
@@ -69,7 +73,7 @@ void test_router_simple()
 	CHECK(dsb_route(&evt) == 0);
 	CHECK(math_handler1_called == 1);
 
-	evt.d1.type = NID_REAL;
+	evt.dest.a1 = NID_REAL;
 	CHECK(dsb_route(&evt) != 0);
 
 	CHECK(dsb_route_final() == 0);

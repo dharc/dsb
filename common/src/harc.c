@@ -4,6 +4,8 @@
 int dsb_harc_gen(const struct NID *pa, const struct NID *pb, struct HARC *ph)
 {
 	int nidc = dsb_nid_compare(pa,pb);
+
+	//Make sure NID order does not matter.
 	if (nidc < 0)
 	{
 		ph->a1 = pa->type;
