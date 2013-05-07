@@ -1,7 +1,7 @@
 /*
- * dsb.h
+ * router.h
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 29 Apr 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,18 +32,32 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef DSB_H_
-#define DSB_H_
+#ifndef ROUTER_H_
+#define ROUTER_H_
 
-#include "dsb/nid.h"
-#include "dsb/event.h"
-#include "dsb/errors.h"
-#include "dsb/wrap.h"
+struct Event;
+struct HARC;
 
-int dsb_init();
-int dsb_final();
+int dsb_route_init(void);
+int dsb_route_final(void);
 
-int dsb_send(struct Event *evt, int async);
-int dsb_wait(struct Event *evt);
+/**
+ * Map a NID range to an event handler. All events destined for a NID in the
+ * specified range will be passed to this handler when routed by the
+ * processor.
+ * @param l Low end of HARC range.
+ * @param h High end of HARC range.
+ * @param handler Handler function.
+ * @return SUCCESS or ERR_ROUTE_SLOT.
+ */
+int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(struct Event *));
 
-#endif /* DSB_H_ */
+/**
+ * Route event to correct handler. Should not be called manually.
+ * @param evt The event to route.
+ * @return SUCCESS, ERR_NOROUTE or ERR_ROUTE_MISSING.
+ */
+int dsb_route(struct Event *evt);
+
+
+#endif /* ROUTER_H_ */

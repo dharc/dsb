@@ -1,7 +1,7 @@
 /*
- * dsb.c
+ * router.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 29 Apr 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,33 +32,78 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/dsb.h"
-#include "dsb/router.h"
-#include "dsb/processor.h"
+#include "router.h"
+#include "dsb/nid.h"
+#include "dsb/event.h"
+#include "dsb/errors.h"
+#include "dsb/harc.h"
 
-int dsb_init()
+struct RouterEntry
 {
-	int ret;
-	ret = dsb_nid_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_event_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_route_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_proc_init();
-	return ret;
+	int (*handler)(struct Event *);
+	struct HARC l;
+	struct HARC h;
+};
+
+#define MAX_HANDLERS	20
+
+struct RouterEntry route_table[MAX_HANDLERS];
+
+int dsb_route_init(void)
+{
+	int i;
+	for (i=0; i<MAX_HANDLERS; i++)
+	{
+		route_table[i].handler = 0;
+	}
+	return SUCCESS;
 }
 
-int dsb_final()
+int dsb_route_final(void)
 {
-	int ret;
-	ret = dsb_proc_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_route_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_event_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_nid_final();
-	return ret;
+	return SUCCESS;
 }
 
+int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(struct Event *))
+{
+	//TODO Consider making threadsafe.
+	int ff;
+	for (ff=0; ff<MAX_HANDLERS; ff++)
+	{
+		if (route_table[ff].handler == 0) break;
+	}
+
+	if (ff == MAX_HANDLERS-1) return ERR_ROUTE_SLOT;
+
+	route_table[ff].l = *l;
+	route_table[ff].h = *h;
+	route_table[ff].handler = handler;
+
+	return SUCCESS;
+}
+
+int dsb_route(struct Event *evt)
+{
+	int i;
+	for (i=0; i<MAX_HANDLERS; i++)
+	{
+		//Compare destination with low and high for each handler.
+		if (dsb_harc_compare(&(route_table[i].l),&(evt->dest)) <= 0)
+		{
+			if (dsb_harc_compare(&(route_table[i].h),&(evt->dest)) >= 0)
+			{
+				if (route_table[i].handler != 0)
+				{
+					return route_table[i].handler(evt);
+				}
+				else
+				{
+					return ERR_ROUTE_MISSING;
+				}
+			}
+		}
+	}
+
+	//Failed to find a matching handler.
+	return ERR_NOROUTE;
+}

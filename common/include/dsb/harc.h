@@ -29,14 +29,43 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef _HARC_H_
 #define _HARC_H_
 
-#include "dsb/nid.h"
+struct NID;
 
+/**
+ * The tail of a hyperarc can be used to identify that hyperarc. A tail is
+ * generated from two Node identifiers.
+ */
 struct HARC
 {
-	struct NID a;
-	struct NID b;
+	union {
+	unsigned long long a;
+	struct {
+		unsigned int a1;
+		unsigned int a2;
+	};
+	};
+	unsigned long long b;
+	unsigned long long c;
 };
 
-struct NID *dsb_harc_major(const struct HARC *harc); 
+/**
+ * Generate a hyperarc tail structure from two nodes. The order of the two
+ * tail nodes is not significant.
+ * @param First tail node.
+ * @param Second tail node.
+ * @param HARC structure to populate.
+ * @return SUCCESS.
+ */
+int dsb_harc_gen(const struct NID *, const struct NID *, struct HARC *);
+
+/**
+ * Compare two hyperarcs for equality. If the first is less than the second
+ * -1 is returned. If they are equal 0 is returned and if the first is greater
+ * then 1 is returned.
+ * @param First hyperarc tail.
+ * @param Second hyperarc tail.
+ * @return Result of comparison: -1, 0 or 1.
+ */
+int dsb_harc_compare(const struct HARC *, const struct HARC *);
 
 #endif

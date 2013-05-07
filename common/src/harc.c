@@ -1,14 +1,34 @@
 #include "dsb/harc.h"
+#include "dsb/nid.h"
 
-struct NID *dsb_harc_major(const struct HARC *harc)
+int dsb_harc_gen(const struct NID *pa, const struct NID *pb, struct HARC *ph)
 {
-	if (dsb_nid_compare(harc->a,harc->b) >= 0)
+	int nidc = dsb_nid_compare(pa,pb);
+	if (nidc < 0)
 	{
-		return &harc->a;
+		ph->a1 = pa->type;
+		ph->a2 = pb->type;
+		ph->b = pa->ll;
+		ph->c = pb->ll;
 	}
 	else
 	{
-		return &harc->b;
+		ph->a2 = pa->type;
+		ph->a1 = pb->type;
+		ph->c = pa->ll;
+		ph->b = pb->ll;
 	}
+	return 0;
+}
+
+int dsb_harc_compare(const struct HARC *pa, const struct HARC *pb)
+{
+	if (pa->a < pb->a) return -1;
+	if (pa->a > pb->a) return 1;
+	if (pa->b < pb->b) return -1;
+	if (pa->b > pb->b) return 1;
+	if (pa->c < pb->c) return -1;
+	if (pa->c > pb->c) return 1;
+	return 0;
 }
 

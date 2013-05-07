@@ -1,5 +1,5 @@
 /*
- * processor.c
+ * common.h
  *
  *  Created on: 30 Apr 2013
  *      Author: nick
@@ -32,51 +32,15 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/processor.h"
+#ifndef COMMON_H_
+#define COMMON_H_
+
+#include "dsb/nid.h"
 #include "dsb/event.h"
 #include "dsb/errors.h"
-#include "dsb/router.h"
+#include "dsb/wrap.h"
 
-int dsb_proc_send(struct Event *evt, int async)
-{
-	int ret;
+int dsb_common_init();
+int dsb_common_final();
 
-	evt->flags |= EVTFLAG_SENT;
-
-	switch(evt->type >> 8)
-	{
-	case EVENT_GETTERS:
-		ret = dsb_route(evt);
-		if (ret != SUCCESS) break;
-		if (async != 0)
-		{
-			ret = dsb_proc_wait(evt);
-		}
-		break;
-
-
-	default:
-		ret = ERR_INVALIDEVENT;
-		break;
-	}
-
-	if (evt->flags & EVTFLAG_FREE)
-	{
-		dsb_event_free(evt);
-	}
-	return ret;
-}
-
-int dsb_proc_wait(const struct Event *evt)
-{
-	if (!(evt->flags & EVTFLAG_SENT))
-	{
-		return ERR_NOTSENT;
-	}
-	while (!(evt->flags & EVTFLAG_DONE))
-	{
-		//Process other events etc.
-	}
-
-	return SUCCESS;
-}
+#endif /* COMMON_H_ */

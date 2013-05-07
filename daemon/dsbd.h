@@ -1,7 +1,7 @@
 /*
- * router.h
+ * dsbd.h
  *
- *  Created on: 29 Apr 2013
+ *  Created on: 7 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,32 +32,11 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ROUTER_H_
-#define ROUTER_H_
-
-struct Event;
-struct NID;
-
-int dsb_route_init(void);
-int dsb_route_final(void);
-
-/**
- * Map a NID range to an event handler. All events destined for a NID in the
- * specified range will be passed to this handler when routed by the
- * processor.
- * @param l Low end of NID range.
- * @param h High end of NID range.
- * @param handler Handler function.
- * @return SUCCESS or ERR_ROUTE_SLOT.
- */
-int dsb_route_map(const struct NID *l, const struct NID *h, int (*handler)(struct Event *));
-
-/**
- * Route event to correct handler. Should not be called manually.
- * @param evt The event to route.
- * @return SUCCESS, ERR_NOROUTE or ERR_ROUTE_MISSING.
- */
-int dsb_route(struct Event *evt);
+#ifndef DSBD_H_
+#define DSBD_H_
 
 
-#endif /* ROUTER_H_ */
+
+
+
+#endif /* DSBD_H_ */

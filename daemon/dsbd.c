@@ -1,4 +1,9 @@
-/* 
+/*
+ * dsbd.c
+ *
+ *  Created on: 7 May 2013
+ *      Author: nick
+
 Copyright (c) 2013, dharc ltd.
 All rights reserved.
 
@@ -26,88 +31,9 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
  */
-#ifndef _EVENT_H_
-#define _EVENT_H_
 
-#define MAX_EVENT_PARAMS	2
-
-#include "dsb/harc.h"
-#include "dsb/nid.h"
-
-enum EventType
+int main(int argc, char *argv[])
 {
-	EVENT_GET=0,
-
-	EVENT_SET=0x100,
-	EVENT_DEFINE,
-	EVENT_DELETE,
-
-	EVENT_DEP=0x200,
-	EVENT_INVALID
-};
-
-enum
-{
-	EVENT_GETTERS=0,
-	EVENT_SETTERS,
-	EVENT_DEPENDENCIES,
-	EVENT_NOTIFIES
-};
-
-#define EVTFLAG_NONE		0
-#define EVTFLAG_FREE		1	//Delete event when complete
-#define EVTFLAG_DONE		2	//Event has been processed
-#define EVTFLAG_SENT		4	//The event has been sent.
-
-/**
- * DSB Event structure.
- */
-struct Event
-{
-	enum EventType type;
-	struct HARC dest;
-	union {
-	struct NID p[MAX_EVENT_PARAMS];
-	struct NID res;			//Event result (when EVTFLAG_DONE).
-	};
-
-	//Not sent over network
-	unsigned char flags;
-};
-
-
-/**
- * Initialise the event subsystem. Must be called before any events are
- * allocated or freed.
- * @return 0 on success.
- */
-int dsb_event_init();
-
-/**
- * Cleanup memory upon exit. Should be called to safely close the
- * application.
- * @return 0 on success.
- */
-int dsb_event_final();
-
-/**
- * Allocate an event from the event pool.
- * @return Event pointer or NULL if no spare events.
- */
-struct Event *dsb_event_allocate();
-
-/**
- * Add the event back to the pool of available events.
- * @param evt The event previously allocated.
- */
-void dsb_event_free(struct Event *evt);
-
-/**
- * Number of parameters expected for this event.
- * @param evt
- * @return Number of expected parameters.
- */
-int dsb_event_params(const struct Event *evt);
-
-#endif
+	return 0;
+}
 
