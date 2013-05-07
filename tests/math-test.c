@@ -42,19 +42,11 @@ either expressed or implied, of the FreeBSD Project.
 
 extern struct Module *dsb_math_module();
 
-void test_math_system()
+void test_math_add()
 {
 	struct Event evt;
 	struct NID a;
 	struct NID b;
-
-	dsb_nid_init();
-	dsb_event_init();
-	dsb_route_init();
-
-	//Load the math module
-	CHECK(dsb_module_register("math",dsb_math_module()) == SUCCESS);
-	CHECK(dsb_module_load("math",0) == SUCCESS);
 
 	//Generate 55 +
 	dsb_iton(55,&a);
@@ -83,16 +75,63 @@ void test_math_system()
 	CHECK(evt.res.type == NID_INTEGER);
 	CHECK(evt.res.ll == 110);
 
-	dsb_route_final();
-	dsb_event_final();
-	dsb_nid_final();
+	DONE;
+}
+
+void test_math_sub()
+{
+	struct Event evt;
+	struct NID a;
+	struct NID b;
+
+	//Generate 55 -
+	dsb_iton(55,&a);
+	b.type = NID_SPECIAL;
+	b.ll = SPECIAL_SUB;
+	CHECK(dsb_harc_gen(&a,&b,&evt.dest) == SUCCESS);
+
+	evt.type = EVENT_GET;
+	evt.flags = 0;
+
+	//Send 55 - get event
+	CHECK(dsb_route(&evt) == SUCCESS);
+	CHECK(evt.flags & EVTFLAG_DONE);
+	CHECK(evt.res.type == NID_INTSUB);
+	CHECK(evt.res.ll == 55);
+
+	//Generate 55- 44
+	a.ll = 44;
+	CHECK(dsb_harc_gen(&a, &evt.res, &evt.dest) == SUCCESS);
+
+	evt.type = EVENT_GET;
+	evt.flags = 0;
+
+	//Send 55- 44 get event
+	CHECK(dsb_route(&evt) == SUCCESS);
+	CHECK(evt.flags & EVTFLAG_DONE);
+	CHECK(evt.res.type == NID_INTEGER);
+	CHECK(evt.res.ll == 11);
 
 	DONE;
 }
 
 int main(int argc, char *argv[])
 {
-	dsb_test(test_math_system);
+	dsb_nid_init();
+	dsb_event_init();
+	dsb_route_init();
+
+	//Load the math module
+	dsb_module_register("math",dsb_math_module());
+	dsb_module_load("math",0);
+
+	dsb_test(test_math_add);
+	dsb_test(test_math_sub);
+
+	dsb_route_final();
+	dsb_event_final();
+	dsb_nid_final();
+
 	return 0;
 }
 

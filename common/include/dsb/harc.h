@@ -63,12 +63,25 @@ int dsb_harc_gen(const struct NID *, const struct NID *, struct HARC *);
 /**
  * Compare two hyperarcs for equality. If the first is less than the second
  * -1 is returned. If they are equal 0 is returned and if the first is greater
- * then 1 is returned.
+ * then 1 is returned. NOTE: This function is not very useful as HARCs should
+ * not be compared in this manner. Use the contains function instead for
+ * range checking.
  * @param First hyperarc tail.
  * @param Second hyperarc tail.
  * @return Result of comparison: -1, 0 or 1.
  */
 int dsb_harc_compare(const struct HARC *, const struct HARC *);
+
+/**
+ * Checks if a HARC is within a HARC range. A HARC range is a 2D area in
+ * NID space so returns a value to indicate in which 2D direction the HARC is if
+ * not within the area (left, right, above, below, etc).
+ * @param l Low part of HARC range.
+ * @param h High part of HARC range.
+ * @param harc The HARC to check.
+ * @return 0 if contained in the HARC area. 1 = left, 2 = right, 3 = above, 4 = below, 5 = above left, 6 = above right, 7 = below left and 8 = below right.
+ */
+int dsb_harc_contains(const struct HARC *l, const struct HARC *h, const struct HARC *harc);
 
 /**
  * Generate a HARC from components instead of going via a NID.

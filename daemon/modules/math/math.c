@@ -42,8 +42,12 @@ either expressed or implied, of the FreeBSD Project.
 
 struct Module mathmod;
 
+//-----------------------------------------------------------------------------
+//  Arithmetic handlers.
+//-----------------------------------------------------------------------------
+
 /*
- * Generate an intermediate INTADD NID
+ * Generate an intermediate INTADD NID from "number +"
  */
 int math_arith_add1(struct Event *evt)
 {
@@ -60,6 +64,9 @@ int math_arith_add1(struct Event *evt)
 	return SUCCESS;
 }
 
+/*
+ * Do addition with INTADD and INT nodes.
+ */
 int math_arith_add2(struct Event *evt)
 {
 	signed long long num1 = evt->dest.b;
@@ -68,6 +75,7 @@ int math_arith_add2(struct Event *evt)
 	if (evt->type == EVENT_GET)
 	{
 		evt->res.type = NID_INTEGER;
+		//Do the addition
 		evt->res.ll = num1 + num2;
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
@@ -76,18 +84,72 @@ int math_arith_add2(struct Event *evt)
 	return SUCCESS;
 }
 
+/*
+ * Generate an intermediate INTSUB NID from "number -"
+ */
+int math_arith_sub1(struct Event *evt)
+{
+	signed long long num = evt->dest.c;
+
+	if (evt->type == EVENT_GET)
+	{
+		evt->res.type = NID_INTSUB;
+		evt->res.ll = num;
+		//TODO Make threadsafe
+		evt->flags |= EVTFLAG_DONE;
+	}
+
+	return SUCCESS;
+}
+
+/*
+ * Do addition with INTSUB and INT nodes.
+ */
+int math_arith_sub2(struct Event *evt)
+{
+	signed long long num1 = evt->dest.b;
+	signed long long num2 = evt->dest.c;
+
+	if (evt->type == EVENT_GET)
+	{
+		evt->res.type = NID_INTEGER;
+		//Do the addition
+		evt->res.ll = num1 - num2;
+		//TODO Make threadsafe
+		evt->flags |= EVTFLAG_DONE;
+	}
+
+	return SUCCESS;
+}
+
+//-----------------------------------------------------------------------------
+
+/*
+ * Initialise the math module by setting up the router to route events
+ * for arithmetic operators on numbers to our handlers.
+ */
 int math_init(const struct NID *base)
 {
 	struct HARC low;
 	struct HARC high;
 
-	//Route for the ADD operator.
+	//Route for the first part of ADD operator.
 	dsb_harc_C(NID_SPECIAL, SPECIAL_ADD, NID_INTEGER, 0, &low);
 	dsb_harc_C(NID_SPECIAL, SPECIAL_ADD, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
 	dsb_route_map(&low,&high,math_arith_add1);
+	//Route for the second part of ADD operator.
 	dsb_harc_C(NID_INTADD, 0, NID_INTEGER, 0, &low);
 	dsb_harc_C(NID_INTADD, 0xFFFFFFFFFFFFFFFF, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
 	dsb_route_map(&low,&high,math_arith_add2);
+
+	//Route for the first part of SUB operator.
+	dsb_harc_C(NID_SPECIAL, SPECIAL_SUB, NID_INTEGER, 0, &low);
+	dsb_harc_C(NID_SPECIAL, SPECIAL_SUB, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
+	dsb_route_map(&low,&high,math_arith_sub1);
+	//Route for the second part of SUB operator.
+	dsb_harc_C(NID_INTSUB, 0, NID_INTEGER, 0, &low);
+	dsb_harc_C(NID_INTSUB, 0xFFFFFFFFFFFFFFFF, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
+	dsb_route_map(&low,&high,math_arith_sub2);
 
 	return SUCCESS;
 }
@@ -97,6 +159,9 @@ int math_final()
 	return SUCCESS;
 }
 
+/*
+ * Module registration structure.
+ */
 struct Module *dsb_math_module()
 {
 	mathmod.init = math_init;
