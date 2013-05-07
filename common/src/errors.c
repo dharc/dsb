@@ -45,6 +45,10 @@ const char *dsb_error_str(int err)
 	case ERR_NOROUTE:			return "No known route for event";
 	case ERR_ROUTE_MISSING:		return "Missing handler in route table";
 	case ERR_INVALIDEVENT:		return "Invalid event type";
+	case ERR_INVALIDMOD:		return "Module is invalid";
+	case ERR_NOMOD:				return "Cannot find module";
+	case ERR_MODEXISTS:			return "Module already exists";
+	case ERR_MODNAME:			return "Invalid module name";
 	default:					return "Unknown Error";
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * module.h
+ * config.h
  *
  *  Created on: 7 May 2013
  *      Author: nick
@@ -32,45 +32,22 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef MODULE_H_
-#define MODULE_H_
+#ifndef CONFIG_H_
+#define CONFIG_H_
 
-struct NID;
+/* Auto generated config file */
 
-struct Module
-{
-	int (*init)(const struct NID *);
-	int (*update)();
-	int (*final)();
-};
+#define VERSION_MAJOR @dsb_VERSION_MAJOR@
+#define VERSION_MINOR @dsb_VERSION_MINOR@
+#define VERSION_PATCH @dsb_VERSION_PATCH@
+#cmakedefine UNIX
+#cmakedefine WIN32
+#define INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
+#define BINDIR "@CMAKE_INSTALL_PREFIX@/bin"
+#define SHAREDIR "@CMAKE_INSTALL_PREFIX@/share/dsb"
+#define TARGET_NAME "@CMAKE_SYSTEM_NAME@"
+#define TARGET_PROCESSOR "@CMAKE_SYSTEM_PROCESSOR@"
 
-/**
- * Used to register internal compiled modules. Will return an error if the
- * module structure is missing required parts or if the module has already
- * been registered. Not to be used for external modules.
- * @param name The name of the internal module.
- * @param Structure containing module init, update and final functions.
- * @return SUCCESS, ERR_MODEXISTS, ERR_INVALIDMOD.
- */
-int dsb_module_register(const char *name, const struct Module *);
+#cmakedefine NO_THREADS
 
-/**
- * Search for and then load a named module. It will search first for internal
- * registered modules and then the file system for the module library (.so)
- * file.
- * @param name Name of the module to load.
- * @param base An option base node to module configuration.
- * @return SUCCESS, ERR_NOMOD, ERR_INVALIDMOD.
- */
-int dsb_module_load(const char *name, const struct NID *base);
-
-int dsb_module_unload(const char *name);
-
-/**
- * Search for a named module and validate but do not load it.
- * @param name Name of module.
- * @return SUCCESS means module was found, ERR_NOMOD means it wasn't.
- */
-int dsb_module_exists(const char *name);
-
-#endif /* MODULE_H_ */
+#endif /* CONFIG_H_ */

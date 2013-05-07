@@ -32,8 +32,69 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
+#include "dsb/module.h"
+#include "dsb/errors.h"
+#include "config.h"
+#include <stdio.h>
+
+void print_help()
+{
+	printf("Usage: dsbd [options]\n");
+	printf("  -l <name>     Load a named module.\n");
+	printf("  -h            Print this help message.\n");
+	printf("  -v            Display dsbd version information\n");
+}
+
+void print_version()
+{
+	printf("dsbd - Version: %d.%d.%d (%s, %s)\n",VERSION_MAJOR,VERSION_MINOR,VERSION_PATCH,TARGET_NAME,TARGET_PROCESSOR);
+}
+
+int process_args(int argc, char *argv[])
+{
+	int i;
+	int ret;
+
+	for (i=0; i<argc; i++)
+	{
+		if (argv[i][0] == '-')
+		{
+			switch (argv[i][1])
+			{
+			case 'l':
+				ret = dsb_module_load(argv[++i],0);
+				if (ret != SUCCESS)
+				{
+					printf("Error: %s\n",dsb_error_str(ret));
+				}
+				break;
+
+			case 'h':
+				print_help();
+				break;
+
+			case 'v':
+				print_version();
+				break;
+
+			default:
+				printf("Invalid Option\n");
+				print_help();
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
+	int ret;
+
+	ret = process_args(argc,argv);
+	if (ret != 0) return ret;
+
 	return 0;
 }
 

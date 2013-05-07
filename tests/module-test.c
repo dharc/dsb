@@ -1,5 +1,5 @@
 /*
- * module.h
+ * module-test.c
  *
  *  Created on: 7 May 2013
  *      Author: nick
@@ -32,45 +32,62 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef MODULE_H_
-#define MODULE_H_
+#include "dsb/module.h"
+#include "dsb/test.h"
+#include "dsb/errors.h"
 
-struct NID;
+int mod_hasloaded = 0;
+int mod_hasunloaded = 0;
 
-struct Module
+int mod_test_init(const struct NID *b)
 {
-	int (*init)(const struct NID *);
-	int (*update)();
-	int (*final)();
-};
+	mod_hasloaded = 1;
+	return 0;
+}
 
-/**
- * Used to register internal compiled modules. Will return an error if the
- * module structure is missing required parts or if the module has already
- * been registered. Not to be used for external modules.
- * @param name The name of the internal module.
- * @param Structure containing module init, update and final functions.
- * @return SUCCESS, ERR_MODEXISTS, ERR_INVALIDMOD.
- */
-int dsb_module_register(const char *name, const struct Module *);
+int mod_test_final()
+{
+	mod_hasunloaded = 1;
+	return 0;
+}
 
-/**
- * Search for and then load a named module. It will search first for internal
- * registered modules and then the file system for the module library (.so)
- * file.
- * @param name Name of the module to load.
- * @param base An option base node to module configuration.
- * @return SUCCESS, ERR_NOMOD, ERR_INVALIDMOD.
- */
-int dsb_module_load(const char *name, const struct NID *base);
+void test_module_register()
+{
+	struct Module mod;
+	mod.init = 0;
+	mod.final = 0;
+	mod.update = 0;
 
-int dsb_module_unload(const char *name);
+	CHECK(dsb_module_register("testmod", &mod) == ERR_INVALIDMOD);
 
-/**
- * Search for a named module and validate but do not load it.
- * @param name Name of module.
- * @return SUCCESS means module was found, ERR_NOMOD means it wasn't.
- */
-int dsb_module_exists(const char *name);
+	mod.init = mod_test_init;
+	CHECK(dsb_module_register("testmod", &mod) == ERR_INVALIDMOD);
 
-#endif /* MODULE_H_ */
+	mod.final = mod_test_final;
+	CHECK(dsb_module_register("testmod", &mod) == SUCCESS);
+
+	DONE;
+}
+
+void test_module_load()
+{
+	struct Module mod;
+	mod.init = mod_test_init;
+	mod.final = mod_test_final;
+	mod.update = 0;
+
+	CHECK(dsb_module_register("testmod2", &mod) == SUCCESS);
+	CHECK(dsb_module_load("testmod2",0) == SUCCESS);
+	CHECK(mod_hasloaded == 1);
+	CHECK(dsb_module_unload("testmod2") == SUCCESS);
+	CHECK(mod_hasunloaded == 1);
+	DONE;
+}
+
+int main(int argc, char *argv[])
+{
+	dsb_test(test_module_register);
+	dsb_test(test_module_load);
+	return 0;
+}
+

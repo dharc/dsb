@@ -1,12 +1,4 @@
-*.a
-nid-test
-cmake_install.cmake
-CMakeFiles/
-Makefile
-CMakeCache.txt
-event-test
-router-test
-harc-test
-dsbd
+Debug/
+Release/
 .cproject
 .project

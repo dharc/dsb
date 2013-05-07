@@ -4,15 +4,22 @@ project (dsb)
 # Need to include staged files and libs
 include_directories(${PROJECT_SOURCE_DIR}/common/include)
 include_directories(${PROJECT_SOURCE_DIR}/daemon/include)
+include_directories(${PROJECT_BINARY_DIR})
 
 set(dsb_VERSION_MAJOR "0")
 set(dsb_VERSION_MINOR "1")
 set(dsb_VERSION_PATCH "1")
 
-set(CMAKE_C_FLAGS "-DLINUX -DTHREADED -g -Wall")
+option(WITH_NO_THREADS "Disable multi-threading" OFF)
+
+set(CMAKE_C_FLAGS "-Wall")
+set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c)
-set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c)
+set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/src/module.c)
+
+configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
 add_library(dsbcommon ${COMMONSOURCE})
 
@@ -30,6 +37,9 @@ target_link_libraries(event-test dsbcommon)
 
 add_executable(router-test tests/router-test.c daemon/src/router.c)
 target_link_libraries(router-test dsbcommon)
+
+add_executable(module-test tests/module-test.c daemon/src/module.c)
+target_link_libraries(module-test dsbcommon)
 
 install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.a" DESTINATION lib)
 install(DIRECTORY common/include DESTINATION include USE_SOURCE_PERMISSIONS)

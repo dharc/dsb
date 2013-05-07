@@ -46,7 +46,12 @@ enum
 	ERR_ROUTE_MISSING,	//Missing handler for event
 	ERR_NID_FREE,		//Can't free NID.
 	ERR_NOTSENT,		//Event hasn't been sent.
-	ERR_INVALIDEVENT	//Event type is unknown.
+	ERR_INVALIDEVENT,	//Event type is unknown.
+	ERR_INVALIDMOD,		//Module structure is missing something.
+	ERR_NOMOD,			//Cannot find module.
+	ERR_MODEXISTS,		//Module already registered.
+	ERR_MODNAME,		//Invalid module name.
+	ERR_END
 };
 
 /**
@@ -55,6 +60,14 @@ enum
  * @return String for the error.
  */
 const char *dsb_error_str(int err);
+
+/**
+ * Log and print error messages, depending upon log and debug settings.
+ * @param errno
+ * @param data Optional node containing additional error details.
+ * @return errno, as passed in the parameter.
+ */
+int dsb_error(int errno, const struct NID * data);
 
 
 #endif /* ERRORS_H_ */
