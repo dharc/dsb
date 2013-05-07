@@ -17,7 +17,7 @@ set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c)
-set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/src/module.c)
+set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/src/module.c daemon/modules/math/math.c)
 
 configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
@@ -40,6 +40,9 @@ target_link_libraries(router-test dsbcommon)
 
 add_executable(module-test tests/module-test.c daemon/src/module.c)
 target_link_libraries(module-test dsbcommon)
+
+add_executable(math-test tests/math-test.c daemon/src/module.c daemon/src/router.c daemon/modules/math/math.c)
+target_link_libraries(math-test dsbcommon)
 
 install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.a" DESTINATION lib)
 install(DIRECTORY common/include DESTINATION include USE_SOURCE_PERMISSIONS)

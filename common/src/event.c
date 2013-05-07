@@ -2,7 +2,7 @@
 #include "dsb/errors.h"
 #include <malloc.h>
 
-#if defined(LINUX) && defined(THREADED)
+#if defined(UNIX) && !defined(NO_THREADS)
 #include <pthread.h>
 pthread_mutex_t evt_pool_mtx = PTHREAD_MUTEX_INITIALIZER;
 #endif //LINUX THREADED
@@ -51,14 +51,14 @@ struct Event *dsb_event_allocate()
 {
 	struct Event *res;
 
-	#if defined(LINUX) && defined(THREADED)
+	#if defined(UNIX) && !defined(NO_THREADS)
 	pthread_mutex_lock(&evt_pool_mtx);
 	#endif
 
 	//NOTE: No safety checks
 	res = event_pool[event_lastalloc++];
 
-	#if defined(LINUX) && defined(THREADED)
+	#if defined(UNIX) && !defined(NO_THREADS)
 	pthread_mutex_unlock(&evt_pool_mtx);
 	#endif
 
@@ -67,14 +67,14 @@ struct Event *dsb_event_allocate()
 
 void dsb_event_free(struct Event *evt)
 {
-	#if defined(LINUX) && defined(THREADED)
+	#if defined(UNIX) && !defined(NO_THREADS)
 	pthread_mutex_lock(&evt_pool_mtx);
 	#endif
 
 	//NOTE: No safety checks
 	event_pool[--event_lastalloc] = evt;
 
-	#if defined(LINUX) && defined(THREADED)
+	#if defined(UNIX) && !defined(NO_THREADS)
 	pthread_mutex_unlock(&evt_pool_mtx);
 	#endif
 }

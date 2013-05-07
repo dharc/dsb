@@ -34,6 +34,9 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/module.h"
 #include "dsb/errors.h"
+#include "dsb/processor.h"
+#include "dsb/router.h"
+#include "dsb/common.h"
 #include "config.h"
 #include <stdio.h>
 
@@ -47,13 +50,17 @@ void print_help()
 
 void print_version()
 {
-	printf("dsbd - Version: %d.%d.%d (%s, %s)\n",VERSION_MAJOR,VERSION_MINOR,VERSION_PATCH,TARGET_NAME,TARGET_PROCESSOR);
+	printf("dsbd - Version: %d.%d.%d (%s, %s)\n",
+			VERSION_MAJOR,
+			VERSION_MINOR,
+			VERSION_PATCH,
+			TARGET_NAME,
+			TARGET_PROCESSOR);
 }
 
 int process_args(int argc, char *argv[])
 {
 	int i;
-	int ret;
 
 	for (i=0; i<argc; i++)
 	{
@@ -62,11 +69,7 @@ int process_args(int argc, char *argv[])
 			switch (argv[i][1])
 			{
 			case 'l':
-				ret = dsb_module_load(argv[++i],0);
-				if (ret != SUCCESS)
-				{
-					printf("Error: %s\n",dsb_error_str(ret));
-				}
+				DSB_ERROR(dsb_module_load(argv[++i],0));
 				break;
 
 			case 'h':
@@ -88,12 +91,25 @@ int process_args(int argc, char *argv[])
 	return 0;
 }
 
+extern struct Module *dsb_math_module();
+
 int main(int argc, char *argv[])
 {
 	int ret;
 
+	//Initialise the common parts
+	dsb_common_init();
+	//dsb_proc_init();
+	dsb_route_init();
+
+	//Register the internal modules
+	dsb_module_register("math",dsb_math_module());
+
+	//Ready to process command line args.
 	ret = process_args(argc,argv);
 	if (ret != 0) return ret;
+
+	dsb_common_final();
 
 	return 0;
 }

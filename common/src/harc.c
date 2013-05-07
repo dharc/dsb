@@ -1,5 +1,6 @@
 #include "dsb/harc.h"
 #include "dsb/nid.h"
+#include "dsb/errors.h"
 
 int dsb_harc_gen(const struct NID *pa, const struct NID *pb, struct HARC *ph)
 {
@@ -32,5 +33,17 @@ int dsb_harc_compare(const struct HARC *pa, const struct HARC *pb)
 	if (pa->c < pb->c) return -1;
 	if (pa->c > pb->c) return 1;
 	return 0;
+}
+
+int dsb_harc_C(enum NIDType ta, unsigned long long a, enum NIDType tb, unsigned long long b, struct HARC *harc)
+{
+	struct NID na;
+	struct NID nb;
+	na.type = ta;
+	na.ll = a;
+	nb.type = tb;
+	nb.ll = b;
+	dsb_harc_gen(&na,&nb,harc);
+	return SUCCESS;
 }
 

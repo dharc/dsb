@@ -33,6 +33,8 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/errors.h"
+#include <stdio.h>
+#include "config.h"
 
 const char *dsb_error_str(int err)
 {
@@ -53,3 +55,9 @@ const char *dsb_error_str(int err)
 	}
 }
 
+int dsb_error(int errno, const struct NID *data)
+{
+	if (errno == SUCCESS) return SUCCESS;
+	printf("Error: %s\n",dsb_error_str(errno));
+	return errno;
+}

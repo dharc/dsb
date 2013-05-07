@@ -1,5 +1,5 @@
 /*
- * config.h
+ * specials.h
  *
  *  Created on: 7 May 2013
  *      Author: nick
@@ -32,29 +32,28 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#ifndef SPECIALS_H_
+#define SPECIALS_H_
 
-/* Auto generated config file */
+enum
+{
+	SPECIAL_NULL=0,
+	SPECIAL_TRUE,
+	SPECIAL_FALSE,
+	//---- Integer Ops ----
+	SPECIAL_ADD,
+	SPECIAL_SUB,
+	SPECIAL_DIV,
+	SPECIAL_MUL,
+	SPECIAL_SHIFTL,
+	SPECIAL_SHIFTR,
+	SPECIAL_BITAND,
+	SPECIAL_BITOR,
+	SPECIAL_BITNOT,
 
-#define VERSION_MAJOR @dsb_VERSION_MAJOR@
-#define VERSION_MINOR @dsb_VERSION_MINOR@
-#define VERSION_PATCH @dsb_VERSION_PATCH@
+	SPECIAL_END
+};
 
-#cmakedefine UNIX
-#cmakedefine WIN32
 
-#define INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
-#define BINDIR "@CMAKE_INSTALL_PREFIX@/bin"
-#define SHAREDIR "@CMAKE_INSTALL_PREFIX@/share/dsb"
 
-#ifdef UNIX
-#define LOGFILE "/var/log/dsb.log"
-#endif
-
-#define TARGET_NAME "@CMAKE_SYSTEM_NAME@"
-#define TARGET_PROCESSOR "@CMAKE_SYSTEM_PROCESSOR@"
-
-#cmakedefine NO_THREADS
-
-#endif /* CONFIG_H_ */
+#endif /* SPECIALS_H_ */

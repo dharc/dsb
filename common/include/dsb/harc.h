@@ -30,6 +30,7 @@ either expressed or implied, of the FreeBSD Project.
 #define _HARC_H_
 
 struct NID;
+enum NIDType;
 
 /**
  * The tail of a hyperarc can be used to identify that hyperarc. A tail is
@@ -68,5 +69,16 @@ int dsb_harc_gen(const struct NID *, const struct NID *, struct HARC *);
  * @return Result of comparison: -1, 0 or 1.
  */
 int dsb_harc_compare(const struct HARC *, const struct HARC *);
+
+/**
+ * Generate a HARC from components instead of going via a NID.
+ * @param typea Type of first component.
+ * @param vala First component value.
+ * @param typeb Type of second component.
+ * @param valb Second component value.
+ * @param harc Destination HARC to fill in.
+ * @return SUCCESS.
+ */
+int dsb_harc_C(enum NIDType,unsigned long long,enum NIDType,unsigned long long,struct HARC*);
 
 #endif

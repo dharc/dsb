@@ -35,6 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef ERRORS_H_
 #define ERRORS_H_
 
+struct NID;
 
 enum
 {
@@ -68,6 +69,12 @@ const char *dsb_error_str(int err);
  * @return errno, as passed in the parameter.
  */
 int dsb_error(int errno, const struct NID * data);
+
+#ifdef _DEBUG
+#define DSB_ERROR(A) dsb_error(A,0)
+#else
+#define DSB_ERROR(A) A
+#endif
 
 
 #endif /* ERRORS_H_ */

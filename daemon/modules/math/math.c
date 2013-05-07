@@ -1,5 +1,5 @@
 /*
- * config.h
+ * math.c
  *
  *  Created on: 7 May 2013
  *      Author: nick
@@ -32,29 +32,76 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#include "dsb/nid.h"
+#include "dsb/errors.h"
+#include "dsb/module.h"
+#include "dsb/event.h"
+#include "dsb/harc.h"
+#include "dsb/specials.h"
+#include "dsb/router.h"
 
-/* Auto generated config file */
+struct Module mathmod;
 
-#define VERSION_MAJOR @dsb_VERSION_MAJOR@
-#define VERSION_MINOR @dsb_VERSION_MINOR@
-#define VERSION_PATCH @dsb_VERSION_PATCH@
+/*
+ * Generate an intermediate INTADD NID
+ */
+int math_arith_add1(struct Event *evt)
+{
+	signed long long num = evt->dest.c;
 
-#cmakedefine UNIX
-#cmakedefine WIN32
+	if (evt->type == EVENT_GET)
+	{
+		evt->res.type = NID_INTADD;
+		evt->res.ll = num;
+		//TODO Make threadsafe
+		evt->flags |= EVTFLAG_DONE;
+	}
 
-#define INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
-#define BINDIR "@CMAKE_INSTALL_PREFIX@/bin"
-#define SHAREDIR "@CMAKE_INSTALL_PREFIX@/share/dsb"
+	return SUCCESS;
+}
 
-#ifdef UNIX
-#define LOGFILE "/var/log/dsb.log"
-#endif
+int math_arith_add2(struct Event *evt)
+{
+	signed long long num1 = evt->dest.b;
+	signed long long num2 = evt->dest.c;
 
-#define TARGET_NAME "@CMAKE_SYSTEM_NAME@"
-#define TARGET_PROCESSOR "@CMAKE_SYSTEM_PROCESSOR@"
+	if (evt->type == EVENT_GET)
+	{
+		evt->res.type = NID_INTEGER;
+		evt->res.ll = num1 + num2;
+		//TODO Make threadsafe
+		evt->flags |= EVTFLAG_DONE;
+	}
 
-#cmakedefine NO_THREADS
+	return SUCCESS;
+}
 
-#endif /* CONFIG_H_ */
+int math_init(const struct NID *base)
+{
+	struct HARC low;
+	struct HARC high;
+
+	//Route for the ADD operator.
+	dsb_harc_C(NID_SPECIAL, SPECIAL_ADD, NID_INTEGER, 0, &low);
+	dsb_harc_C(NID_SPECIAL, SPECIAL_ADD, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
+	dsb_route_map(&low,&high,math_arith_add1);
+	dsb_harc_C(NID_INTADD, 0, NID_INTEGER, 0, &low);
+	dsb_harc_C(NID_INTADD, 0xFFFFFFFFFFFFFFFF, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
+	dsb_route_map(&low,&high,math_arith_add2);
+
+	return SUCCESS;
+}
+
+int math_final()
+{
+	return SUCCESS;
+}
+
+struct Module *dsb_math_module()
+{
+	mathmod.init = math_init;
+	mathmod.update = 0;
+	mathmod.final = math_final;
+	return &mathmod;
+}
+

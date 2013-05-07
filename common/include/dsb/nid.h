@@ -36,6 +36,17 @@ enum NIDType
 	NID_REAL,
 	NID_CHARACTER,
 	NID_LABEL,
+	//---- Integer Operations -----
+	NID_INTADD,
+	NID_INTSUB,
+	NID_INTDIV,
+	NID_INTMUL,
+	NID_INTBITAND,
+	NID_INTBITNOT,
+	NID_INTBITOR,
+	NID_INTSHIFTL,
+	NID_INTSHIFTR,
+
 	NID_USER=1000
 };
 
@@ -97,5 +108,8 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len);
  * @return 0 on success.
  */
 int dsb_nid_fromStr(const char *str, struct NID *nid);
+
+void dsb_iton(int,struct NID*);
+int dsb_ntoi(const struct NID*);
 
 #endif //_NID_H_

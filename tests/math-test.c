@@ -1,5 +1,5 @@
 /*
- * config.h
+ * math-test.c
  *
  *  Created on: 7 May 2013
  *      Author: nick
@@ -32,29 +32,67 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#include "dsb/test.h"
+#include "dsb/nid.h"
+#include "dsb/event.h"
+#include "dsb/router.h"
+#include "dsb/module.h"
+#include "dsb/specials.h"
+#include "dsb/errors.h"
 
-/* Auto generated config file */
+extern struct Module *dsb_math_module();
 
-#define VERSION_MAJOR @dsb_VERSION_MAJOR@
-#define VERSION_MINOR @dsb_VERSION_MINOR@
-#define VERSION_PATCH @dsb_VERSION_PATCH@
+void test_math_system()
+{
+	struct Event evt;
+	struct NID a;
+	struct NID b;
 
-#cmakedefine UNIX
-#cmakedefine WIN32
+	dsb_nid_init();
+	dsb_event_init();
+	dsb_route_init();
 
-#define INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
-#define BINDIR "@CMAKE_INSTALL_PREFIX@/bin"
-#define SHAREDIR "@CMAKE_INSTALL_PREFIX@/share/dsb"
+	//Load the math module
+	CHECK(dsb_module_register("math",dsb_math_module()) == SUCCESS);
+	CHECK(dsb_module_load("math",0) == SUCCESS);
 
-#ifdef UNIX
-#define LOGFILE "/var/log/dsb.log"
-#endif
+	//Generate 55 +
+	dsb_iton(55,&a);
+	b.type = NID_SPECIAL;
+	b.ll = SPECIAL_ADD;
+	CHECK(dsb_harc_gen(&a,&b,&evt.dest) == SUCCESS);
 
-#define TARGET_NAME "@CMAKE_SYSTEM_NAME@"
-#define TARGET_PROCESSOR "@CMAKE_SYSTEM_PROCESSOR@"
+	evt.type = EVENT_GET;
+	evt.flags = 0;
 
-#cmakedefine NO_THREADS
+	//Send 55 + get event
+	CHECK(dsb_route(&evt) == SUCCESS);
+	CHECK(evt.flags & EVTFLAG_DONE);
+	CHECK(evt.res.type == NID_INTADD);
+	CHECK(evt.res.ll == 55);
 
-#endif /* CONFIG_H_ */
+	//Generate 55+ 55
+	CHECK(dsb_harc_gen(&a, &evt.res, &evt.dest) == SUCCESS);
+
+	evt.type = EVENT_GET;
+	evt.flags = 0;
+
+	//Send 55+ 55 get event
+	CHECK(dsb_route(&evt) == SUCCESS);
+	CHECK(evt.flags & EVTFLAG_DONE);
+	CHECK(evt.res.type == NID_INTEGER);
+	CHECK(evt.res.ll == 110);
+
+	dsb_route_final();
+	dsb_event_final();
+	dsb_nid_final();
+
+	DONE;
+}
+
+int main(int argc, char *argv[])
+{
+	dsb_test(test_math_system);
+	return 0;
+}
+

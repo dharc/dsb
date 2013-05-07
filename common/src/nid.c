@@ -38,3 +38,21 @@ int dsb_nid_compare(const struct NID *a, const struct NID *b)
 	return 0;
 }
 
+void dsb_iton(int i, struct NID *n)
+{
+	n->type = NID_INTEGER;
+	n->ll = i;
+}
+
+int dsb_ntoi(const struct NID *n)
+{
+	if (n->type == NID_INTEGER)
+	{
+		return n->ll;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
