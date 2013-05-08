@@ -15,6 +15,13 @@ int dsb_nid_final()
 	return SUCCESS;
 }
 
+struct NID *dsb_nid(enum NIDType type, unsigned long long ll, struct NID *nid)
+{
+	nid->type = type;
+	nid->ll = ll;
+	return nid;
+}
+
 int dsb_nid_allocate(struct NID *nid)
 {
 	*nid = local_base;

@@ -44,14 +44,14 @@ either expressed or implied, of the FreeBSD Project.
 
 enum EventType
 {
-	EVENT_GET=0,    //!< EVENT_GET
+	EVENT_GET=0,		//!< Get the head of a HARC
 
-	EVENT_SET=0x100,//!< EVENT_SET
-	EVENT_DEFINE,   //!< EVENT_DEFINE
-	EVENT_DELETE,   //!< EVENT_DELETE
+	EVENT_DEFINE=0x100,	//!< Define a HARC
+	EVENT_DELETE,   	//!< Delete a HARC
+	EVENT_NOTIFY,		//!< Notify HARC that it is out-of-date.
 
-	EVENT_DEP=0x200,//!< EVENT_DEP
-	EVENT_INVALID   //!< EVENT_INVALID
+	EVENT_DEP=0x200,	//!< Add a dependency to a HARC
+	EVENT_INVALID		//!< EVENT_INVALID
 };
 
 enum
@@ -67,6 +67,7 @@ enum
 #define EVTFLAG_DONE		2	///< Event has been processed
 #define EVTFLAG_SENT		4	///< The event has been sent.
 #define EVTFLAG_MULT		8	///< An event with a destination region.
+#define EVTFLAG_VIRT		16  ///< Virtual, do not use memory.
 
 /**
  * DSB Event structure.
@@ -74,21 +75,44 @@ enum
 struct Event
 {
 	enum EventType type;
-	struct NID d1;
-	struct NID d2;
+	struct NID d1;			///< Destination
+	struct NID d2;			///< Destination
+
+	union {
+	struct NID value;		///< Value parameter.
+
+	struct NID res;			///< Returned event result.
+
+	struct {
+	struct NID def;			///< Definition
+	int eval;				///< Evaluator to use.
+	};
+	};
+
 	union {
 	struct {
-	struct NID d1b;
-	struct NID d2b;
-	struct NID res;			//Event result (when EVTFLAG_DONE).
+	struct NID d1b;			///< Second destination in multi events.
+	struct NID d2b;			///< Second destination in multi events.
 	};
-	struct NID p[MAX_EVENT_PARAMS];
+	struct {
+	struct NID dep1;		///< Dependency
+	struct NID dep2;		///< Dependency
+	};
 	};
 
 	//Not sent over network
-	unsigned char flags;
+	unsigned int flags;	///< Event flags.
 };
 
+/**
+ * Event Constructor.
+ * @param[in] type
+ * @param[in] d1
+ * @param[in] d2
+ * @param[out] evt
+ * @return evt
+ */
+struct Event *dsb_event(enum EventType type, const struct NID *d1, const struct NID *d2, struct Event *evt);
 
 /**
  * Initialise the event subsystem. Must be called before any events are

@@ -92,6 +92,7 @@ int process_args(int argc, char *argv[])
 }
 
 extern struct Module *dsb_math_module();
+extern struct Module *dsb_volatile_module();
 
 int main(int argc, char *argv[])
 {
@@ -103,11 +104,15 @@ int main(int argc, char *argv[])
 	dsb_route_init();
 
 	//Register the internal modules
+	dsb_module_register("volatile",dsb_volatile_module());
 	dsb_module_register("math",dsb_math_module());
 
 	//Ready to process command line args.
 	ret = process_args(argc,argv);
 	if (ret != 0) return ret;
+
+	//Need to call all module update code.
+	//Need to process queues until empty.
 
 	dsb_common_final();
 

@@ -1,7 +1,7 @@
 /*
- * harc-test.c
+ * evaluator.c
  *
- *  Created on: 7 May 2013
+ *  Created on: 8 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,24 +32,21 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/test.h"
+#include "dsb/evaluator.h"
 #include "dsb/harc.h"
-#include "dsb/nid.h"
+#include "dsb/errors.h"
 
-void test_harc_gen()
+int dsb_eval_call(int id, struct HARC *harc, void **data)
 {
+	//Null evaluator just copies definition to head.
+	if (id == 0)
+	{
+		harc->h.type = harc->def.type;
+		harc->h.ll = harc->def.ll;
+		return SUCCESS;
+	}
 
-}
-
-void test_harc_compare()
-{
-
-}
-
-int main(int argc, char *argv[])
-{
-	//dsb_test(test_harc_gen);
-	//dsb_test(test_harc_compare);
-	return 0;
+	//Otherwise look for the evaluator.
+	return SUCCESS;
 }
 

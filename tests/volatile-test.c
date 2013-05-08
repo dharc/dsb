@@ -1,7 +1,7 @@
 /*
- * harc-test.c
+ * volatile-test.c
  *
- *  Created on: 7 May 2013
+ *  Created on: 8 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -33,23 +33,62 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/test.h"
-#include "dsb/harc.h"
 #include "dsb/nid.h"
+#include "dsb/event.h"
+#include "dsb/router.h"
+#include "dsb/module.h"
+#include "dsb/specials.h"
 
-void test_harc_gen()
+void test_vol_getset()
 {
+	struct Event evt;
+	struct NID a;
+	struct NID b;
 
+	//Create tail NIDs
+	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&a);
+	dsb_nid(NID_INTEGER,1,&b);
+
+	//Generate DEFINE event.
+	dsb_event(EVENT_DEFINE,&a,&b,&evt);
+	dsb_nid(NID_INTEGER,55,&(evt.def));
+	evt.eval = 0; //No evaluator
+
+	//Send DEFINE event.
+	CHECK(dsb_route(&evt) == 0);
+
+	//Generate GET event;
+	dsb_event(EVENT_GET,&a,&b,&evt);
+
+	//Send GET event.
+	CHECK(dsb_route(&evt) == 0);
+
+	//Check result of GET.
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(evt.res.type == NID_INTEGER);
+	CHECK(evt.res.ll == 55);
+
+	DONE;
 }
 
-void test_harc_compare()
-{
-
-}
+extern struct Module *dsb_volatile_module();
 
 int main(int argc, char *argv[])
 {
-	//dsb_test(test_harc_gen);
-	//dsb_test(test_harc_compare);
+	dsb_nid_init();
+	dsb_event_init();
+	dsb_route_init();
+
+	//Load the volatile module
+	dsb_module_register("volatile",dsb_volatile_module());
+	dsb_module_load("volatile",0);
+
+	dsb_test(test_vol_getset);
+
+	dsb_route_final();
+	dsb_event_final();
+	dsb_nid_final();
+
 	return 0;
 }
 

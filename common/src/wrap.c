@@ -48,3 +48,15 @@ int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r)
 	evt.type = EVENT_GET;
 	return dsb_send(&evt,0);
 }
+
+int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
+{
+	struct Event evt;
+	evt.d1 = *d1;
+	evt.d2 = *d2;
+	evt.def = *v;
+	evt.eval = 0;
+	evt.flags = 0;
+	evt.type = EVENT_DEFINE;
+	return dsb_send(&evt,1);
+}

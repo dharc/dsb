@@ -1,7 +1,7 @@
 /*
- * harc-test.c
+ * evaluator.h
  *
- *  Created on: 7 May 2013
+ *  Created on: 8 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,24 +32,29 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/test.h"
-#include "dsb/harc.h"
-#include "dsb/nid.h"
+/** @file evaluator.h */
 
-void test_harc_gen()
-{
+#ifndef EVALUATOR_H_
+#define EVALUATOR_H_
 
-}
+struct HARC;
 
-void test_harc_compare()
-{
+/**
+ * Register a definition evaluator to a particular id. The id must be greater
+ * than 0 and not already be in use.
+ * @param id Unique ID for evaluator.
+ * @param e The evaluator function.
+ * @return SUCCESS or ERR_EVALID.
+ */
+int dsb_eval_register(int id, int (*e)(struct HARC *harc, void **data));
 
-}
+/**
+ * Call a definition evaluator to evaluate a given definition.
+ * @param id ID of evaluator as previously registered.
+ * @param harc Hyperarc structure to evaluate.
+ * @param data Custom data used by evaluator.
+ * @return SUCCESS, ERR_EVALID or another error code.
+ */
+int dsb_eval_call(int id, struct HARC *harc, void **data);
 
-int main(int argc, char *argv[])
-{
-	//dsb_test(test_harc_gen);
-	//dsb_test(test_harc_compare);
-	return 0;
-}
-
+#endif /* EVALUATOR_H_ */

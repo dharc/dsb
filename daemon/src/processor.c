@@ -37,6 +37,12 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/router.h"
 
+//Map this to local processor send implementation.
+int dsb_send(struct Event *evt, int async)
+{
+	return dsb_proc_send(evt,async);
+}
+
 int dsb_proc_send(struct Event *evt, int async)
 {
 	int ret;

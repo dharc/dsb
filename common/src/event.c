@@ -46,6 +46,15 @@ int dsb_event_final()
 	return ERR_NOINIT;
 }
 
+struct Event *dsb_event(enum EventType type, const struct NID *d1, const struct NID *d2, struct Event *evt)
+{
+	evt->type = type;
+	evt->flags = 0;
+	evt->d1 = *d1;
+	evt->d2 = *d2;
+	return evt;
+}
+
 
 struct Event *dsb_event_allocate()
 {

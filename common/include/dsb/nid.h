@@ -129,6 +129,15 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len);
 int dsb_nid_fromStr(const char *str, struct NID *nid);
 
 /**
+ * NodeID Constructor.
+ * @param[in] type Node type.
+ * @param[in] ll Node value.
+ * @param[out] nid Structure to populate.
+ * @return nid.
+ */
+struct NID *dsb_nid(enum NIDType type, unsigned long long ll, struct NID *nid);
+
+/**
  * Make a NID from an int.
  * @param[in] i The source integer.
  * @param[out] n The destination NID to populate.

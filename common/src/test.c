@@ -25,7 +25,7 @@ void dsb_test_done(const char *function)
 	{
 		if (test_pretty == 1)
 		{
-			printf("%s \e[31;1failed\e[0m\n",function);
+			printf("%s \e[31;1mfailed\e[0m\n",function);
 		}
 		else
 		{

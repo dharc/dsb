@@ -36,20 +36,308 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/router.h"
 #include "dsb/event.h"
 #include "dsb/errors.h"
+#include "dsb/evaluator.h"
 #include <stdio.h>
+#include <malloc.h>
 
 struct Module volmod;
 
+#define VOLFLAG_OUTOFDATE	1
+#define VOLFLAG_VIRTUAL		2
+
+struct VolHARCEntry
+{
+	struct HARC harc;
+	void *data;
+	int flags;
+	struct VolHARCEntry *next;
+};
+
+struct VolRegionEntry
+{
+	struct NID x1;
+	struct NID x2;
+	struct NID y1;
+	struct NID y2;
+	struct NID def;
+	void *data;
+	int eval;
+	int flags;
+};
+
+#define VOL_HASH_SIZE	1000
+#define VOL_MAX_REGIONS	100
+
+struct VolHARCEntry *voltable[VOL_HASH_SIZE];
+struct VolRegionEntry *volregions[VOL_MAX_REGIONS];
+
+/*
+ * HASH two NIDs together.
+ */
+int vol_hashnid(const struct NID *a, const struct NID *b)
+{
+	//TODO Make sure a and b are in correct order.
+	//TODO Improve hash function
+	return (a->ll + (b->ll*100)) % VOL_HASH_SIZE;
+}
+
+struct VolRegionEntry *vol_createregion(const struct NID *x1, const struct NID *x2, const struct NID *y1, const struct NID *y2)
+{
+	struct VolRegionEntry *res;
+	int i;
+
+	res = malloc(sizeof(struct VolRegionEntry));
+	res->x1 = *x1;
+	res->x2 = *x2;
+	res->y1 = *y1;
+	res->y2 = *y2;
+	res->flags = 0;
+	res->data = 0;
+	res->eval = 0;
+	res->def.type = 0;
+	res->def.ll = 0;
+
+	for (i=0; i<VOL_MAX_REGIONS; i++)
+	{
+		if (volregions[i] == 0)
+		{
+			volregions[i] = res;
+			return res;
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * Return 0 if n is within the range of a and b. 1 otherwise.
+ * Copied from router.
+ */
+inline int nid_withinrange2(const struct NID *a, const struct NID *b, const struct NID *n)
+{
+	//NOTE: Assumption about a being less than b!!!!
+	return ((dsb_nid_compare(a,n) <= 0) && (dsb_nid_compare(b,n) >= 0)) ? 0 : 1;
+}
+
+struct VolRegionEntry *vol_getregion(const struct NID *a, const struct NID *b)
+{
+	//TODO Use search algorithm.
+	int i;
+	int t1,t2;
+
+	for (i=0; i<VOL_MAX_REGIONS; i++)
+	{
+		if (volregions[i] == 0) return 0;
+
+		//Check first order is in the range
+		t1 = nid_withinrange2(&(volregions[i]->x1),&(volregions[i]->x2),a);
+		t2 = nid_withinrange2(&(volregions[i]->y1),&(volregions[i]->y2),b);
+		if (t1 == 0 && t2 == 0)
+		{
+			return volregions[i];
+		}
+
+		//Check second order is in the range
+		t1 = nid_withinrange2(&(volregions[i]->x1),&(volregions[i]->x2),b);
+		t2 = nid_withinrange2(&(volregions[i]->y1),&(volregions[i]->y2),a);
+		if (t1 == 0 && t2 == 0)
+		{
+			return volregions[i];
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * Construct a new HARC entry in the hash table.
+ */
+struct VolHARCEntry *vol_createentry(const struct NID *a, const struct NID *b)
+{
+	int hash = vol_hashnid(a,b);
+	//TODO Make threadsafe.
+	struct VolHARCEntry *res = voltable[hash];
+	//No match found so create new entry.
+	res = malloc(sizeof(struct VolHARCEntry));
+	res->harc.t1 = *a;
+	res->harc.t2 = *b;
+	res->harc.h.type = NID_SPECIAL;
+	res->harc.h.ll = 0;
+	res->harc.def.type = NID_SPECIAL;
+	res->harc.def.ll = 0;
+	res->harc.e = 0;
+	res->data = 0;
+	res->flags = 0;
+
+	//TODO Make threadsafe
+	res->next = voltable[hash];
+	voltable[hash] = res;
+	return res;
+}
+
+/*
+ * Find or create a HARC entry in the hash table.
+ */
+struct VolHARCEntry *vol_getentry(const struct NID *a, const struct NID *b)
+{
+	int hash = vol_hashnid(a,b);
+	//TODO Make threadsafe.
+	struct VolHARCEntry *res = voltable[hash];
+
+	//TODO Check a and b ordering.
+	while (res != 0)
+	{
+		//Does this HARC entry match?
+		if ((dsb_nid_compare(a,&(res->harc.t1)) == 0) && (dsb_nid_compare(b,&(res->harc.t2)) == 0))
+		{
+			return res;
+		}
+		//Move to next entry.
+		res = res->next;
+	}
+
+	return 0;
+}
+
+/*
+ * Process DEFINE events. Updates definition and sets to out-of-date.
+ */
+int vol_define(struct Event *evt)
+{
+	struct VolHARCEntry *ent = vol_getentry(&(evt->d1),&(evt->d2));
+
+	//If it doesn't exist then create it now.
+	if (ent == 0)
+	{
+		ent = vol_createentry(&(evt->d1),&(evt->d2));
+	}
+
+	ent->harc.e = evt->eval;
+	ent->harc.def.type = evt->def.type;
+	ent->harc.def.ll = evt->def.ll;
+	ent->flags |= VOLFLAG_OUTOFDATE;
+
+	//Generate NOTIFY events to mark others as out-of-date.
+
+	return SUCCESS;
+}
+
+/*
+ * Process NOTIFY events by marking as out-of-date.
+ */
+int vol_notify(struct Event *evt)
+{
+	struct VolHARCEntry *ent = vol_getentry(&(evt->d1),&(evt->d2));
+	if (ent == 0) return SUCCESS;
+
+	ent->flags |= VOLFLAG_OUTOFDATE;
+	return SUCCESS;
+}
+
+/*
+ * Process GET events by returning the cached value or evaluating the
+ * definition. The special case is for a HARC defined as a region where
+ * the HARC needs to be created, or if virtual then simulated.
+ */
+int vol_get(struct Event *evt)
+{
+	struct VolHARCEntry *ent = vol_getentry(&(evt->d1),&(evt->d2));
+	struct VolRegionEntry *reg;
+	struct HARC harc;
+
+	//If no entry so check for region
+	if (ent == 0)
+	{
+		//Check if matches a region.
+		reg = vol_getregion(&(evt->d1),&(evt->d2));
+		if (reg != 0)
+		{
+			//Matches a region.
+			if ((reg->flags & VOLFLAG_VIRTUAL) != 0)
+			{
+				//Its a virtual region so don't create a real HARC
+				harc.t1.type = evt->d1.type;
+				harc.t1.ll = evt->d1.ll;
+				harc.t2.type = evt->d2.type;
+				harc.t2.ll = evt->d2.ll;
+				harc.def.type = reg->def.type;
+				harc.def.ll = reg->def.ll;
+				//Get evaluator and use to get result.
+				dsb_eval_call(reg->eval,&harc,&(reg->data));
+				evt->res.type = harc.h.type;
+				evt->res.ll = harc.h.ll;
+				evt->flags |= EVTFLAG_DONE;
+				return SUCCESS;
+			}
+			else
+			{
+				//Its not virtual, so cache as real entry.
+				ent = vol_createentry(&(evt->d1),&(evt->d2));
+				ent->harc.e = reg->eval;
+				ent->harc.def.type = reg->def.type;
+				ent->harc.def.ll = reg->def.ll;
+				ent->flags |= VOLFLAG_OUTOFDATE;
+			}
+		}
+		else
+		{
+			//No such HARC so return Null.
+			evt->res.type = 0;
+			evt->res.ll = 0;
+			evt->flags |= EVTFLAG_DONE;
+			return SUCCESS;
+		}
+	}
+
+	//Out of date so evaluate definition
+	if ((ent->flags & VOLFLAG_OUTOFDATE) != 0)
+	{
+		//Get evaluator and use to get result.
+		dsb_eval_call(ent->harc.e,&(ent->harc),&(ent->data));
+
+		//No longer out-of-date
+		evt->flags &= ~VOLFLAG_OUTOFDATE;
+	}
+
+	evt->res.type = ent->harc.h.type;
+	evt->res.ll = ent->harc.h.ll;
+	evt->flags |= EVTFLAG_DONE;
+	return SUCCESS;
+}
+
+/*
+ * Main event handler for volatile storage.
+ */
 int vol_handler(struct Event *evt)
 {
-	printf("VOLATILE: %d:%d,%d:%d\n",evt->d1.type,evt->d1.a,evt->d2.type,evt->d2.a);
-	return SUCCESS;
+	if ((evt->flags & EVTFLAG_MULT) == 0)
+	{
+		switch(evt->type)
+		{
+		case EVENT_GET: return vol_get(evt);
+		case EVENT_DEFINE: return vol_define(evt);
+		case EVENT_NOTIFY: return vol_notify(evt);
+		default: return SUCCESS;
+		}
+	}
+	else
+	{
+		//TODO Support region events.
+		return SUCCESS;
+	}
 }
 
 int vol_init(const struct NID *base)
 {
 	struct NID x1;
 	struct NID x2;
+	int i;
+
+	//Clear voltable
+	for (i=0; i<VOL_HASH_SIZE; i++)
+	{
+		voltable[i] = 0;
+	}
 
 	//The entire Node space below user nodes.
 	x1.type = 0;
@@ -63,6 +351,7 @@ int vol_init(const struct NID *base)
 
 int vol_final()
 {
+	//TODO Cleanup all entries.
 	return SUCCESS;
 }
 

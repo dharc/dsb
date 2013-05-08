@@ -43,6 +43,11 @@ either expressed or implied, of the FreeBSD Project.
 struct NID;
 
 /**
+ * @addtogroup API
+ * @{
+ */
+
+/**
  * Get the result of following a hyperarc. This function blocks until the
  * result is obtained.
  * @see dsb_getA
@@ -53,15 +58,36 @@ struct NID;
  */
 int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r);
 
-
+/**
+ * Set the node a hyperarc points to. This function returns immediately
+ * and does not guarantee that the change has been performed.
+ * @param d1 First tail node.
+ * @param d2 Second tail node.
+ * @param v Node to change the head to.
+ * @return SUCCESS or some other error code.
+ */
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v);
+
+
 int dsb_define(
-			const struct NID *d1,
-			const struct NID *d2,
-			const struct NID *def,
-			int eval
-			);
+		const struct NID *d1,
+		const struct NID *d2,
+		const struct NID *def,
+		int eval
+		);
+
+int dsb_defineM(
+		const struct NID *d1a,
+		const struct NID *d1b,
+		const struct NID *d2a,
+		const struct NID *d2b,
+		const struct NID *def,
+		int eval
+		);
+
 int dsb_new(struct NID *n);
 int dsb_delete(struct NID *n);
+
+/** @} */
 
 #endif /* WRAP_H_ */
