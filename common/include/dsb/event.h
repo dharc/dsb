@@ -26,24 +26,32 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
  */
+
+/** @file event.h */
+
 #ifndef _EVENT_H_
 #define _EVENT_H_
 
-#define MAX_EVENT_PARAMS	2
+/**
+ * @addtogroup Events
+ * @{
+ */
+
+#define MAX_EVENT_PARAMS	6
 
 #include "dsb/harc.h"
 #include "dsb/nid.h"
 
 enum EventType
 {
-	EVENT_GET=0,
+	EVENT_GET=0,    //!< EVENT_GET
 
-	EVENT_SET=0x100,
-	EVENT_DEFINE,
-	EVENT_DELETE,
+	EVENT_SET=0x100,//!< EVENT_SET
+	EVENT_DEFINE,   //!< EVENT_DEFINE
+	EVENT_DELETE,   //!< EVENT_DELETE
 
-	EVENT_DEP=0x200,
-	EVENT_INVALID
+	EVENT_DEP=0x200,//!< EVENT_DEP
+	EVENT_INVALID   //!< EVENT_INVALID
 };
 
 enum
@@ -55,9 +63,10 @@ enum
 };
 
 #define EVTFLAG_NONE		0
-#define EVTFLAG_FREE		1	//Delete event when complete
-#define EVTFLAG_DONE		2	//Event has been processed
-#define EVTFLAG_SENT		4	//The event has been sent.
+#define EVTFLAG_FREE		1	///< Delete event when complete
+#define EVTFLAG_DONE		2	///< Event has been processed
+#define EVTFLAG_SENT		4	///< The event has been sent.
+#define EVTFLAG_MULT		8	///< An event with a destination region.
 
 /**
  * DSB Event structure.
@@ -65,10 +74,15 @@ enum
 struct Event
 {
 	enum EventType type;
-	struct HARC dest;
+	struct NID d1;
+	struct NID d2;
 	union {
-	struct NID p[MAX_EVENT_PARAMS];
+	struct {
+	struct NID d1b;
+	struct NID d2b;
 	struct NID res;			//Event result (when EVTFLAG_DONE).
+	};
+	struct NID p[MAX_EVENT_PARAMS];
 	};
 
 	//Not sent over network
@@ -108,6 +122,8 @@ void dsb_event_free(struct Event *evt);
  * @return Number of expected parameters.
  */
 int dsb_event_params(const struct Event *evt);
+
+/** @} */
 
 #endif
 

@@ -51,7 +51,7 @@ struct Module mathmod;
  */
 int math_arith_add1(struct Event *evt)
 {
-	signed long long num = evt->dest.c;
+	signed long long num = evt->d2.ll;
 
 	if (evt->type == EVENT_GET)
 	{
@@ -69,8 +69,8 @@ int math_arith_add1(struct Event *evt)
  */
 int math_arith_add2(struct Event *evt)
 {
-	signed long long num1 = evt->dest.b;
-	signed long long num2 = evt->dest.c;
+	signed long long num1 = evt->d1.ll;
+	signed long long num2 = evt->d2.ll;
 
 	if (evt->type == EVENT_GET)
 	{
@@ -89,7 +89,7 @@ int math_arith_add2(struct Event *evt)
  */
 int math_arith_sub1(struct Event *evt)
 {
-	signed long long num = evt->dest.c;
+	signed long long num = evt->d2.ll;
 
 	if (evt->type == EVENT_GET)
 	{
@@ -107,14 +107,14 @@ int math_arith_sub1(struct Event *evt)
  */
 int math_arith_sub2(struct Event *evt)
 {
-	signed long long num1 = evt->dest.b;
-	signed long long num2 = evt->dest.c;
+	signed long long num1 = evt->d1.ll;
+	signed long long num2 = evt->d2.ll;
 
 	if (evt->type == EVENT_GET)
 	{
 		evt->res.type = NID_INTEGER;
 		//Do the addition
-		evt->res.ll = num1 - num2;
+		evt->res.ll = num2 - num1;
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -130,26 +130,34 @@ int math_arith_sub2(struct Event *evt)
  */
 int math_init(const struct NID *base)
 {
-	struct HARC low;
-	struct HARC high;
+	struct NID x1;
+	struct NID x2;
+	struct NID y1;
+	struct NID y2;
 
 	//Route for the first part of ADD operator.
-	dsb_harc_C(NID_SPECIAL, SPECIAL_ADD, NID_INTEGER, 0, &low);
-	dsb_harc_C(NID_SPECIAL, SPECIAL_ADD, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
-	dsb_route_map(&low,&high,math_arith_add1);
+	x1.type = NID_SPECIAL;
+	x1.ll = SPECIAL_ADD;
+	x2 = x1;
+	dsb_iton(0,&y1);
+	y2.type = NID_INTEGER;
+	y2.ll = 0xFFFFFFFFFFFFFFFF;
+	dsb_route_map(&x1,&x2,&y1,&y2,math_arith_add1);
 	//Route for the second part of ADD operator.
-	dsb_harc_C(NID_INTADD, 0, NID_INTEGER, 0, &low);
-	dsb_harc_C(NID_INTADD, 0xFFFFFFFFFFFFFFFF, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
-	dsb_route_map(&low,&high,math_arith_add2);
+	x1.type = NID_INTADD;
+	x1.ll = 0;
+	x2.type = NID_INTADD;
+	x2.ll = 0xFFFFFFFFFFFFFFFF;
+	dsb_route_map(&x1,&x2,&y1,&y2,math_arith_add2);
 
 	//Route for the first part of SUB operator.
-	dsb_harc_C(NID_SPECIAL, SPECIAL_SUB, NID_INTEGER, 0, &low);
-	dsb_harc_C(NID_SPECIAL, SPECIAL_SUB, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
-	dsb_route_map(&low,&high,math_arith_sub1);
+	//dsb_harc_C(NID_SPECIAL, SPECIAL_SUB, NID_INTEGER, 0, &low);
+	//dsb_harc_C(NID_SPECIAL, SPECIAL_SUB, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
+	//dsb_route_map(&low,&high,math_arith_sub1);
 	//Route for the second part of SUB operator.
-	dsb_harc_C(NID_INTSUB, 0, NID_INTEGER, 0, &low);
-	dsb_harc_C(NID_INTSUB, 0xFFFFFFFFFFFFFFFF, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
-	dsb_route_map(&low,&high,math_arith_sub2);
+	//dsb_harc_C(NID_INTSUB, 0, NID_INTEGER, 0, &low);
+	//dsb_harc_C(NID_INTSUB, 0xFFFFFFFFFFFFFFFF, NID_INTEGER, 0xFFFFFFFFFFFFFFFF, &high);
+	//dsb_route_map(&low,&high,math_arith_sub2);
 
 	return SUCCESS;
 }

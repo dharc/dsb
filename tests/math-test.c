@@ -49,11 +49,9 @@ void test_math_add()
 	struct NID b;
 
 	//Generate 55 +
-	dsb_iton(55,&a);
-	b.type = NID_SPECIAL;
-	b.ll = SPECIAL_ADD;
-	CHECK(dsb_harc_gen(&a,&b,&evt.dest) == SUCCESS);
-
+	dsb_iton(55,&evt.d1);
+	evt.d2.type = NID_SPECIAL;
+	evt.d2.ll = SPECIAL_ADD;
 	evt.type = EVENT_GET;
 	evt.flags = 0;
 
@@ -64,8 +62,7 @@ void test_math_add()
 	CHECK(evt.res.ll == 55);
 
 	//Generate 55+ 55
-	CHECK(dsb_harc_gen(&a, &evt.res, &evt.dest) == SUCCESS);
-
+	evt.d2 = evt.res;
 	evt.type = EVENT_GET;
 	evt.flags = 0;
 
@@ -78,42 +75,7 @@ void test_math_add()
 	DONE;
 }
 
-void test_math_sub()
-{
-	struct Event evt;
-	struct NID a;
-	struct NID b;
 
-	//Generate 55 -
-	dsb_iton(55,&a);
-	b.type = NID_SPECIAL;
-	b.ll = SPECIAL_SUB;
-	CHECK(dsb_harc_gen(&a,&b,&evt.dest) == SUCCESS);
-
-	evt.type = EVENT_GET;
-	evt.flags = 0;
-
-	//Send 55 - get event
-	CHECK(dsb_route(&evt) == SUCCESS);
-	CHECK(evt.flags & EVTFLAG_DONE);
-	CHECK(evt.res.type == NID_INTSUB);
-	CHECK(evt.res.ll == 55);
-
-	//Generate 55- 44
-	a.ll = 44;
-	CHECK(dsb_harc_gen(&a, &evt.res, &evt.dest) == SUCCESS);
-
-	evt.type = EVENT_GET;
-	evt.flags = 0;
-
-	//Send 55- 44 get event
-	CHECK(dsb_route(&evt) == SUCCESS);
-	CHECK(evt.flags & EVTFLAG_DONE);
-	CHECK(evt.res.type == NID_INTEGER);
-	CHECK(evt.res.ll == 11);
-
-	DONE;
-}
 
 int main(int argc, char *argv[])
 {
@@ -126,7 +88,6 @@ int main(int argc, char *argv[])
 	dsb_module_load("math",0);
 
 	dsb_test(test_math_add);
-	dsb_test(test_math_sub);
 
 	dsb_route_final();
 	dsb_event_final();

@@ -1,7 +1,7 @@
 /*
- * errors.h
+ * volatile.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 8 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,54 +32,48 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file errors.h */
+#include "dsb/module.h"
+#include "dsb/router.h"
+#include "dsb/event.h"
+#include "dsb/errors.h"
+#include <stdio.h>
 
-#ifndef ERRORS_H_
-#define ERRORS_H_
+struct Module volmod;
 
-struct NID;
-
-/**
- * Error enums used for function return values.
- */
-enum
+int vol_handler(struct Event *evt)
 {
-	SUCCESS=0,			//!< SUCCESS
-	ERR_REINIT,			///< Multiple init
-	ERR_NOINIT,			///< Not initialised
-	ERR_ROUTE_SLOT,		///< No spare slots
-	ERR_NOROUTE,		///< No handler for event
-	ERR_ROUTE_MISSING,	///< Missing handler for event
-	ERR_NID_FREE,		///< Can't free NID.
-	ERR_NOTSENT,		///< Event hasn't been sent.
-	ERR_INVALIDEVENT,	///< Event type is unknown.
-	ERR_INVALIDMOD,		///< Module structure is missing something.
-	ERR_NOMOD,			///< Cannot find module.
-	ERR_MODEXISTS,		///< Module already registered.
-	ERR_MODNAME,		///< Invalid module name.
-	ERR_END   			//!< ERR_END
-};
+	printf("VOLATILE: %d:%d,%d:%d\n",evt->d1.type,evt->d1.a,evt->d2.type,evt->d2.a);
+	return SUCCESS;
+}
 
-/**
- * Convert DSB error number to a string.
- * @param err Error number.
- * @return String for the error.
+int vol_init(const struct NID *base)
+{
+	struct NID x1;
+	struct NID x2;
+
+	//The entire Node space below user nodes.
+	x1.type = 0;
+	x1.ll = 0;
+	x2.type = NID_USER-1;
+	x2.ll = 0xFFFFFFFFFFFFFFFF;
+	dsb_route_map(&x1,&x2,&x1,&x2,vol_handler);
+
+	return SUCCESS;
+}
+
+int vol_final()
+{
+	return SUCCESS;
+}
+
+/*
+ * Module registration structure.
  */
-const char *dsb_error_str(int err);
+struct Module *dsb_volatile_module()
+{
+	volmod.init = vol_init;
+	volmod.update = 0;
+	volmod.final = vol_final;
+	return &volmod;
+}
 
-/**
- * Log and print error messages, depending upon log and debug settings.
- * @param errno
- * @param data Optional node containing additional error details.
- * @return errno, as passed in the parameter.
- */
-int dsb_error(int errno, const struct NID * data);
-
-#ifdef _DEBUG
-#define DSB_ERROR(A) dsb_error(A,0)
-#else
-#define DSB_ERROR(A) A
-#endif
-
-
-#endif /* ERRORS_H_ */

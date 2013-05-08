@@ -32,25 +32,48 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
+/** @file router.h */
+
 #ifndef ROUTER_H_
 #define ROUTER_H_
 
 struct Event;
-struct HARC;
+struct NID;
+
+/**
+ * @addtogroup Router
+ * The router will route events to event handlers as described in its internal
+ * routing table. The routing table consists of non overlapping 2D regions in
+ * Node space that are associated with a handler. Events should not be routed
+ * directly, but go via the processor to be scheduled. The only function to
+ * be used externally, therefore, is dsb_route_map.
+ * @see dsb_route_map
+ * @see Processor
+ * @{
+ */
 
 int dsb_route_init(void);
 int dsb_route_final(void);
 
 /**
- * Map a NID range to an event handler. All events destined for a NID in the
- * specified range will be passed to this handler when routed by the
- * processor.
- * @param l Low end of HARC range.
- * @param h High end of HARC range.
- * @param handler Handler function.
- * @return SUCCESS or ERR_ROUTE_SLOT.
+ * Map a region of node space to an event handler. All events destined
+ * for that region will be routed to the handler. A region is
+ * 2-dimensional and so has an x range and y range but it does not matter
+ * which range is x or y and they can be flipped.
+ * @param x1		Start of first dimension.
+ * @param x2		End of first dimension.
+ * @param y1		Start of second dimension.
+ * @param y2		End of second dimension.
+ * @param handler	Event handler for the region.
+ * @return SUCCESS, ERR_ROUTE_SLOT.
+ * @author Nick Pope
  */
-int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(struct Event *));
+int dsb_route_map(
+		const struct NID *x1,
+		const struct NID *x2,
+		const struct NID *y1,
+		const struct NID *y2,
+		int (*handler)(struct Event *));
 
 /**
  * Route event to correct handler. Should not be called manually.
@@ -59,5 +82,6 @@ int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(str
  */
 int dsb_route(struct Event *evt);
 
+/** @} */
 
 #endif /* ROUTER_H_ */

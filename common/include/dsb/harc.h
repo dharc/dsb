@@ -26,6 +26,9 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
  */
+
+/** @file harc.h */
+
 #ifndef _HARC_H_
 #define _HARC_H_
 
@@ -47,6 +50,23 @@ struct HARC
 	};
 	unsigned long long b;
 	unsigned long long c;
+};
+
+/**
+ * The location of a HARC relative to a 2-dimensional HARC region. Is
+ * used by dsb_harc_contains.
+ */
+enum HARCLocation
+{
+	HARC_CONTAINED = 0,//!< HARC is within the region
+	HARC_LEFT,         //!< HARC_LEFT
+	HARC_RIGHT,        //!< HARC_RIGHT
+	HARC_ABOVE,        //!< HARC_ABOVE
+	HARC_BELOW,        //!< HARC_BELOW
+	HARC_ABOVELEFT,    //!< HARC_ABOVELEFT
+	HARC_ABOVERIGHT,   //!< HARC_ABOVERIGHT
+	HARC_BELOWLEFT,    //!< HARC_BELOWLEFT
+	HARC_BELOWRIGHT    //!< HARC_BELOWRIGHT
 };
 
 /**
@@ -81,7 +101,7 @@ int dsb_harc_compare(const struct HARC *, const struct HARC *);
  * @param harc The HARC to check.
  * @return 0 if contained in the HARC area. 1 = left, 2 = right, 3 = above, 4 = below, 5 = above left, 6 = above right, 7 = below left and 8 = below right.
  */
-int dsb_harc_contains(const struct HARC *l, const struct HARC *h, const struct HARC *harc);
+enum HARCLocation dsb_harc_contains(const struct HARC *l, const struct HARC *h, const struct HARC *harc);
 
 /**
  * Generate a HARC from components instead of going via a NID.

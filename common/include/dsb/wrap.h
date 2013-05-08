@@ -40,16 +40,26 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef WRAP_H_
 #define WRAP_H_
 
-struct HARC;
 struct NID;
 
+/**
+ * Get the result of following a hyperarc. This function blocks until the
+ * result is obtained.
+ * @see dsb_getA
+ * @param[in] d1 First tail node.
+ * @param[in] d2 Second tail node.
+ * @param[out] r NID to be filled with result.
+ * @return SUCCESS or some other error code.
+ */
 int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r);
+
+
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v);
 int dsb_define(
 			const struct NID *d1,
 			const struct NID *d2,
 			const struct NID *def,
-			void (*f)(const struct NID*,const struct NID*,const struct NID*)
+			int eval
 			);
 int dsb_new(struct NID *n);
 int dsb_delete(struct NID *n);

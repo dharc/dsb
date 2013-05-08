@@ -41,8 +41,10 @@ either expressed or implied, of the FreeBSD Project.
 struct RouterEntry
 {
 	int (*handler)(struct Event *);
-	struct HARC l;
-	struct HARC h;
+	struct NID x1;
+	struct NID x2;
+	struct NID y1;
+	struct NID y2;
 };
 
 #define MAX_HANDLERS	20
@@ -64,9 +66,16 @@ int dsb_route_final(void)
 	return SUCCESS;
 }
 
-int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(struct Event *))
+int dsb_route_map(
+		const struct NID *x1,
+		const struct NID *x2,
+		const struct NID *y1,
+		const struct NID *y2,
+		int (*handler)(struct Event *))
 {
 	//TODO Consider making threadsafe.
+	//TODO Check for overlapping node regions.
+	//TODO optimise using 2D binary search.
 	int ff;
 	for (ff=0; ff<MAX_HANDLERS; ff++)
 	{
@@ -75,31 +84,59 @@ int dsb_route_map(const struct HARC *l, const struct HARC *h, int (*handler)(str
 
 	if (ff == MAX_HANDLERS-1) return ERR_ROUTE_SLOT;
 
-	route_table[ff].l = *l;
-	route_table[ff].h = *h;
+	route_table[ff].x1 = *x1;
+	route_table[ff].x2 = *x2;
+	route_table[ff].y1 = *y1;
+	route_table[ff].y2 = *y2;
 	route_table[ff].handler = handler;
 
 	return SUCCESS;
 }
 
+/*
+ * Return 0 if n is within the range of a and b. 1 otherwise.
+ */
+inline int nid_withinrange(const struct NID *a, const struct NID *b, const struct NID *n)
+{
+	//NOTE: Assumption about a being less than b!!!!
+	return ((dsb_nid_compare(a,n) <= 0) && (dsb_nid_compare(b,n) >= 0)) ? 0 : 1;
+}
+
 int dsb_route(struct Event *evt)
 {
+	//TODO Use a more efficient search strategy.
+	//TODO Properly support regional events.
 	int i;
+	int t1,t2;
 	for (i=0; i<MAX_HANDLERS; i++)
 	{
-		//Compare destination with low and high for each handler.
-		if (dsb_harc_compare(&(route_table[i].l),&(evt->dest)) <= 0)
+		//Check first order is in the range
+		t1 = nid_withinrange(&(route_table[i].x1),&(route_table[i].x2),&(evt->d1));
+		t2 = nid_withinrange(&(route_table[i].y1),&(route_table[i].y2),&(evt->d2));
+		if (t1 == 0 && t2 == 0)
 		{
-			if (dsb_harc_compare(&(route_table[i].h),&(evt->dest)) >= 0)
+			if (route_table[i].handler != 0)
 			{
-				if (route_table[i].handler != 0)
-				{
-					return route_table[i].handler(evt);
-				}
-				else
-				{
-					return ERR_ROUTE_MISSING;
-				}
+				return route_table[i].handler(evt);
+			}
+			else
+			{
+				return ERR_ROUTE_MISSING;
+			}
+		}
+
+		//For symmetry, check the alternative order.
+		t1 = nid_withinrange(&(route_table[i].x1),&(route_table[i].x2),&(evt->d2));
+		t2 = nid_withinrange(&(route_table[i].y1),&(route_table[i].y2),&(evt->d1));
+		if (t1 == 0 && t2 == 0)
+		{
+			if (route_table[i].handler != 0)
+			{
+				return route_table[i].handler(evt);
+			}
+			else
+			{
+				return ERR_ROUTE_MISSING;
 			}
 		}
 	}

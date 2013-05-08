@@ -35,6 +35,12 @@ int dsb_harc_compare(const struct HARC *pa, const struct HARC *pb)
 	return 0;
 }
 
+enum HARCLocation dsb_harc_contains(const struct HARC *l, const struct HARC *h, const struct HARC *harc)
+{
+
+	return HARC_CONTAINED;
+}
+
 int dsb_harc_C(enum NIDType ta, unsigned long long a, enum NIDType tb, unsigned long long b, struct HARC *harc)
 {
 	struct NID na;
