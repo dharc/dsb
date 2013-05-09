@@ -47,11 +47,11 @@ either expressed or implied, of the FreeBSD Project.
  */
 struct HARC
 {
-	struct NID t1;	///< Tail 1
-	struct NID t2;	///< Tail 2
-	struct NID h;	///< Head
-	struct NID def;	///< Definition
-	int e;			///< Evaluator
+	struct NID t1;	///< Tail 1. Should always be greater than or equal to tail 2.
+	struct NID t2;	///< Tail 2. Should always be less than or equal to tail 1.
+	struct NID h;	///< Head. Typically a cached value that results from evaluating the definition.
+	struct NID def;	///< Definition. Identifies the structure to use as the definition.
+	int e;			///< Evaluator. Which definition evaluator should be used for this HARC.
 };
 
 /** @} */

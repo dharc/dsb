@@ -1,7 +1,7 @@
 /*
- * errors.h
+ * eval-test.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 9 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,56 +32,54 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file errors.h */
+#include "dsb/test.h"
+#include "dsb/evaluator.h"
+#include "dsb/nid.h"
+#include "dsb/module.h"
+#include "dsb/errors.h"
 
-#ifndef ERRORS_H_
-#define ERRORS_H_
+unsigned int hasevaluated = 0;
 
-struct NID;
-
-/**
- * Error enums used for function return values.
- */
-enum
+int eval_test(struct HARC *harc, void **data)
 {
-	SUCCESS=0,			//!< SUCCESS
-	ERR_REINIT,			///< Multiple init
-	ERR_NOINIT,			///< Not initialised
-	ERR_ROUTE_SLOT,		///< No spare slots
-	ERR_NOROUTE,		///< No handler for event
-	ERR_ROUTE_MISSING,	///< Missing handler for event
-	ERR_NID_FREE,		///< Can't free NID.
-	ERR_NOTSENT,		///< Event hasn't been sent.
-	ERR_INVALIDEVENT,	///< Event type is unknown.
-	ERR_INVALIDMOD,		///< Module structure is missing something.
-	ERR_NOMOD,			///< Cannot find module.
-	ERR_MODEXISTS,		///< Module already registered.
-	ERR_MODNAME,		///< Invalid module name.
-	ERR_EVALID,			///< Invalid evaluator ID.
-	ERR_NOEVAL,			///< No evaluator for given ID.
-	ERR_END   			//!< ERR_END
-};
+	hasevaluated = 1;
+	return SUCCESS;
+}
 
-/**
- * Convert DSB error number to a string.
- * @param err Error number.
- * @return String for the error.
- */
-const char *dsb_error_str(int err);
+void test_eval_regcall()
+{
+	//The valid case
+	CHECK(dsb_eval_register(EVAL_CUSTOM+1,eval_test) == SUCCESS);
+	CHECK(dsb_eval_call(EVAL_CUSTOM+1,0,0) == SUCCESS);
+	CHECK(hasevaluated == 1);
 
-/**
- * Log and print error messages, depending upon log and debug settings.
- * @param errno
- * @param data Optional node containing additional error details.
- * @return errno, as passed in the parameter.
- */
-int dsb_error(int errno, const struct NID * data);
+	//Error cases.
+	CHECK(dsb_eval_register(-1,eval_test) == ERR_EVALID);
+	CHECK(dsb_eval_register(EVAL_MAX+1,eval_test) == ERR_EVALID);
+	CHECK(dsb_eval_call(-1,0,0) == ERR_EVALID);
+	CHECK(dsb_eval_call(50,0,0) == ERR_NOEVAL);
+	DONE;
+}
 
-#ifdef _DEBUG
-#define DSB_ERROR(A) dsb_error(A,0)
-#else
-#define DSB_ERROR(A) A
-#endif
+void test_eval_basic()
+{
+	DONE;
+}
 
+extern struct Module *dsb_evaluators_module();
 
-#endif /* ERRORS_H_ */
+int main(int argc, char *argv[])
+{
+	dsb_nid_init();
+
+	//Load the evaluators module
+	dsb_module_register("evaluators",dsb_evaluators_module());
+	dsb_module_load("evaluators",0);
+
+	dsb_test(test_eval_regcall);
+	dsb_test(test_eval_basic);
+
+	dsb_nid_final();
+	return 0;
+}
+

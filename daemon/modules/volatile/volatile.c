@@ -42,32 +42,39 @@ either expressed or implied, of the FreeBSD Project.
 
 struct Module volmod;
 
-#define VOLFLAG_OUTOFDATE	1
-#define VOLFLAG_VIRTUAL		2
+#define VOLFLAG_OUTOFDATE	1	//Mark entry as out-of-date.
+#define VOLFLAG_VIRTUAL		2	//Mark region as not wanting caching.
 
+/*
+ * An entry to record a single HARC in memory.
+ */
 struct VolHARCEntry
 {
-	struct HARC harc;
-	void *data;
-	int flags;
-	struct VolHARCEntry *next;
+	struct HARC harc;			//The core HARC data.
+	void *data;					//Used by the definition evaluator.
+	int flags;					//Meta details for volatile storage.
+	struct VolHARCEntry *next;	//Next entry in hash table.
 };
 
+/*
+ * A region entry to define a whole collection of HARCs.
+ */
 struct VolRegionEntry
 {
-	struct NID x1;
-	struct NID x2;
-	struct NID y1;
-	struct NID y2;
-	struct NID def;
-	void *data;
-	int eval;
-	int flags;
+	struct NID x1;		//Low X NID
+	struct NID x2;		//High X NID
+	struct NID y1;		//Low Y NID
+	struct NID y2;		//High Y NID
+	struct NID def;		//Definition for this region of HARCs
+	void *data;			//Data for the definition evaluator.
+	int eval;			//Which evaluator to use for this region.
+	int flags;			//Meta details about the region.
 };
 
 #define VOL_HASH_SIZE	1000
 #define VOL_MAX_REGIONS	100
 
+//Entry and region storage
 struct VolHARCEntry *voltable[VOL_HASH_SIZE];
 struct VolRegionEntry *volregions[VOL_MAX_REGIONS];
 
@@ -81,6 +88,9 @@ int vol_hashnid(const struct NID *a, const struct NID *b)
 	return (a->ll + (b->ll*100)) % VOL_HASH_SIZE;
 }
 
+/*
+ * Create a new region entry with everything initialised to 0.
+ */
 struct VolRegionEntry *vol_createregion(const struct NID *x1, const struct NID *x2, const struct NID *y1, const struct NID *y2)
 {
 	struct VolRegionEntry *res;
@@ -97,6 +107,8 @@ struct VolRegionEntry *vol_createregion(const struct NID *x1, const struct NID *
 	res->def.type = 0;
 	res->def.ll = 0;
 
+	//Find a space for the region and insert it.
+	//TODO Use 2D search structure for better performance.
 	for (i=0; i<VOL_MAX_REGIONS; i++)
 	{
 		if (volregions[i] == 0)
@@ -119,6 +131,10 @@ inline int nid_withinrange2(const struct NID *a, const struct NID *b, const stru
 	return ((dsb_nid_compare(a,n) <= 0) && (dsb_nid_compare(b,n) >= 0)) ? 0 : 1;
 }
 
+/*
+ * Search for and return a region that matches the HARC tail given as
+ * parameters a and b. 0 is returned if no match is found.
+ */
 struct VolRegionEntry *vol_getregion(const struct NID *a, const struct NID *b)
 {
 	//TODO Use search algorithm.
@@ -155,9 +171,8 @@ struct VolRegionEntry *vol_getregion(const struct NID *a, const struct NID *b)
 struct VolHARCEntry *vol_createentry(const struct NID *a, const struct NID *b)
 {
 	int hash = vol_hashnid(a,b);
-	//TODO Make threadsafe.
-	struct VolHARCEntry *res = voltable[hash];
-	//No match found so create new entry.
+	struct VolHARCEntry *res;
+
 	res = malloc(sizeof(struct VolHARCEntry));
 	res->harc.t1 = *a;
 	res->harc.t2 = *b;
@@ -223,11 +238,39 @@ int vol_define(struct Event *evt)
 }
 
 /*
+ * Process DEFINE events for regions.
+ */
+int vol_defineregion(struct Event *evt)
+{
+	struct VolRegionEntry *reg = vol_getregion(&(evt->d1),&(evt->d2));
+
+	//If it doesn't exist then create it now.
+	if (reg == 0)
+	{
+		reg = vol_createregion(&(evt->d1),&(evt->d1b),&(evt->d2),&(evt->d2b));
+		reg->def = evt->def;
+		reg->eval = evt->eval;
+		//TODO set region flags
+		return SUCCESS;
+	}
+
+	/*
+	 * Otherwise may need to split existing regions and remove cached entries.
+	 * Need to also consider how non region defines interact in areas that
+	 * have region definitions.
+	 */
+
+	return SUCCESS;
+}
+
+/*
  * Process NOTIFY events by marking as out-of-date.
  */
 int vol_notify(struct Event *evt)
 {
+	//Find the relevant HARC entry...
 	struct VolHARCEntry *ent = vol_getentry(&(evt->d1),&(evt->d2));
+	//Do not need to worry about regions as they are always out-of-date.
 	if (ent == 0) return SUCCESS;
 
 	ent->flags |= VOLFLAG_OUTOFDATE;
@@ -245,7 +288,7 @@ int vol_get(struct Event *evt)
 	struct VolRegionEntry *reg;
 	struct HARC harc;
 
-	//If no entry so check for region
+	//If no entry, check for region
 	if (ent == 0)
 	{
 		//Check if matches a region.
@@ -322,8 +365,13 @@ int vol_handler(struct Event *evt)
 	}
 	else
 	{
-		//TODO Support region events.
-		return SUCCESS;
+		switch(evt->type)
+		{
+		//No MULTI GET
+		case EVENT_DEFINE: return vol_defineregion(evt);
+		//case EVENT_NOTIFY: return vol_notify(evt);
+		default: return SUCCESS;
+		}
 	}
 }
 
@@ -337,6 +385,11 @@ int vol_init(const struct NID *base)
 	for (i=0; i<VOL_HASH_SIZE; i++)
 	{
 		voltable[i] = 0;
+	}
+	//Clear volregions
+	for (i=0; i<VOL_MAX_REGIONS; i++)
+	{
+		volregions[i] = 0;
 	}
 
 	//The entire Node space below user nodes.
@@ -352,6 +405,7 @@ int vol_init(const struct NID *base)
 int vol_final()
 {
 	//TODO Cleanup all entries.
+	//TODO Cleanup all regions.
 	return SUCCESS;
 }
 

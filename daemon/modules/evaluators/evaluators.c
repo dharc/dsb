@@ -1,7 +1,7 @@
 /*
- * errors.h
+ * evaluators.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 9 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,56 +32,34 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file errors.h */
+#include "dsb/evaluator.h"
+#include "dsb/module.h"
+#include "dsb/errors.h"
 
-#ifndef ERRORS_H_
-#define ERRORS_H_
+struct Module evalmod;
+struct HARC;
 
-struct NID;
+extern int (*eval_basic)(struct HARC *harc, void **data);
 
-/**
- * Error enums used for function return values.
- */
-enum
+int eval_init()
 {
-	SUCCESS=0,			//!< SUCCESS
-	ERR_REINIT,			///< Multiple init
-	ERR_NOINIT,			///< Not initialised
-	ERR_ROUTE_SLOT,		///< No spare slots
-	ERR_NOROUTE,		///< No handler for event
-	ERR_ROUTE_MISSING,	///< Missing handler for event
-	ERR_NID_FREE,		///< Can't free NID.
-	ERR_NOTSENT,		///< Event hasn't been sent.
-	ERR_INVALIDEVENT,	///< Event type is unknown.
-	ERR_INVALIDMOD,		///< Module structure is missing something.
-	ERR_NOMOD,			///< Cannot find module.
-	ERR_MODEXISTS,		///< Module already registered.
-	ERR_MODNAME,		///< Invalid module name.
-	ERR_EVALID,			///< Invalid evaluator ID.
-	ERR_NOEVAL,			///< No evaluator for given ID.
-	ERR_END   			//!< ERR_END
-};
+	dsb_eval_register(EVAL_BASIC,eval_basic);
+	return SUCCESS;
+}
 
-/**
- * Convert DSB error number to a string.
- * @param err Error number.
- * @return String for the error.
+int eval_final()
+{
+	dsb_eval_register(EVAL_BASIC,0);
+	return SUCCESS;
+}
+
+/*
+ * Module registration structure.
  */
-const char *dsb_error_str(int err);
-
-/**
- * Log and print error messages, depending upon log and debug settings.
- * @param errno
- * @param data Optional node containing additional error details.
- * @return errno, as passed in the parameter.
- */
-int dsb_error(int errno, const struct NID * data);
-
-#ifdef _DEBUG
-#define DSB_ERROR(A) dsb_error(A,0)
-#else
-#define DSB_ERROR(A) A
-#endif
-
-
-#endif /* ERRORS_H_ */
+struct Module *dsb_evaluators_module()
+{
+	evalmod.init = eval_init;
+	evalmod.update = 0;
+	evalmod.final = eval_final;
+	return &evalmod;
+}

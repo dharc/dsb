@@ -37,6 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/processor.h"
 #include "dsb/router.h"
 #include "dsb/common.h"
+#include "dsb/evaluator.h"
 #include "config.h"
 #include <stdio.h>
 
@@ -91,8 +92,10 @@ int process_args(int argc, char *argv[])
 	return 0;
 }
 
+//Internally compiled modules.
 extern struct Module *dsb_math_module();
 extern struct Module *dsb_volatile_module();
+extern struct Module *dsb_evaluators_module();
 
 int main(int argc, char *argv[])
 {
@@ -100,12 +103,14 @@ int main(int argc, char *argv[])
 
 	//Initialise the common parts
 	dsb_common_init();
+	dsb_eval_init();
 	//dsb_proc_init();
 	dsb_route_init();
 
 	//Register the internal modules
 	dsb_module_register("volatile",dsb_volatile_module());
 	dsb_module_register("math",dsb_math_module());
+	dsb_module_register("evaluators",dsb_evaluators_module());
 
 	//Ready to process command line args.
 	ret = process_args(argc,argv);
@@ -114,6 +119,7 @@ int main(int argc, char *argv[])
 	//Need to call all module update code.
 	//Need to process queues until empty.
 
+	dsb_eval_final();
 	dsb_common_final();
 
 	return 0;

@@ -71,6 +71,52 @@ void test_vol_getset()
 	DONE;
 }
 
+void test_vol_region()
+{
+	struct Event evt;
+	struct NID a;
+	struct NID b;
+
+	//Create tail NIDs
+	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&a);
+	dsb_nid(NID_INTEGER,2,&b);
+
+	//Generate DEFINE event.
+	dsb_event(EVENT_DEFINE,&a,&b,&evt);
+	dsb_nid(NID_INTEGER,66,&(evt.def));
+	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&(evt.d1b));
+	dsb_nid(NID_INTEGER,50,&(evt.d2b));
+	evt.eval = 0; //No evaluator
+	evt.flags |= EVTFLAG_MULT;
+
+	//Send DEFINE event.
+	CHECK(dsb_route(&evt) == 0);
+
+	//Generate GET event;
+	dsb_event(EVENT_GET,&a,&b,&evt);
+
+	//Send GET event.
+	CHECK(dsb_route(&evt) == 0);
+
+	//Check result of GET.
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(evt.res.type == NID_INTEGER);
+	CHECK(evt.res.ll == 66);
+
+	//Generate GET event;
+	b.ll = 20;
+	dsb_event(EVENT_GET,&a,&b,&evt);
+
+	//Send GET event.
+	CHECK(dsb_route(&evt) == 0);
+
+	//Check result of GET.
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(evt.res.type == NID_INTEGER);
+	CHECK(evt.res.ll == 66);
+	DONE;
+}
+
 extern struct Module *dsb_volatile_module();
 
 int main(int argc, char *argv[])
@@ -84,6 +130,7 @@ int main(int argc, char *argv[])
 	dsb_module_load("volatile",0);
 
 	dsb_test(test_vol_getset);
+	dsb_test(test_vol_region);
 
 	dsb_route_final();
 	dsb_event_final();

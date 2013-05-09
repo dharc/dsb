@@ -39,6 +39,19 @@ either expressed or implied, of the FreeBSD Project.
 
 struct HARC;
 
+#define MAX_EVALUATORS		1000
+
+enum
+{
+	EVAL_CONSTANT=0,
+	EVAL_BASIC,
+	EVAL_CUSTOM=100,
+	EVAL_MAX=MAX_EVALUATORS
+};
+
+int dsb_eval_init();
+int dsb_eval_final();
+
 /**
  * Register a definition evaluator to a particular id. The id must be greater
  * than 0 and not already be in use.

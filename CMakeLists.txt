@@ -17,7 +17,7 @@ set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c)
-set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/src/module.c daemon/modules/math/math.c daemon/modules/volatile/volatile.c daemon/src/evaluator.c)
+set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/src/module.c daemon/modules/math/math.c daemon/modules/volatile/volatile.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/src/evaluator.c)
 
 configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
@@ -46,6 +46,9 @@ target_link_libraries(math-test dsbcommon)
 
 add_executable(volatile-test tests/volatile-test.c daemon/src/module.c daemon/src/router.c daemon/modules/volatile/volatile.c daemon/src/evaluator.c)
 target_link_libraries(volatile-test dsbcommon)
+
+add_executable(eval-test tests/eval-test.c daemon/src/module.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/src/evaluator.c)
+target_link_libraries(eval-test dsbcommon)
 
 install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.a" DESTINATION lib)
 install(DIRECTORY common/include DESTINATION include USE_SOURCE_PERMISSIONS)
