@@ -34,13 +34,37 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/harc.h"
 #include "dsb/errors.h"
+#include "dsb/nid.h"
+#include "dsb/specials.h"
+#include "dsb/wrap.h"
 
 /*
  * The most basic DSB definition evaluator. Does not compile the def.
  */
 int eval_basic(struct HARC *harc, void **data)
 {
-	harc->h = harc->def;
+	struct NID N;
+	struct NID res;
+	int size;
+	int i;
+
+	dsb_nid(NID_SPECIAL,SPECIAL_SIZE,&N);
+	dsb_get(&(harc->def),&N,&res);
+	size = res.ll;
+
+	if (size <= 0) return SUCCESS;
+
+	//Get the first element.
+	dsb_iton(0,&N);
+	dsb_get(&(harc->def),&N,&res);
+
+	for (i=1; i<size; i++)
+	{
+
+	}
+
+	harc->h = res;
+
 	return SUCCESS;
 }
 

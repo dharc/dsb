@@ -40,6 +40,11 @@ either expressed or implied, of the FreeBSD Project.
 
 unsigned int hasevaluated = 0;
 
+int dsb_send(struct Event *evt)
+{
+	return 0;
+}
+
 int eval_test(struct HARC *harc, void **data)
 {
 	hasevaluated = 1;

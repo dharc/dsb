@@ -50,6 +50,8 @@ enum
 	SPECIAL_BITAND,
 	SPECIAL_BITOR,
 	SPECIAL_BITNOT,
+	//---- Definitions and Strings
+	SPECIAL_SIZE,
 
 	SPECIAL_END
 };

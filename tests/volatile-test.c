@@ -39,6 +39,11 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/module.h"
 #include "dsb/specials.h"
 
+int dsb_send(struct Event *evt)
+{
+	return 0;
+}
+
 void test_vol_getset()
 {
 	struct Event evt;
