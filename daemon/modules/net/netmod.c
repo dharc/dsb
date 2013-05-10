@@ -1,7 +1,7 @@
 /*
- * errors.h
+ * netmod.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 10 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,57 +32,76 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file errors.h */
+#include "dsb/module.h"
+#include "dsb/errors.h"
+#include "dsb/nid.h"
+#include <zmq.h>
 
-#ifndef ERRORS_H_
-#define ERRORS_H_
+struct Module netmod;
 
-struct NID;
+void *ctx;	//zmq context
+void *sock; //zmq listening socket.
 
-/**
- * Error enums used for function return values.
- */
-enum
+int net_init(const NID_t *base)
 {
-	SUCCESS=0,			//!< SUCCESS
-	ERR_REINIT,			///< Multiple init
-	ERR_NOINIT,			///< Not initialised
-	ERR_ROUTE_SLOT,		///< No spare slots
-	ERR_NOROUTE,		///< No handler for event
-	ERR_ROUTE_MISSING,	///< Missing handler for event
-	ERR_NID_FREE,		///< Can't free NID.
-	ERR_NOTSENT,		///< Event hasn't been sent.
-	ERR_INVALIDEVENT,	///< Event type is unknown.
-	ERR_INVALIDMOD,		///< Module structure is missing something.
-	ERR_NOMOD,			///< Cannot find module.
-	ERR_MODEXISTS,		///< Module already registered.
-	ERR_MODNAME,		///< Invalid module name.
-	ERR_EVALID,			///< Invalid evaluator ID.
-	ERR_NOEVAL,			///< No evaluator for given ID.
-	ERR_NETBIND,
-	ERR_END   			//!< ERR_END
-};
+	int rc;
 
-/**
- * Convert DSB error number to a string.
- * @param err Error number.
- * @return String for the error.
+	//Set up listening socket if possible.
+	//ctx = zmq_ctx_new ();
+	ctx = zmq_init(1); //DEPRECATED
+	sock = zmq_socket (ctx, ZMQ_REP);
+	rc = zmq_bind (sock, "tcp://*:5555");
+
+	if (rc != 0) return ERR_NETBIND;
+
+	return SUCCESS;
+}
+
+int net_final()
+{
+	zmq_close(sock);
+	//zmq_ctx_destroy(ctx);
+	zmq_term(ctx); //DEPRECATED
+	return SUCCESS;
+}
+
+int net_update()
+{
+	zmq_pollitem_t item;
+	zmq_msg_t msg;
+	int rc;
+
+	while (1)
+	{
+		//Poll for message.
+		item.socket = sock;
+		item.events = ZMQ_POLLIN;
+		rc = zmq_poll(&item,1,0);
+
+		//Nothing left to process.
+		//if (rc >= 0) break;
+		if (item.revents != ZMQ_POLLIN) break;
+
+		//Get the message
+		zmq_msg_init(&msg);
+		rc = zmq_recv(sock,&msg,0);
+
+		//Process the message.
+
+		zmq_msg_close(&msg);
+	}
+
+	return SUCCESS;
+}
+
+/*
+ * Module registration structure.
  */
-const char *dsb_error_str(int err);
+struct Module *dsb_network_module()
+{
+	netmod.init = net_init;
+	netmod.update = net_update;
+	netmod.final = net_final;
+	return &netmod;
+}
 
-/**
- * Log and print error messages, depending upon log and debug settings.
- * @param errno
- * @param data Optional node containing additional error details.
- * @return errno, as passed in the parameter.
- */
-int dsb_error(int errno, const struct NID * data);
-
-#ifdef _DEBUG
-#define DSB_ERROR(A) dsb_error(A,0)
-#else
-#define DSB_ERROR(A) A
-#endif
-
-
-#endif /* ERRORS_H_ */

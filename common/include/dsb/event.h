@@ -104,6 +104,8 @@ struct Event
 	unsigned int flags;	///< Event flags.
 };
 
+typedef struct Event Event_t;
+
 /**
  * Event Constructor.
  * @param[in] type

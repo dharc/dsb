@@ -1,7 +1,7 @@
 /*
- * errors.h
+ * net_protocol.h
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 10 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,57 +32,82 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file errors.h */
+#ifndef NET_PROTOCOL_H_
+#define NET_PROTOCOL_H_
 
-#ifndef ERRORS_H_
-#define ERRORS_H_
-
-struct NID;
+#include "dsb/event.h"
 
 /**
- * Error enums used for function return values.
+ * @file net_protocol.h
+ * Structures for the DSB network protocol.
  */
+
+/**
+ * @addtogroup Net
+ * @{
+ */
+
+#define DSB_NET_VERSION		1
+
+#define NET_MAX_EVENT_SEND	100
+
 enum
 {
-	SUCCESS=0,			//!< SUCCESS
-	ERR_REINIT,			///< Multiple init
-	ERR_NOINIT,			///< Not initialised
-	ERR_ROUTE_SLOT,		///< No spare slots
-	ERR_NOROUTE,		///< No handler for event
-	ERR_ROUTE_MISSING,	///< Missing handler for event
-	ERR_NID_FREE,		///< Can't free NID.
-	ERR_NOTSENT,		///< Event hasn't been sent.
-	ERR_INVALIDEVENT,	///< Event type is unknown.
-	ERR_INVALIDMOD,		///< Module structure is missing something.
-	ERR_NOMOD,			///< Cannot find module.
-	ERR_MODEXISTS,		///< Module already registered.
-	ERR_MODNAME,		///< Invalid module name.
-	ERR_EVALID,			///< Invalid evaluator ID.
-	ERR_NOEVAL,			///< No evaluator for given ID.
-	ERR_NETBIND,
-	ERR_END   			//!< ERR_END
+	DSBNET_TYPE_INFO_REQ=0,
+	DSBNET_TYPE_INFO_REP,
+	DSBNET_TYPE_AUTH_REQ,
+	DSBNET_TYPE_AUTH_REP,
+	DSBNET_TYPE_SEND_REQ,
+	DSBNET_TYPE_SEND_REP,
+	DSBNET_TYPE_END
 };
 
-/**
- * Convert DSB error number to a string.
- * @param err Error number.
- * @return String for the error.
- */
-const char *dsb_error_str(int err);
+struct DSBNetHeader
+{
+	unsigned short type;	///< Message type.
+	unsigned int sig;		///< Client/Server Signature.
+};
 
-/**
- * Log and print error messages, depending upon log and debug settings.
- * @param errno
- * @param data Optional node containing additional error details.
- * @return errno, as passed in the parameter.
- */
-int dsb_error(int errno, const struct NID * data);
+struct DSBNetInfoReq
+{
+	struct DSBNetHeader h;
+	unsigned short proto_version;
+	unsigned short major;
+	unsigned short minor;
+	unsigned short patch;
+	//Other fields to be added later.
+};
 
-#ifdef _DEBUG
-#define DSB_ERROR(A) dsb_error(A,0)
-#else
-#define DSB_ERROR(A) A
-#endif
+struct DSBNetInfoRep
+{
+	struct DSBNetHeader h;
+	unsigned short proto_version;
+	unsigned short major;
+	unsigned short minor;
+	unsigned short patch;
+	//Other fields to be added later.
+};
 
+struct DSBNetAuthReq
+{
+	struct DSBNetHeader h;
+	char username[20];
+	char password[20];
+};
 
-#endif /* ERRORS_H_ */
+struct DSBNetAuthRep
+{
+	struct DSBNetHeader h;
+	unsigned int sig;	//New client signature.
+};
+
+struct DSBNetEventSendReq
+{
+	struct DSBNetHeader h;
+	unsigned short num_events;
+	Event_t events[NET_MAX_EVENT_SEND];
+};
+
+/** @} */
+
+#endif /* NET_PROTOCOL_H_ */

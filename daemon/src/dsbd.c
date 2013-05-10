@@ -96,6 +96,7 @@ int process_args(int argc, char *argv[])
 extern struct Module *dsb_math_module();
 extern struct Module *dsb_volatile_module();
 extern struct Module *dsb_evaluators_module();
+extern struct Module *dsb_network_module();
 
 int main(int argc, char *argv[])
 {
@@ -111,6 +112,7 @@ int main(int argc, char *argv[])
 	dsb_module_register("volatile",dsb_volatile_module());
 	dsb_module_register("math",dsb_math_module());
 	dsb_module_register("evaluators",dsb_evaluators_module());
+	dsb_module_register("net",dsb_network_module());
 
 	//Ready to process command line args.
 	ret = process_args(argc,argv);

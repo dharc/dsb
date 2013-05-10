@@ -104,6 +104,8 @@ struct NID
 	//TODO Add security tag.
 };
 
+typedef struct NID NID_t;
+
 /**
  * Initialise the NID allocation system. Must be called before first NID is
  * allocated.
