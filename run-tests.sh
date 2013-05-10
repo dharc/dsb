@@ -1,16 +1,26 @@
-#!/bin/sh
+#!/bin/bash
 
-cd $1
+TESTDIR="$1"
 
-echo "================================================================================"
-echo "  DSB Tests"
-echo "================================================================================"
-./nid-test
-./event-test
-./harc-test
-./router-test
-./module-test
-./volatile-test
-./eval-test
-./math-test
-echo "================================================================================"
+if [ "$TESTDIR" == "" ]; then
+	TESTDIR="Debug"
+fi
+
+cd $TESTDIR
+
+if [ -x "./nid-test" ]; then
+	echo "================================================================================"
+	echo "  DSB Tests"
+	echo "================================================================================"
+	./nid-test
+	./event-test
+	./harc-test
+	./router-test
+	./module-test
+	./volatile-test
+	./eval-test
+	./math-test
+	echo "================================================================================"
+else
+	echo "Cannot find tests!"
+fi

@@ -37,12 +37,73 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/nid.h"
 #include "dsb/module.h"
 #include "dsb/errors.h"
+#include "dsb/event.h"
+#include "dsb/specials.h"
 
 unsigned int hasevaluated = 0;
+unsigned int hassent = 0;
 
+struct NID sizes[10];
+struct NID defs[10][30];
+
+/*
+ * Create test definitions and hypergraphs.
+ */
+void init_test_defs()
+{
+	//Simple constant definition
+	dsb_nid(NID_INTEGER,89,&(defs[0][0]));
+	dsb_iton(1,&(sizes[0]));
+
+	//Single lookup definition. (def 0 index 0 returns 89);
+	dsb_nid(NID_INTEGER,0,&(defs[1][0]));
+	dsb_nid(NID_INTEGER,0,&(defs[1][1]));
+	dsb_iton(2,&(sizes[1]));
+}
+
+/*
+ * DUMMY event send function to intercept internal events of the evaluator.
+ * Needs to simulate a hypergraph for the definition to work against.
+ */
 int dsb_send(struct Event *evt)
 {
-	return 0;
+	int whichdef;
+	hassent = hassent+1;
+
+	//Only consider GET events.
+	if (evt->type == EVENT_GET)
+	{
+		whichdef = evt->d1.ll;
+
+		//Is it asking for SIZE?
+		if ((evt->d2.type == NID_SPECIAL) && (evt->d2.ll == SPECIAL_SIZE))
+		{
+			evt->res = sizes[whichdef];
+		}
+		//Is it asking for an integer indexed element?
+		else if (evt->d2.type == NID_INTEGER)
+		{
+			//If an invalid number then return NULL.
+			if (evt->d2.ll < 0 || evt->d2.ll >= 30)
+			{
+				evt->res.type = NID_SPECIAL;
+				evt->res.ll = SPECIAL_NULL;
+			}
+			//Otherwise return definition NID element at index.
+			else
+			{
+				evt->res = defs[whichdef][evt->d2.ll];
+			}
+		}
+		else
+		{
+			evt->res.type = NID_SPECIAL;
+			evt->res.ll = SPECIAL_NULL;
+		}
+	}
+
+	evt->flags |= EVTFLAG_DONE;
+	return SUCCESS;
 }
 
 int eval_test(struct HARC *harc, void **data)
@@ -68,6 +129,23 @@ void test_eval_regcall()
 
 void test_eval_basic()
 {
+	struct HARC harc;
+	harc.e = EVAL_BASIC;
+
+	//Check the constant definition
+	dsb_nid(NID_INTEGER,0,&(harc.def));
+	CHECK(dsb_eval_call(EVAL_BASIC,&harc,0) == SUCCESS);
+	CHECK(hassent == 2);
+	CHECK(harc.h.type == NID_INTEGER);
+	CHECK(harc.h.ll == 89);
+
+	//Check the single lookup definition
+	dsb_nid(NID_INTEGER,1,&(harc.def));
+	CHECK(dsb_eval_call(EVAL_BASIC,&harc,0) == SUCCESS);
+	CHECK(hassent == 6);
+	CHECK(harc.h.type == NID_INTEGER);
+	CHECK(harc.h.ll == 89);
+
 	DONE;
 }
 
@@ -76,6 +154,9 @@ extern struct Module *dsb_evaluators_module();
 int main(int argc, char *argv[])
 {
 	dsb_nid_init();
+	dsb_eval_init();
+
+	init_test_defs();
 
 	//Load the evaluators module
 	dsb_module_register("evaluators",dsb_evaluators_module());
@@ -84,6 +165,7 @@ int main(int argc, char *argv[])
 	dsb_test(test_eval_regcall);
 	dsb_test(test_eval_basic);
 
+	dsb_eval_final();
 	dsb_nid_final();
 	return 0;
 }

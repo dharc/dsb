@@ -43,24 +43,40 @@ either expressed or implied, of the FreeBSD Project.
  */
 int eval_basic(struct HARC *harc, void **data)
 {
-	struct NID N;
+	struct NID tmp;
 	struct NID res;
 	int size;
 	int i;
 
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE,&N);
-	dsb_get(&(harc->def),&N,&res);
+	//Get the size of the definition.
+	dsb_nid(NID_SPECIAL,SPECIAL_SIZE,&tmp);
+	dsb_get(&(harc->def),&tmp,&res);
 	size = res.ll;
 
 	if (size <= 0) return SUCCESS;
 
 	//Get the first element.
-	dsb_iton(0,&N);
-	dsb_get(&(harc->def),&N,&res);
+	dsb_iton(0,&tmp);
+	dsb_get(&(harc->def),&tmp,&res);
 
+	//For every other definition element...
 	for (i=1; i<size; i++)
 	{
+		//Get next component of definition.
+		dsb_iton(i,&tmp);
+		dsb_get(&(harc->def),&tmp,&tmp);
 
+		if (tmp.type == NID_OPERATOR)
+		{
+
+		}
+		else
+		{
+			//Do the actual lookup, apply last element with current.
+			dsb_get(&res,&tmp,&res);
+
+			//TODO Add dependency.
+		}
 	}
 
 	harc->h = res;

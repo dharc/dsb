@@ -36,12 +36,15 @@ either expressed or implied, of the FreeBSD Project.
  * @addtogroup Nodes
  * Nodes are the connecting points in the hypergraph and each is given a unique
  * identity so that we may refer to them. There are nodes for all integers,
- * floats, characters and other kinds of entity.
+ * floats, characters and other kinds of entity. These nodes are combined
+ * to form hyperarcs and so act as the foundation to the entire DSB system.
+ * The functions in this module support the construction, manipulation and
+ * comparison of nodes. All operate upon the core NID structure.
  * @{
  */
 
 /**
- * Type classification of nodes at run time. Some nodes need to be treated
+ * Run-time type classification of nodes. Some nodes need to be treated
  * in a special built-in manner, for example the integers. A type of NID_USER
  * or above is available for allocation to particular machines or other
  * devices.
@@ -53,6 +56,7 @@ enum NIDType
 	NID_REAL,			///< A node corresponding to a real number.
 	NID_CHARACTER,		///< A node corresponding to a unicode character.
 	NID_LABEL,			///< Nodes used as labels.
+	NID_OPERATOR,		///< Definition operators.
 	//---- Integer Operations -----
 	NID_INTADD,   //!< NID_INTADD
 	NID_INTSUB,   //!< NID_INTSUB
@@ -68,22 +72,33 @@ enum NIDType
 };
 
 /**
- * Node IDentifier. A 96bit unique ID for Nodes in the DSB structure.
+ * Node IDentifier.
+ *
+ * A 96bit unique ID for Nodes in the DSB structure. Each node
+ * has a type and a 64bit number of that type. To create a NID corresponding to
+ * the integer 50, for example, set `type` to `NID_INTEGER` and `ll` to
+ * the number 50.
+ *
+ * Special nodes such as NULL and TRUE or FALSE can be created using the
+ * `NID_SPECIAL` type and then setting `ll` to `SPECIAL_NULL`, `SPECIAL_TRUE`
+ * or `SPECIAL_FALSE`.
+ *
+ * @see specials.h
  */
 struct NID
 {
-	enum NIDType type;		///< Node type.
+	enum NIDType type;				///< Node type.
 
 	union
 	{
 		struct
 		{
-			unsigned int a;
-			unsigned int b;
+			unsigned int a;			///< 32bit component of ll.
+			unsigned int b;			///< 32bit component of ll.
 		};
-		unsigned long long ll;	///< 64bit value.
-		double dbl;
-		unsigned short chr;
+		unsigned long long ll;		///< 64bit value.
+		double dbl;					///< Double version of ll.
+		unsigned short chr;			///< Unicode version of ll.
 	};
 
 	//TODO Add security tag.
@@ -113,10 +128,24 @@ int dsb_nid_compare(const struct NID *a, const struct NID *b);
 
 /**
  * Convert a NID to a string.
+ *
+ * The generated string is placed in the `str` buffer with a maximum length
+ * of `len`. The basic numeric types such as integers are converted to numeric
+ * strings. Booleans are converted to `true` and `false`.
+ *
+ * Other non basic types take the form:
+ *
+ *     <[TYPE:VALUE]>
+ *
+ * String objects (ie. Nodes that correspond to a string structure) are not
+ * converted to strings with this function.
+ *
+ * @see dstring.h
+ *
  * @param nid NID to convert.
  * @param str Buffer to put the string into.
  * @param len Max length of string.
- * @return 0 on success.
+ * @return SUCCESS.
  */
 int dsb_nid_toStr(const struct NID *nid, char *str, int len);
 

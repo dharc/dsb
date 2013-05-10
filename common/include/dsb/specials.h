@@ -32,6 +32,8 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
+/** @file specials.h */
+
 #ifndef SPECIALS_H_
 #define SPECIALS_H_
 
@@ -54,6 +56,13 @@ enum
 	SPECIAL_SIZE,
 
 	SPECIAL_END
+};
+
+enum
+{
+	OP_BEGINSUB,
+	OP_ENDSUB,
+	OP_SET
 };
 
 

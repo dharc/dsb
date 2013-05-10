@@ -39,6 +39,16 @@ either expressed or implied, of the FreeBSD Project.
 
 struct NID;
 
+/**
+ * @addtogroup Modules
+ * Search, load and register modules. Modules can provide new handlers, agents,
+ * evaluators or other functionality to be incorporated with DSB.
+ * @{
+ */
+
+/**
+ * Module registration structure that each module must provide.
+ */
 struct Module
 {
 	int (*init)(const struct NID *);
@@ -74,5 +84,7 @@ int dsb_module_unload(const char *name);
  * @return SUCCESS means module was found, ERR_NOMOD means it wasn't.
  */
 int dsb_module_exists(const char *name);
+
+/** @} */
 
 #endif /* MODULE_H_ */

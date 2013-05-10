@@ -42,11 +42,14 @@ extern int dsb_send(struct Event *,int);
 int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r)
 {
 	struct Event evt;
+	int res;
 	evt.d1 = *d1;
 	evt.d2 = *d2;
 	evt.flags = 0;
 	evt.type = EVENT_GET;
-	return dsb_send(&evt,0);
+	res = dsb_send(&evt,0);
+	*r = evt.res;
+	return res;
 }
 
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
