@@ -1,4 +1,4 @@
 dsb
 ===
 
-Dynamic Structure Base
+Dynamic Structure Base Daemon and core libraries.
