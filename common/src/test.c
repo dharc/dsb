@@ -12,38 +12,17 @@ void dsb_test_done(const char *function)
 {
 	if (test_pass == 1)
 	{
-		if (test_pretty == 1)
-		{
-			printf("%s \e[32;1mpassed\e[0m\n",function);
-		}
-		else
-		{
-
-		}
+		printf("%s passed\n",function);
 	}
 	else
 	{
-		if (test_pretty == 1)
-		{
-			printf("%s \e[31;1mfailed\e[0m\n",function);
-		}
-		else
-		{
-
-		}
+		printf("%s failed\n",function);
 	}
 }
 
 void dsb_test_checkfailed(int line, const char *function, const char *file)
 {
-	if (test_pretty == 1)
-	{
-		printf("%s:%d \e[31;1mfailed!\e[0m\n",function,line);
-	}
-	else
-	{
-
-	}
+	printf("%s:%d failed!\n",function,line);
 
 	test_pass = 0;
 	check_count++;

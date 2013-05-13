@@ -45,6 +45,8 @@ struct NID;
 enum
 {
 	SUCCESS=0,			//!< SUCCESS
+
+	ERR_ERROR=1000,
 	ERR_REINIT,			///< Multiple init
 	ERR_NOINIT,			///< Not initialised
 	ERR_ROUTE_SLOT,		///< No spare slots
@@ -60,6 +62,10 @@ enum
 	ERR_EVALID,			///< Invalid evaluator ID.
 	ERR_NOEVAL,			///< No evaluator for given ID.
 	ERR_NETBIND,
+
+	ERR_WARNING=2000,
+	ERR_INFO=3000,
+	ERR_DEBUG=4000,
 	ERR_END   			//!< ERR_END
 };
 
@@ -76,12 +82,12 @@ const char *dsb_error_str(int err);
  * @param data Optional node containing additional error details.
  * @return errno, as passed in the parameter.
  */
-int dsb_error(int errno, const struct NID * data);
+int dsb_error(int errno, const char *str);
 
 #ifdef _DEBUG
-#define DSB_ERROR(A) dsb_error(A,0)
+#define DSB_ERROR(A,B) dsb_error(A,B)
 #else
-#define DSB_ERROR(A) A
+#define DSB_ERROR(A,B) A
 #endif
 
 

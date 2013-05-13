@@ -55,9 +55,17 @@ const char *dsb_error_str(int err)
 	}
 }
 
-int dsb_error(int errno, const struct NID *data)
+int dsb_error(int errno, const char *str)
 {
 	if (errno == SUCCESS) return SUCCESS;
-	printf("Error: %s\n",dsb_error_str(errno));
+
+	if (str == 0)
+	{
+		printf("Error: %s\n",dsb_error_str(errno));
+	}
+	else
+	{
+		printf("Error: %s - %s\n",dsb_error_str(errno),str);
+	}
 	return errno;
 }
