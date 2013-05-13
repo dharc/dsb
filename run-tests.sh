@@ -19,7 +19,6 @@ if [ -x "./nid-test" ]; then
 	./module-test
 	./volatile-test
 	./eval-test
-	./math-test
 	echo "================================================================================"
 else
 	echo "Cannot find tests!"
