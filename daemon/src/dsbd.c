@@ -70,7 +70,7 @@ int process_args(int argc, char *argv[])
 			switch (argv[i][1])
 			{
 			case 'l':
-				DSB_ERROR(dsb_module_load(argv[++i],0));
+				dsb_module_load(argv[++i],0);
 				break;
 
 			case 'h':

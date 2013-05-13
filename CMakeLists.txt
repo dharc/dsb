@@ -24,7 +24,7 @@ configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINAR
 add_library(dsbcommon ${COMMONSOURCE})
 
 add_executable(dsbd ${DSBDSOURCE})
-target_link_libraries(dsbd dsbcommon zmq)
+target_link_libraries(dsbd dsbcommon zmq dl)
 
 add_executable(nid-test tests/nid-test.c)
 target_link_libraries(nid-test dsbcommon)
@@ -39,16 +39,16 @@ add_executable(router-test tests/router-test.c daemon/src/router.c)
 target_link_libraries(router-test dsbcommon)
 
 add_executable(module-test tests/module-test.c)
-target_link_libraries(module-test dsbcommon)
+target_link_libraries(module-test dsbcommon dl)
 
 add_executable(math-test tests/math-test.c daemon/src/router.c daemon/modules/math/math.c)
-target_link_libraries(math-test dsbcommon)
+target_link_libraries(math-test dsbcommon dl)
 
 add_executable(volatile-test tests/volatile-test.c daemon/src/router.c daemon/modules/volatile/volatile.c daemon/src/evaluator.c)
-target_link_libraries(volatile-test dsbcommon)
+target_link_libraries(volatile-test dsbcommon dl)
 
 add_executable(eval-test tests/eval-test.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/src/evaluator.c)
-target_link_libraries(eval-test dsbcommon)
+target_link_libraries(eval-test dsbcommon dl)
 
 install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.a" DESTINATION lib)
 install(DIRECTORY common/include DESTINATION include USE_SOURCE_PERMISSIONS)

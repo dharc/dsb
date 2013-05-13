@@ -1,7 +1,7 @@
 #include "dsb/nid.h"
 #include "dsb/errors.h"
 
-struct NID local_base;
+NID_t local_base;
 
 int dsb_nid_init()
 {

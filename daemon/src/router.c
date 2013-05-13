@@ -82,7 +82,7 @@ int dsb_route_map(
 		if (route_table[ff].handler == 0) break;
 	}
 
-	if (ff == MAX_HANDLERS-1) return ERR_ROUTE_SLOT;
+	if (ff == MAX_HANDLERS-1) return DSB_ERROR(ERR_ROUTE_SLOT,0);
 
 	route_table[ff].x1 = *x1;
 	route_table[ff].x2 = *x2;
@@ -121,7 +121,7 @@ int dsb_route(struct Event *evt)
 			}
 			else
 			{
-				return ERR_ROUTE_MISSING;
+				return DSB_ERROR(ERR_ROUTE_MISSING,0);
 			}
 		}
 
@@ -136,11 +136,11 @@ int dsb_route(struct Event *evt)
 			}
 			else
 			{
-				return ERR_ROUTE_MISSING;
+				return DSB_ERROR(ERR_ROUTE_MISSING,0);
 			}
 		}
 	}
 
 	//Failed to find a matching handler.
-	return ERR_NOROUTE;
+	return DSB_ERROR(ERR_NOROUTE,0);
 }

@@ -35,25 +35,51 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/module.h"
 #include "dsb/errors.h"
 #include "string.h"
+#include <stdio.h>
+#include "config.h"
+
+#ifdef UNIX
+#include <dlfcn.h>
+#endif
 
 #define MAX_MODULE_NAME			50
 #define MAX_INTERNAL_MODULES	20
+#define MAX_LOADED_MODULES		30
 
+/*
+ * Internal module registration data.
+ */
 struct ModInternal
 {
 	char name[MAX_MODULE_NAME];
 	struct Module mod;
+	void *handle;
 };
 
 struct ModInternal imods[MAX_INTERNAL_MODULES];
+struct ModInternal *lmods[MAX_LOADED_MODULES] = {0};
+
 unsigned int modix = 0;
+
+int dsb_module_init()
+{
+	return SUCCESS;
+}
+
+int dsb_module_final()
+{
+	return SUCCESS;
+}
 
 int dsb_module_register(const char *name, const struct Module *mod)
 {
 	//Check for problems
-	if (dsb_module_exists(name) == SUCCESS) return ERR_MODEXISTS;
-	if (strlen(name) >= MAX_MODULE_NAME) return ERR_MODNAME;
-	if ((mod->init == 0) || (mod->final == 0)) return ERR_INVALIDMOD;
+	if (dsb_module_exists(name) == SUCCESS)
+		return DSB_ERROR(ERR_MODEXISTS,name);
+	if (strlen(name) >= MAX_MODULE_NAME)
+		return DSB_ERROR(ERR_MODNAME,name);
+	if ((mod->init == 0) || (mod->final == 0))
+		return DSB_ERROR(ERR_INVALIDMOD,name);
 
 	strcpy(imods[modix].name,name);
 	imods[modix].mod = *mod;
@@ -84,6 +110,10 @@ int dsb_module_exists(const char *name)
 int dsb_module_load(const char *name, const struct NID *base)
 {
 	int i;
+	void *handle;
+	char fname[200];
+	void (*init)(struct Module*);
+	struct Module info;
 
 	//First scan internal registered modules.
 	for (i=0; i<modix; i++)
@@ -98,13 +128,37 @@ int dsb_module_load(const char *name, const struct NID *base)
 			}
 			else
 			{
-				return ERR_INVALIDMOD;
+				return DSB_ERROR(ERR_INVALIDMOD,name);
 			}
 		}
 	}
 
 	//Now scan for external modules...
 	//TODO Scan for external modules.
+	#ifdef UNIX
+	sprintf(fname,"lib%s.so",name);
+	handle = dlopen(fname,RTLD_NOW);
+	#endif
+
+	if (handle == 0)
+	{
+		#ifdef UNIX
+		return DSB_ERROR(ERR_NOMOD,dlerror());
+		#endif
+	}
+
+	#ifdef UNIX
+	init = dlsym(handle,"dsb_module_info");
+	#endif
+
+	if (init == 0)
+	{
+		return DSB_ERROR(ERR_INVALIDMOD,name);
+	}
+
+	init(&info);
+
+
 	return ERR_NOMOD;
 }
 
