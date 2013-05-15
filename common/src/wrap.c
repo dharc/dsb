@@ -54,12 +54,29 @@ int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r)
 
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
-	struct Event evt;
-	evt.d1 = *d1;
-	evt.d2 = *d2;
-	evt.def = *v;
-	evt.eval = 0;
-	evt.flags = 0;
-	evt.type = EVENT_DEFINE;
-	return dsb_send(&evt,1);
+	struct Event *evt = dsb_event_allocate();
+	evt->d1 = *d1;
+	evt->d2 = *d2;
+	evt->def = *v;
+	evt->eval = 0;
+	evt->flags = 0;
+	evt->type = EVENT_DEFINE;
+	return dsb_send(evt,1);
+}
+
+int dsb_define(
+		const struct NID *d1,
+		const struct NID *d2,
+		const struct NID *def,
+		int eval
+		)
+{
+	struct Event *evt = dsb_event_allocate();
+	evt->d1 = *d1;
+	evt->d2 = *d2;
+	evt->def = *def;
+	evt->eval = eval;
+	evt->flags = 0;
+	evt->type = EVENT_DEFINE;
+	return dsb_send(evt,1);
 }

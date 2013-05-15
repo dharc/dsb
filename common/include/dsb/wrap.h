@@ -41,6 +41,7 @@ either expressed or implied, of the FreeBSD Project.
 #define WRAP_H_
 
 struct NID;
+typedef struct NID NID_t;
 
 /**
  * @addtogroup API
@@ -56,7 +57,7 @@ struct NID;
  * @param[out] r NID to be filled with result.
  * @return SUCCESS or some other error code.
  */
-int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r);
+int dsb_get(const NID_t *d1, const NID_t *d2, NID_t *r);
 
 /**
  * Set the node a hyperarc points to. This function returns immediately
@@ -66,27 +67,37 @@ int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r);
  * @param v Node to change the head to.
  * @return SUCCESS or some other error code.
  */
-int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v);
+int dsb_set(const NID_t *d1, const NID_t *d2, const NID_t *v);
 
 
 int dsb_define(
-		const struct NID *d1,
-		const struct NID *d2,
-		const struct NID *def,
+		const NID_t *d1,
+		const NID_t *d2,
+		const NID_t *def,
 		int eval
 		);
 
 int dsb_defineM(
-		const struct NID *d1a,
-		const struct NID *d1b,
-		const struct NID *d2a,
-		const struct NID *d2b,
-		const struct NID *def,
+		const NID_t *d1a,
+		const NID_t *d1b,
+		const NID_t *d2a,
+		const NID_t *d2b,
+		const NID_t *def,
 		int eval
 		);
 
-int dsb_new(struct NID *n);
-int dsb_delete(struct NID *n);
+int dsb_getdef(
+		const NID_t *d1,
+		const NID_t *d2,
+		NID_t *def,
+		int *eval
+		);
+
+int dsb_new(NID_t *n);
+int dsb_delete(NID_t *n);
+
+int dsb_getmeta(const NID_t *d1, const NID_t *d2, NID_t *meta);
+int dsb_setmeta(const NID_t *d1, const NID_t *d2, const NID_t *meta);
 
 /** @} */
 

@@ -61,6 +61,7 @@ enum
 	ERR_MODNAME,		///< Invalid module name.
 	ERR_EVALID,			///< Invalid evaluator ID.
 	ERR_NOEVAL,			///< No evaluator for given ID.
+	ERR_EVALEXISTS,		///< Evaluator already registered to ID.
 	ERR_NETBIND,
 
 	ERR_WARNING=2000,

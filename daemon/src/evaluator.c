@@ -38,15 +38,10 @@ either expressed or implied, of the FreeBSD Project.
 
 typedef int (*eval_t)(struct HARC *harc, void **data);
 
-eval_t evaluators[MAX_EVALUATORS];
+eval_t evaluators[MAX_EVALUATORS] = {0};
 
 int dsb_eval_init()
 {
-	int i;
-	for (i=0; i<MAX_EVALUATORS; i++)
-	{
-		evaluators[i] = 0;
-	}
 	return SUCCESS;
 }
 
@@ -57,7 +52,8 @@ int dsb_eval_final()
 
 int dsb_eval_register(int id, int (*e)(struct HARC *harc, void **data))
 {
-	if (id <= 0 || id >= MAX_EVALUATORS) return ERR_EVALID;
+	if (id <= 0 || id >= MAX_EVALUATORS) return DSB_ERROR(ERR_EVALID,0);
+	if (evaluators[id] != 0) return DSB_ERROR(ERR_EVALEXISTS,0);
 	evaluators[id] = e;
 	return SUCCESS;
 }
@@ -67,14 +63,13 @@ int dsb_eval_call(int id, struct HARC *harc, void **data)
 	//Null evaluator just copies definition to head.
 	if (id == 0)
 	{
-		harc->h.type = harc->def.type;
-		harc->h.ll = harc->def.ll;
+		harc->h = harc->def;
 		return SUCCESS;
 	}
 
 	//Sanity check the ID.
-	if (id < 0 || id >= MAX_EVALUATORS) return ERR_EVALID;
-	if (evaluators[id] == 0) return ERR_NOEVAL;
+	if (id < 0 || id >= MAX_EVALUATORS) return DSB_ERROR(ERR_EVALID,0);
+	if (evaluators[id] == 0) return DSB_ERROR(ERR_NOEVAL,0);
 
 	return evaluators[id](harc,data);
 }

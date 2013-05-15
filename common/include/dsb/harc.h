@@ -34,6 +34,8 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/nid.h"
 
+struct Event;
+
 /**
  * @addtogroup Hyperarc
  * @{
@@ -47,12 +49,26 @@ either expressed or implied, of the FreeBSD Project.
  */
 struct HARC
 {
-	struct NID t1;	///< Tail 1. Should always be greater than or equal to tail 2.
-	struct NID t2;	///< Tail 2. Should always be less than or equal to tail 1.
-	struct NID h;	///< Head. Typically a cached value that results from evaluating the definition.
-	struct NID def;	///< Definition. Identifies the structure to use as the definition.
-	int e;			///< Evaluator. Which definition evaluator should be used for this HARC.
+	struct NID t1;		///< Tail 1. Should always be greater than or equal to tail 2.
+	struct NID t2;		///< Tail 2. Should always be less than or equal to tail 1.
+	struct NID h;		///< Head. Typically a cached value that results from evaluating the definition.
+	struct NID def;		///< Definition. Identifies the structure to use as the definition.
+	int e;				///< Evaluator. Which definition evaluator should be used for this HARC.
+
+	int flags;			///< Status flags.
+
+	#ifndef STRIP_HARC_META
+	struct NID meta;	///< Meta data for this hyperarc.
+	#endif
 };
+
+/**
+ * Processes an event on a hyperarc.
+ * @param harc The hyperarc corresponding to the event destination.
+ * @param event The event to be processed on the hyperarc.
+ * @return SUCCESS.
+ */
+int dsb_harc_handler(struct HARC *harc, struct Event *event);
 
 /** @} */
 

@@ -159,7 +159,7 @@ int dsb_module_load(const char *name, const struct NID *base)
 	init(&info);
 
 
-	return ERR_NOMOD;
+	return DSB_ERROR(ERR_NOMOD,name);
 }
 
 int dsb_module_unload(const char *name)
@@ -179,12 +179,12 @@ int dsb_module_unload(const char *name)
 				}
 				else
 				{
-					return ERR_INVALIDMOD;
+					return DSB_ERROR(ERR_INVALIDMOD,name);
 				}
 			}
 		}
 
 		//Now scan for external modules...
 		//TODO Scan for external modules.
-		return ERR_NOMOD;
+		return DSB_ERROR(ERR_NOMOD,name);
 }

@@ -39,17 +39,40 @@ either expressed or implied, of the FreeBSD Project.
 
 struct HARC;
 
-#define MAX_EVALUATORS		1000
+/**
+ * @addtogroup Evaluators
+ * Evaluators are responsible for evaluating hyperarc definitions when they
+ * are observed and out-of-date. Definitions can be in any form as long as
+ * they return an NID that acts as the head of the hyperarc.
+ *
+ * @{
+ */
 
+#define MAX_EVALUATORS 1000		///< Maximum number of evaluators.
+
+/**
+ * Common evaluator IDs. For custom evaluators use a number between
+ * EVAL_CUSTOM and EVAL_MAX, but be sure that it is unique.
+ */
 enum
 {
-	EVAL_CONSTANT=0,
-	EVAL_BASIC,
-	EVAL_CUSTOM=100,
-	EVAL_MAX=MAX_EVALUATORS
+	EVAL_CONSTANT=0,		//!< Constant definitions (same as =).
+	EVAL_BASIC,				//!< Basic DASM style definition evaluator
+	EVAL_LUA,				//!< LUA Evaluator
+	EVAL_CUSTOM=100,		//!< EVAL_CUSTOM
+	EVAL_MAX=MAX_EVALUATORS	//!< EVAL_MAX
 };
 
+/**
+ * Initialise the evaluation system.
+ * @return SUCCESS
+ */
 int dsb_eval_init();
+
+/**
+ * Finalise and cleanup the evaluation system.
+ * @return SUCCESS
+ */
 int dsb_eval_final();
 
 /**
@@ -69,5 +92,7 @@ int dsb_eval_register(int id, int (*e)(struct HARC *harc, void **data));
  * @return SUCCESS, ERR_EVALID or another error code.
  */
 int dsb_eval_call(int id, struct HARC *harc, void **data);
+
+/** @} */
 
 #endif /* EVALUATOR_H_ */
