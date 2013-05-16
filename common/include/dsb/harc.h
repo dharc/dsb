@@ -35,11 +35,14 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/nid.h"
 
 struct Event;
+typedef struct Event Event_t;
 
 /**
  * @addtogroup Hyperarc
  * @{
  */
+
+#define HARC_OUTOFDATE	1
 
 /**
  * Hyperarc structure. A hyperarc consists of two tail nodes and one head
@@ -62,13 +65,15 @@ struct HARC
 	#endif
 };
 
+typedef struct HARC HARC_t;
+
 /**
  * Processes an event on a hyperarc.
  * @param harc The hyperarc corresponding to the event destination.
  * @param event The event to be processed on the hyperarc.
  * @return SUCCESS.
  */
-int dsb_harc_handler(struct HARC *harc, struct Event *event);
+int dsb_harc_handler(HARC_t *harc, Event_t *event);
 
 /** @} */
 
