@@ -36,13 +36,18 @@ either expressed or implied, of the FreeBSD Project.
 
 struct Event;
 typedef struct Event Event_t;
+struct Dependency;
+typedef struct Dependency Dependency_t;
 
 /**
  * @addtogroup Hyperarc
  * @{
  */
 
-#define HARC_OUTOFDATE	1
+#define HARC_OUTOFDATE	1	///< This hyperarc needs a re-evaluation of its def
+#define HARC_VOLATILE	2	///< A volatile HARC, destroyed asap
+#define HARC_LOCK		4	///< Thread lock.
+#define HARC_EXTERNAL	8	///< Observed externally so always evaluate.
 
 /**
  * Hyperarc structure. A hyperarc consists of two tail nodes and one head
@@ -52,16 +57,19 @@ typedef struct Event Event_t;
  */
 struct HARC
 {
-	struct NID t1;		///< Tail 1. Should always be greater than or equal to tail 2.
-	struct NID t2;		///< Tail 2. Should always be less than or equal to tail 1.
-	struct NID h;		///< Head. Typically a cached value that results from evaluating the definition.
-	struct NID def;		///< Definition. Identifies the structure to use as the definition.
-	int e;				///< Evaluator. Which definition evaluator should be used for this HARC.
+	NID_t t1;		///< Tail 1. Should always be greater than or equal to tail 2.
+	NID_t t2;		///< Tail 2. Should always be less than or equal to tail 1.
+	NID_t h;		///< Head. Typically a cached value that results from evaluating the definition.
+	NID_t def;		///< Definition. Identifies the structure to use as the definition.
+	int e;			///< Evaluator. Which definition evaluator should be used for this HARC.
 
-	int flags;			///< Status flags.
+	//The following are volatile and do not need to be saved.
+	int flags;		///< Status flags (HARC_ definitions).
+	void *data;		///< Internal (optional) state used by evaluator.
+	Dependency_t *deps;		///< List of dependencies.
 
 	#ifndef STRIP_HARC_META
-	struct NID meta;	///< Meta data for this hyperarc.
+	NID_t meta;		///< Meta data for this hyperarc.
 	#endif
 };
 
@@ -73,7 +81,9 @@ typedef struct HARC HARC_t;
  * @param event The event to be processed on the hyperarc.
  * @return SUCCESS.
  */
-int dsb_harc_handler(HARC_t *harc, Event_t *event);
+int dsb_harc_event(HARC_t *harc, Event_t *event);
+
+int dsb_harc_eval(HARC_t *harc);
 
 /** @} */
 
