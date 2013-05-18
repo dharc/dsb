@@ -308,7 +308,7 @@ int vol_handler(Event_t *evt)
 	if ((evt->flags & EVTFLAG_MULT) == 0)
 	{
 		HARC_t *harc = vol_getharc(&(evt->d1),&(evt->d2),evt->type != EVENT_GET);
-		return dsb_harc_handler(harc,evt);
+		return dsb_harc_event(harc,evt);
 	}
 	else
 	{

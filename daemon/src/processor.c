@@ -36,6 +36,95 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/event.h"
 #include "dsb/errors.h"
 #include "dsb/router.h"
+#include "config.h"
+#include <malloc.h>
+
+#if defined(UNIX) && !defined(NO_THREADS)
+#include <pthread.h>
+#endif
+
+#define QUEUE_SIZE		10000
+
+/*
+ * A threadsafe event queue. There should be 3 of these.
+ */
+struct EventQueue
+{
+	Event_t **q;
+	unsigned int rix;
+	unsigned int wix;
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_t mtx;
+	#endif
+};
+
+#define WRITE_QUEUE			0
+#define READ_QUEUE			1
+#define DEPENDENCY_QUEUE	2
+
+struct EventQueue queue[3];
+unsigned int curq;	//Current queue being processed.
+
+int queue_insert(int q, Event_t *e)
+{
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_lock(&(queue[q].mtx));
+	#endif
+
+	queue[q].q[queue[q].wix++] = e;
+
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_unlock(&(queue[q].mtx));
+	#endif
+
+	return SUCCESS;
+}
+
+Event_t *queue_pop(int q)
+{
+	Event_t *res = 0;
+
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_lock(&(queue[q].mtx));
+	#endif
+
+	//Are there any events left to read.
+	if (queue[q].rix < queue[q].wix)
+	{
+		res = queue[q].q[queue[q].rix++];
+	}
+
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_lock(&(queue[q].mtx));
+	#endif
+
+	return res;
+}
+
+int dsb_proc_init()
+{
+	int i;
+	for (i=0; i<3; i++)
+	{
+		queue[i].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
+		queue[i].rix = 0;
+		queue[i].wix = 0;
+		#if defined(UNIX) && !defined(NO_THREADS)
+		pthread_mutex_init(&(queue[i].mtx),0);
+		#endif
+	}
+	return SUCCESS;
+}
+
+int dsb_proc_final()
+{
+	int i;
+	for (i=0; i<3; i++)
+	{
+		free(queue[i].q);
+	}
+	return SUCCESS;
+}
 
 //Map this to local processor send implementation.
 int dsb_send(struct Event *evt, int async)
@@ -46,24 +135,16 @@ int dsb_send(struct Event *evt, int async)
 int dsb_proc_send(struct Event *evt, int async)
 {
 	int ret;
+	int q = evt->type >> 8;
 
 	evt->flags |= EVTFLAG_SENT;
 
-	switch(evt->type >> 8)
+	ret = queue_insert(q,evt);
+
+	//Need to block until done.
+	if (async == SYNC)
 	{
-	case EVENT_GETTERS:
-		ret = dsb_route(evt);
-		if (ret != SUCCESS) break;
-		if (async != 0)
-		{
-			ret = dsb_proc_wait(evt);
-		}
-		break;
-
-
-	default:
-		ret = ERR_INVALIDEVENT;
-		break;
+		ret = dsb_proc_wait(evt);
 	}
 
 	if (evt->flags & EVTFLAG_FREE)

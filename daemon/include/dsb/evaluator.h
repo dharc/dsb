@@ -38,6 +38,7 @@ either expressed or implied, of the FreeBSD Project.
 #define EVALUATOR_H_
 
 struct HARC;
+typedef struct HARC HARC_t;
 
 /**
  * @addtogroup Evaluators
@@ -82,7 +83,7 @@ int dsb_eval_final();
  * @param e The evaluator function.
  * @return SUCCESS or ERR_EVALID.
  */
-int dsb_eval_register(int id, int (*e)(struct HARC *harc, void **data));
+int dsb_eval_register(int id, int (*e)(HARC_t *harc));
 
 /**
  * Call a definition evaluator to evaluate a given definition.
@@ -91,7 +92,7 @@ int dsb_eval_register(int id, int (*e)(struct HARC *harc, void **data));
  * @param data Custom data used by evaluator.
  * @return SUCCESS, ERR_EVALID or another error code.
  */
-int dsb_eval_call(int id, struct HARC *harc, void **data);
+int dsb_eval_call(HARC_t *harc);
 
 /** @} */
 

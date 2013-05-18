@@ -106,7 +106,7 @@ int dsb_send(struct Event *evt)
 	return SUCCESS;
 }
 
-int eval_test(struct HARC *harc, void **data)
+int eval_test(struct HARC *harc)
 {
 	hasevaluated = 1;
 	return SUCCESS;
@@ -114,16 +114,19 @@ int eval_test(struct HARC *harc, void **data)
 
 void test_eval_regcall()
 {
+	HARC_t h;
+	h.e = EVAL_CUSTOM+1;
 	//The valid case
 	CHECK(dsb_eval_register(EVAL_CUSTOM+1,eval_test) == SUCCESS);
-	CHECK(dsb_eval_call(EVAL_CUSTOM+1,0,0) == SUCCESS);
+	CHECK(dsb_eval_call(&h) == SUCCESS);
 	CHECK(hasevaluated == 1);
 
 	//Error cases.
+	h.e = EVAL_MAX+1;
 	CHECK(dsb_eval_register(-1,eval_test) == ERR_EVALID);
 	CHECK(dsb_eval_register(EVAL_MAX+1,eval_test) == ERR_EVALID);
-	CHECK(dsb_eval_call(-1,0,0) == ERR_EVALID);
-	CHECK(dsb_eval_call(50,0,0) == ERR_NOEVAL);
+	CHECK(dsb_eval_call(0) == ERR_EVALID);
+	CHECK(dsb_eval_call(&h) == ERR_EVALID);
 	DONE;
 }
 
@@ -134,14 +137,14 @@ void test_eval_basic()
 
 	//Check the constant definition
 	dsb_nid(NID_INTEGER,0,&(harc.def));
-	CHECK(dsb_eval_call(EVAL_BASIC,&harc,0) == SUCCESS);
+	CHECK(dsb_eval_call(&harc) == SUCCESS);
 	CHECK(hassent == 2);
 	CHECK(harc.h.type == NID_INTEGER);
 	CHECK(harc.h.ll == 89);
 
 	//Check the single lookup definition
 	dsb_nid(NID_INTEGER,1,&(harc.def));
-	CHECK(dsb_eval_call(EVAL_BASIC,&harc,0) == SUCCESS);
+	CHECK(dsb_eval_call(&harc) == SUCCESS);
 	CHECK(hassent == 6);
 	CHECK(harc.h.type == NID_INTEGER);
 	CHECK(harc.h.ll == 89);

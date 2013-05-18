@@ -39,6 +39,9 @@ either expressed or implied, of the FreeBSD Project.
 
 struct Event;
 
+#define SYNC	0
+#define ASYNC	1
+
 int dsb_proc_init();
 int dsb_proc_final();
 
@@ -56,5 +59,9 @@ int dsb_proc_send(struct Event *evt, int async);
  * @return SUCCESS or ERR_NOTSENT.
  */
 int dsb_proc_wait(const struct Event *evt);
+
+int dsb_proc_single();
+
+int dsb_proc_run();
 
 #endif /* PROCESSOR_H_ */

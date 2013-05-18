@@ -2,8 +2,9 @@
 #include "dsb/nid.h"
 #include "dsb/errors.h"
 #include "dsb/event.h"
+#include "dsb/evaluator.h"
 
-int dsb_harc_handler(HARC_t *harc, Event_t *event)
+int dsb_harc_event(HARC_t *harc, Event_t *event)
 {
 	if (harc == 0)
 	{
@@ -19,7 +20,7 @@ int dsb_harc_handler(HARC_t *harc, Event_t *event)
 						if ((harc->flags & HARC_OUTOFDATE) != 0)
 						{
 							//Get evaluator and use to get result.
-							dsb_eval_call(harc->e,harc,0);
+							dsb_eval_call(harc);
 
 							//No longer out-of-date
 							harc->flags &= ~HARC_OUTOFDATE;
