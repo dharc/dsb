@@ -1,4 +1,9 @@
-/* 
+/*
+ * dependency.h
+ *
+ *  Created on: 19 May 2013
+ *      Author: nick
+
 Copyright (c) 2013, dharc ltd.
 All rights reserved.
 
@@ -27,53 +32,23 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file harc.h */
+#ifndef DEPENDENCY_H_
+#define DEPENDENCY_H_
 
-#ifndef _HARC_H_
-#define _HARC_H_
-
-#include "dsb/nid.h"
-#include "config.h"
-
-typedef struct Event Event_t;
-typedef struct Dependency Dependency_t;
+/** @file dependency.h */
 
 /**
- * @addtogroup Hyperarc
- * @{
+ * Records a dependency on a HARC.
+ * @see HARC
  */
-
-#define HARC_OUTOFDATE	1	///< This hyperarc needs a re-evaluation of its def
-#define HARC_VOLATILE	2	///< A volatile HARC, destroyed asap
-#define HARC_LOCK		4	///< Thread lock.
-#define HARC_EXTERNAL	8	///< Observed externally so always evaluate.
-
-/**
- * Hyperarc structure. A hyperarc consists of two tail nodes and one head
- * node. There may be a definition to describe how the head node is to be
- * calculated. The evaluator selects how this definition is to be
- * interpreted and processed to generate the head node.
- */
-struct HARC
+struct Dependency
 {
-	NID_t t1;		///< Tail 1. Should always be greater than or equal to tail 2.
-	NID_t t2;		///< Tail 2. Should always be less than or equal to tail 1.
-	NID_t def;		///< Definition. Identifies the structure to use as the definition.
-	int e;			///< Evaluator. Which definition evaluator should be used for this HARC.
-	Dependency_t *deps;		///< List of dependants.
-
-	//The following are volatile and do not need to be saved.
-	NID_t h;		///< Head. Cached value that results from evaluating the definition.
-	int flags;		///< Status flags (HARC_ definitions).
-	void *data;		///< Internal (optional) state used by evaluator.
-
-	#ifndef STRIP_HARC_META
-	NID_t meta;		///< Meta data for this hyperarc.
-	#endif
+	NID_t a;
+	NID_t b;
+	struct Dependency *next;
 };
 
-typedef struct HARC HARC_t;
+typedef struct Dependency Dependency_t;
 
-/** @} */
 
-#endif
+#endif /* DEPENDENCY_H_ */

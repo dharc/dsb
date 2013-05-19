@@ -38,6 +38,10 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/router.h"
 #include "config.h"
 #include <malloc.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <string.h>
 
 #if defined(UNIX) && !defined(NO_THREADS)
 #include <pthread.h>
@@ -95,7 +99,7 @@ Event_t *queue_pop(int q)
 	}
 
 	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_lock(&(queue[q].mtx));
+	pthread_mutex_unlock(&(queue[q].mtx));
 	#endif
 
 	return res;
@@ -107,6 +111,7 @@ int dsb_proc_init()
 	for (i=0; i<3; i++)
 	{
 		queue[i].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
+		memset(queue[i].q,0,sizeof(Event_t*)*QUEUE_SIZE);
 		queue[i].rix = 0;
 		queue[i].wix = 0;
 		#if defined(UNIX) && !defined(NO_THREADS)
@@ -136,9 +141,7 @@ int dsb_proc_send(struct Event *evt, int async)
 {
 	int ret;
 	int q = evt->type >> 8;
-
 	evt->flags |= EVTFLAG_SENT;
-
 	ret = queue_insert(q,evt);
 
 	//Need to block until done.
@@ -165,5 +168,72 @@ int dsb_proc_wait(const struct Event *evt)
 		//Process other events etc.
 	}
 
+	return SUCCESS;
+}
+
+int dsb_proc_single()
+{
+	int q = curq;
+	Event_t *e;
+	//Choose an event
+	e = queue_pop(q);
+	if (e == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		//If an event was found then route it.
+		dsb_route(e);
+		return 1;
+	}
+}
+
+long long getTicks()
+{
+	#ifdef UNIX
+	unsigned long long ticks;
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	ticks = ((unsigned long long)now.tv_sec) * (unsigned long long)1000000 + ((unsigned long long)now.tv_usec);
+	return ticks;
+	#endif
+
+	#ifdef WIN32
+	LARGE_INTEGER tks;
+	QueryPerformanceCounter(&tks);
+	return (((unsigned long long)tks.HighPart << 32) + (unsigned long long)tks.LowPart);
+	#endif
+}
+
+int dsb_proc_run(unsigned int maxfreq)
+{
+	long long tick;
+	long long maxticks = maxfreq * 1000000;
+	long long sleeptime;
+
+	while(1)
+	{
+		tick = getTicks();
+		//Loop through all the queues.
+		curq = WRITE_QUEUE;
+		while (dsb_proc_single() == 1);
+		curq = READ_QUEUE;
+		while (dsb_proc_single() == 1);
+		curq = DEPENDENCY_QUEUE;
+		while (dsb_proc_single() == 1);
+
+		//Work out how much spare time we have.
+		sleeptime = (maxticks - (getTicks() - tick)) / 10000;
+		if (sleeptime > 0)
+		{
+			usleep(sleeptime);
+		}
+	}
+	return SUCCESS;
+}
+
+int dsb_proc_runthread()
+{
 	return SUCCESS;
 }

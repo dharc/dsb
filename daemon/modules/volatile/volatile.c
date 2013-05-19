@@ -37,6 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/event.h"
 #include "dsb/errors.h"
 #include "dsb/evaluator.h"
+#include "dsb/harc_d.h"
 #include <stdio.h>
 #include <malloc.h>
 

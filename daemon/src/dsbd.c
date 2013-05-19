@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
 	dsb_eval_init();
 	//dsb_proc_init();
 	dsb_route_init();
+	dsb_proc_init();
 
 	//Register the internal modules
 	dsb_module_register("volatile",dsb_volatile_module());
@@ -120,7 +121,9 @@ int main(int argc, char *argv[])
 
 	//Need to call all module update code.
 	//Need to process queues until empty.
+	dsb_proc_run(40);
 
+	dsb_proc_final();
 	dsb_eval_final();
 	dsb_common_final();
 
