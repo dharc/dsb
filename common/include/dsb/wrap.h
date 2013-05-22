@@ -40,6 +40,11 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef WRAP_H_
 #define WRAP_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 struct NID;
 typedef struct NID NID_t;
 
@@ -100,5 +105,9 @@ int dsb_getmeta(const NID_t *d1, const NID_t *d2, NID_t *meta);
 int dsb_setmeta(const NID_t *d1, const NID_t *d2, const NID_t *meta);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WRAP_H_ */

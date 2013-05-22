@@ -1,7 +1,9 @@
 #include "dsb/nid.h"
 #include "dsb/errors.h"
+#include "dsb/specials.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 NID_t local_base;
 
@@ -147,5 +149,36 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 		//}
 
 		return ERR_NIDSTR;
+}
+
+int dsb_nid_toStr(const struct NID *nid, char *str, int len)
+{
+	int i = 0;
+	const char *temp;
+
+
+	if (nid->type == NID_SPECIAL)
+	{
+		switch(nid->ll)
+		{
+		case SPECIAL_NULL:		strcpy(str, "null"); return SUCCESS;
+		case SPECIAL_TRUE:		strcpy(str, "true"); return SUCCESS;
+		case SPECIAL_FALSE:		strcpy(str, "false"); return SUCCESS;
+		default: break;
+		}
+	}
+	else if (nid->type == NID_INTEGER)
+	{
+		sprintf(str, "%d", (unsigned int)nid->ll);
+		return SUCCESS;
+	}
+	else if (nid->type == NID_REAL)
+	{
+		sprintf(str, "%0.4f", (float)nid->dbl);
+		return SUCCESS;
+	}
+
+	sprintf(str,"[%d:%d]",nid->type,(unsigned int)nid->ll);
+	return SUCCESS;
 }
 
