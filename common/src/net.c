@@ -60,6 +60,10 @@ typedef int socklen_t;
 #define SOCKET_ERROR -1
 #endif
 
+#define MAX_CONNECTIONS		100
+
+int connections[MAX_CONNECTIONS] = {-1};
+
 int dsb_net_init()
 {
 	//Initialise windows sockets
@@ -88,6 +92,7 @@ int dsb_net_connect(const char *url)
 	char addr[100];
 	int port = 5555;
 	char *t;
+	int i;
 	#ifdef WIN32
 	HOSTENT *host;
 	#else
@@ -138,7 +143,27 @@ int dsb_net_connect(const char *url)
 	}
 
 	//Now need to store connection socket.
+	for (i=0; i<MAX_CONNECTIONS; i++)
+	{
+		if (connections[i] == -1)
+		{
+			connections[i] = sock;
+			return sock;
+		}
+	}
 
-	return sock;
+	#ifndef WIN32
+	close(sock);
+	#else
+	closesocket(sock);
+	#endif
+	DSB_ERROR(ERR_NETCONNECT,url);
+	return -1;
+}
+
+int dsb_net_poll()
+{
+	//Select on each connection and pass to correct msg handler.
+	return SUCCESS;
 }
 
