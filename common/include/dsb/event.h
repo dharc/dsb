@@ -44,11 +44,11 @@ either expressed or implied, of the FreeBSD Project.
 
 enum EventType
 {
-	EVENT_GET=0,		//!< Get the head of a HARC
-
-	EVENT_DEFINE=0x100,	//!< Define a HARC
+	EVENT_DEFINE=0x000,	//!< Define a HARC
 	EVENT_DELETE,   	//!< Delete a HARC
 	EVENT_NOTIFY,		//!< Notify HARC that it is out-of-date.
+
+	EVENT_GET=0x100,		//!< Get the head of a HARC
 
 	EVENT_DEP=0x200,	//!< Add a dependency to a HARC
 	EVENT_INVALID		//!< EVENT_INVALID

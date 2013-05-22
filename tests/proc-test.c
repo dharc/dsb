@@ -1,4 +1,9 @@
-/* 
+/*
+ * proc-test.c
+ *
+ *  Created on: 22 May 2013
+ *      Author: nick
+
 Copyright (c) 2013, dharc ltd.
 All rights reserved.
 
@@ -27,53 +32,62 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file harc.h */
+#include "dsb/test.h"
+#include "dsb/processor.h"
+#include "dsb/event.h"
+#include "dsb/errors.h"
 
-#ifndef _HARC_H_
-#define _HARC_H_
+//extern int queue_insert(int q, Event_t *e);
+Event_t *queue_pop(int q);
 
-#include "dsb/nid.h"
-#include "dsb/config.h"
-
-typedef struct Event Event_t;
-typedef struct Dependency Dependency_t;
-
-/**
- * @addtogroup Hyperarc
- * @{
- */
-
-#define HARC_OUTOFDATE	1	///< This hyperarc needs a re-evaluation of its def
-#define HARC_VOLATILE	2	///< A volatile HARC, destroyed asap
-#define HARC_LOCK		4	///< Thread lock.
-#define HARC_EXTERNAL	8	///< Observed externally so always evaluate.
-
-/**
- * Hyperarc structure. A hyperarc consists of two tail nodes and one head
- * node. There may be a definition to describe how the head node is to be
- * calculated. The evaluator selects how this definition is to be
- * interpreted and processed to generate the head node.
- */
-struct HARC
+void test_proc_send()
 {
-	NID_t t1;		///< Tail 1. Should always be greater than or equal to tail 2.
-	NID_t t2;		///< Tail 2. Should always be less than or equal to tail 1.
-	NID_t def;		///< Definition. Identifies the structure to use as the definition.
-	int e;			///< Evaluator. Which definition evaluator should be used for this HARC.
-	Dependency_t *deps;		///< List of dependants.
+	Event_t evt;
+	Event_t *t;
 
-	//The following are volatile and do not need to be saved.
-	NID_t h;		///< Head. Cached value that results from evaluating the definition.
-	int flags;		///< Status flags (HARC_ definitions).
-	void *data;		///< Internal (optional) state used by evaluator.
+	evt.type = EVENT_GET;
+	evt.eval = 555;
+	CHECK(dsb_proc_send(&evt,ASYNC) == SUCCESS);
+	t = queue_pop(1);
+	CHECK(t != 0);
+	if (t != 0)
+	{
+		CHECK(t->eval == 555);
+	}
 
-	#ifndef STRIP_HARC_META
-	NID_t meta;		///< Meta data for this hyperarc.
-	#endif
-};
+	evt.type = EVENT_DEFINE;
+	evt.eval = 777;
+	CHECK(dsb_proc_send(&evt,ASYNC) == SUCCESS);
+	t = queue_pop(0);
+	CHECK(t != 0);
+	if (t != 0)
+	{
+		CHECK(t->eval == 777);
+	}
 
-typedef struct HARC HARC_t;
+	evt.type = EVENT_DEP;
+	evt.eval = 888;
+	CHECK(dsb_proc_send(&evt,ASYNC) == SUCCESS);
+	t = queue_pop(2);
+	CHECK(t != 0);
+	if (t != 0)
+	{
+		CHECK(t->eval == 888);
+	}
 
-/** @} */
+	DONE;
+}
 
-#endif
+int main(int argc, char *argv[])
+{
+	dsb_nid_init();
+	dsb_event_init();
+	dsb_proc_init();
+
+	dsb_test(test_proc_send);
+
+	dsb_proc_final();
+	dsb_event_final();
+	dsb_nid_final();
+	return 0;
+}

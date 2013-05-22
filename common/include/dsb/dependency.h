@@ -38,7 +38,7 @@ either expressed or implied, of the FreeBSD Project.
 /** @file dependency.h */
 
 /**
- * Records a dependency on a HARC.
+ * Records a dependency on a HARC. Should be used as a singly linked-list.
  * @see HARC
  */
 struct Dependency

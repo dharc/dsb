@@ -1,5 +1,7 @@
 #include "dsb/nid.h"
 #include "dsb/errors.h"
+#include <string.h>
+#include <stdlib.h>
 
 NID_t local_base;
 
@@ -61,5 +63,89 @@ int dsb_ntoi(const struct NID *n)
 	{
 		return 0;
 	}
+}
+
+int dsb_nid_fromStr(const char *str, struct NID *nid)
+{
+	if (str == 0) return ERR_NIDSTR;
+
+	//Explicit OID
+	if ((str[0] == '['))
+	{
+		int i = 1;
+		int a;
+		long long b;
+
+		//Read Integer
+		a = 0;
+		while (str[i] != 0 && str[i] != ':') {
+			a *= 10;
+			a += str[i] - '0';
+			i++;
+		}
+
+		if (str[i] == 0) return ERR_NIDSTR;
+
+		//Read :
+		i++;
+
+		//Read Integer
+		b = 0;
+		while (str[i] != 0 && str[i] != ']') {
+			b *= 10;
+			b += str[i] - '0';
+			i++;
+		}
+
+		if (str[i] == 0) return ERR_NIDSTR;
+
+		//Read ]
+
+		nid->type = a;
+		nid->ll = b;
+		return SUCCESS;
+	}
+	else if ((str[0] == '-') || (str[0] >= '0' && str[0] <= '9'))
+	{
+			if (strchr(str, '.'))
+			{
+				nid->dbl = atof(str);
+				nid->type = NID_REAL;
+				return SUCCESS;
+			}
+			else
+			{
+				int i=0;
+				int num=0;
+				int neg = 0;
+
+				if (str[0] == '-') {
+					i++;
+					neg = 1;
+				}
+
+				if (str[i] == 0) return ERR_NIDSTR;
+
+				while (str[i] != 0) {
+					num *= 10;
+					num += str[i] - '0';
+					i++;
+				}
+				if (neg == 1) num = -num;
+				nid->type = NID_INTEGER;
+				nid->ll = num;
+				return SUCCESS;
+			}
+		}
+		//else if (v[0] == '\'') {
+		//	m_a = 0;
+		//	m_b = 3;
+		//	m_c = 0;
+		//	m_d = v[1];
+		//} else {
+		//	*this = names->lookup(v);
+		//}
+
+		return ERR_NIDSTR;
 }
 

@@ -19,7 +19,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c)
 set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/modules/net/netmod.c daemon/modules/math/math.c daemon/modules/volatile/volatile.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/src/evaluator.c)
 
-configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/config.h )
+configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/dsb/config.h )
 
 add_library(dsbcommon ${COMMONSOURCE})
 
@@ -50,6 +50,10 @@ target_link_libraries(volatile-test dsbcommon dl)
 add_executable(eval-test tests/eval-test.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/src/evaluator.c)
 target_link_libraries(eval-test dsbcommon dl)
 
+add_executable(proc-test tests/proc-test.c daemon/src/processor.c daemon/src/router.c)
+target_link_libraries(proc-test dsbcommon)
+
 install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.a" DESTINATION lib)
-install(DIRECTORY common/include DESTINATION include USE_SOURCE_PERMISSIONS)
+install(FILES "${PROJECT_BINARY_DIR}/dsb/config.h" DESTINATION include/dsb)
+install(DIRECTORY common/include/dsb DESTINATION include)
 

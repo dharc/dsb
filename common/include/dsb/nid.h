@@ -32,6 +32,11 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef _NID_H_
 #define _NID_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * @addtogroup Nodes
  * Nodes are the connecting points in the hypergraph and each is given a unique
@@ -184,5 +189,9 @@ void dsb_iton(int,struct NID*);
 int dsb_ntoi(const struct NID*);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_NID_H_

@@ -166,6 +166,7 @@ int dsb_proc_wait(const struct Event *evt)
 	while (!(evt->flags & EVTFLAG_DONE))
 	{
 		//Process other events etc.
+		dsb_proc_single();
 	}
 
 	return SUCCESS;

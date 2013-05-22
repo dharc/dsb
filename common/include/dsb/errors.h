@@ -47,6 +47,7 @@ enum
 	SUCCESS=0,			//!< SUCCESS
 
 	ERR_ERROR=1000,
+	ERR_NIDSTR,			///< Invalid NID String
 	ERR_REINIT,			///< Multiple init
 	ERR_NOINIT,			///< Not initialised
 	ERR_ROUTE_SLOT,		///< No spare slots
