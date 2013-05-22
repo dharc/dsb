@@ -35,18 +35,30 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef NET_H_
 #define NET_H_
 
-/**
- * Send a single event over the network. This function will not block, if the
- * event expects a return value then it will be updated as it is received from
- * the network, at some later date.
- *
- * @param sock ZMQ Socket to send to.
- * @param e Event to send.
- * @return SUCCESS, ERR_SOCKET.
- */
-int dsb_net_send_event(void *sock, Event_t *e);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-int dsb_net_send_events(void *sock, int count, Event_t *es);
-int dsb_net_send_info(void *sock);
+/**
+ * @addtogroup Net
+ * @{
+ */
+
+int dsb_net_init();
+int dsb_net_final();
+
+int dsb_net_connect(const char *url);
+int dsb_net_add(int sock);
+int dsb_net_disconnect(int sock);
+int dsb_net_send(int sock, void *msg);
+int dsb_net_poll();
+int dsb_net_callback(int msgtype, int (*cb)(void *));
+
+/** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NET_H_ */

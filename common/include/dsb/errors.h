@@ -37,6 +37,8 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef ERRORS_H_
 #define ERRORS_H_
 
+#include "dsb/config.h"
+
 struct NID;
 
 /**
@@ -64,6 +66,8 @@ enum
 	ERR_NOEVAL,			///< No evaluator for given ID.
 	ERR_EVALEXISTS,		///< Evaluator already registered to ID.
 	ERR_NETBIND,
+	ERR_NETCONNECT,		///< Could not connect to address.
+	ERR_NET,
 
 	ERR_WARNING=2000,
 	ERR_INFO=3000,

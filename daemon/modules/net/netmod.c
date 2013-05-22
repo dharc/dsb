@@ -35,61 +35,31 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/module.h"
 #include "dsb/errors.h"
 #include "dsb/nid.h"
-#include <zmq.h>
+#include "dsb/net.h"
 
 struct Module netmod;
 
-void *ctx;	//zmq context
-void *sock; //zmq listening socket.
-
 int net_init(const NID_t *base)
 {
-	int rc;
+	dsb_net_init();
 
-	//Set up listening socket if possible.
-	//ctx = zmq_ctx_new ();
-	ctx = zmq_init(1); //DEPRECATED
-	sock = zmq_socket (ctx, ZMQ_REP);
-	rc = zmq_bind (sock, "tcp://*:5555");
-
-	if (rc != 0) return ERR_NETBIND;
+	//Set up listener socket.
 
 	return SUCCESS;
 }
 
 int net_final()
 {
-	zmq_close(sock);
-	//zmq_ctx_destroy(ctx);
-	zmq_term(ctx); //DEPRECATED
+	//Close listener socket.
+
+	dsb_net_final();
 	return SUCCESS;
 }
 
 int net_update()
 {
-	zmq_pollitem_t item;
-	zmq_msg_t msg;
-	int rc;
-
-	while (1)
-	{
-		//Poll for message.
-		item.socket = sock;
-		item.events = ZMQ_POLLIN;
-		rc = zmq_poll(&item,1,0);
-
-		//Nothing left to process.
-		//if (rc >= 0) break;
-		if (item.revents != ZMQ_POLLIN) break;
-
-		//Get the message
-		zmq_msg_init(&msg);
-		rc = zmq_recv(sock,&msg,0);
-
-		//Process the message.
-
-		zmq_msg_close(&msg);
-	}
+	//Poll listener socket
+	//Poll all connection sockets.
 
 	return SUCCESS;
 }

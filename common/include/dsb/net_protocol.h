@@ -108,6 +108,20 @@ struct DSBNetEventSendReq
 	Event_t events[NET_MAX_EVENT_SEND];
 };
 
+/**
+ * Send a single event over the network. This function will not block, if the
+ * event expects a return value then it will be updated as it is received from
+ * the network, at some later date.
+ *
+ * @param sock Socket to send to.
+ * @param e Event to send.
+ * @return SUCCESS, ERR_SOCKET.
+ */
+int dsb_net_send_event(int sock, Event_t *e);
+
+int dsb_net_send_events(int sock, int count, Event_t *es);
+int dsb_net_send_info(int sock);
+
 /** @} */
 
 #endif /* NET_PROTOCOL_H_ */
