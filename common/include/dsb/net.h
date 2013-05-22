@@ -45,12 +45,43 @@ extern "C"
  * @{
  */
 
+/**
+ * Initialise common network code. Must be called before any network
+ * functions are used.
+ * @return SUCCESS
+ */
 int dsb_net_init();
+
+/**
+ * Finalise common network code.
+ * @return
+ */
 int dsb_net_final();
 
+/**
+ * Connect to a dsbd server. If successful the connection is added to
+ * available connections and set as default.
+ * @param url address[:port], may be ip or host name.
+ * @return The socket handle, or -1 on error.
+ */
 int dsb_net_connect(const char *url);
+
+/**
+ * Manually add socket to available connections. Used by dsbd module which
+ * receives connection requests.
+ * @param sock
+ * @return SUCCESS
+ */
 int dsb_net_add(int sock);
+
 int dsb_net_disconnect(int sock);
+
+/**
+ * Send a message to a socket. Will determine message size automatically.
+ * @param sock Socket.
+ * @param msg Must contain a struct DSBNetHeader.
+ * @return SUCCESS.
+ */
 int dsb_net_send(int sock, void *msg);
 int dsb_net_poll();
 int dsb_net_callback(int msgtype, int (*cb)(void *));

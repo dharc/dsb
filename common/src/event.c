@@ -4,14 +4,14 @@
 
 #if defined(UNIX) && !defined(NO_THREADS)
 #include <pthread.h>
-pthread_mutex_t evt_pool_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t evt_pool_mtx = PTHREAD_MUTEX_INITIALIZER;
 #endif //LINUX THREADED
 
 #define EVENT_POOL_SIZE	10000
 
-struct Event *event_heap = 0;		//Single block for cache efficiency
-struct Event **event_pool = 0;		//Free events in the heap
-unsigned int event_lastalloc = 0;
+static struct Event *event_heap = 0;		//Single block for cache efficiency
+static struct Event **event_pool = 0;		//Free events in the heap
+static unsigned int event_lastalloc = 0;
 
 int dsb_event_init()
 {

@@ -62,7 +62,7 @@ typedef int socklen_t;
 
 #define MAX_CONNECTIONS		100
 
-int connections[MAX_CONNECTIONS] = {-1};
+static int connections[MAX_CONNECTIONS] = {-1};
 
 int dsb_net_init()
 {
