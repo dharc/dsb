@@ -85,7 +85,10 @@ struct Event
 
 	struct {
 	struct NID def;			///< Definition
+	union {
 	int eval;				///< Evaluator to use.
+	int resid;
+	};
 	};
 	};
 

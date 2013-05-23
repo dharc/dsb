@@ -34,9 +34,9 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/errors.h"
 #include <stdio.h>
-#include "config.h"
+#include "dsb/config.h"
 
-const char *dsb_error_str(int err)
+const char *dsb_log_str(int err)
 {
 	switch(err)
 	{
@@ -51,21 +51,67 @@ const char *dsb_error_str(int err)
 	case ERR_NOMOD:				return "Cannot find module";
 	case ERR_MODEXISTS:			return "Module already exists";
 	case ERR_MODNAME:			return "Invalid module name";
+
+	case ERR_NETBIND:			return "Unable to bind socket";
+	case ERR_NETCONNECT:		return "Could not connect to host";
+	case ERR_NET:				return "Generic Network Error";
+	case ERR_NETMSGCHK:			return "Corrupted message";
+	case ERR_NETMSGDATA:		return "Incorrect amount of message data";
+	case ERR_NETMSGTYPE:		return "Invalid messsage type";
+	case ERR_NETLISTEN:			return "Could not listen on port";
+	case ERR_NETMAX:			return "Max net connections reached";
+	case ERR_NETACCEPT:			return "Could not accept connection";
+	case ERR_NETCB:				return "Net message callback error";
+
+	case INFO_NETACCEPT:		return "New connection.";
+	case INFO_NETLISTEN:		return "Net Listening";
+	case INFO_NETDISCONNECT:	return "Client disconnected";
+
+	case DEBUG_NETMSG:			return "Net Message";
 	default:					return "Unknown Error";
 	}
 }
 
-int dsb_error(int errno, const char *str)
+int dsb_log(int msg, const char *str)
 {
-	if (errno == SUCCESS) return SUCCESS;
+	if (msg == SUCCESS) return SUCCESS;
 
-	if (str == 0)
+	//Is this an error message
+	if (msg >> 12 == 0)
 	{
-		printf("Error: %s\n",dsb_error_str(errno));
+		if (str == 0)
+		{
+			printf("Error: %s\n",dsb_log_str(msg));
+		}
+		else
+		{
+			printf("Error: %s - %s\n",dsb_log_str(msg),str);
+		}
 	}
-	else
+	//Is this an information message
+	else if (msg >> 12 == 3)
 	{
-		printf("Error: %s - %s\n",dsb_error_str(errno),str);
+		if (str == 0)
+		{
+			printf("Info: %s\n",dsb_log_str(msg));
+		}
+		else
+		{
+			printf("Info: %s - %s\n",dsb_log_str(msg),str);
+		}
 	}
-	return errno;
+	//Is this an information message
+	else if (msg >> 12 == 4)
+	{
+		if (str == 0)
+		{
+			printf("Debug: %s\n",dsb_log_str(msg));
+		}
+		else
+		{
+			printf("Debug: %s - %s\n",dsb_log_str(msg),str);
+		}
+	}
+
+	return msg;
 }

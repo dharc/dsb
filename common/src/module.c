@@ -36,7 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "string.h"
 #include <stdio.h>
-#include "config.h"
+#include "dsb/config.h"
 
 #ifdef UNIX
 #include <dlfcn.h>
@@ -56,8 +56,8 @@ struct ModInternal
 	void *handle;
 };
 
-struct ModInternal imods[MAX_INTERNAL_MODULES];
-struct ModInternal *lmods[MAX_LOADED_MODULES] = {0};
+static struct ModInternal imods[MAX_INTERNAL_MODULES];
+static struct ModInternal *lmods[MAX_LOADED_MODULES] = {0};
 
 unsigned int modix = 0;
 
@@ -109,7 +109,7 @@ int dsb_module_exists(const char *name)
 
 int dsb_module_load(const char *name, const struct NID *base)
 {
-	int i;
+	int i,j;
 	void *handle;
 	char fname[200];
 	void (*init)(struct Module*);
@@ -121,6 +121,11 @@ int dsb_module_load(const char *name, const struct NID *base)
 		//Do we have a name match
 		if (strcmp(name,imods[i].name) == 0)
 		{
+			for (j=0; i<MAX_LOADED_MODULES; j++)
+			{
+				if (lmods[j] == 0) break;
+			}
+			lmods[j] = &(imods[i]);
 			if (imods[i].mod.init != 0)
 			{
 				//Initialise the module!
@@ -187,4 +192,23 @@ int dsb_module_unload(const char *name)
 		//Now scan for external modules...
 		//TODO Scan for external modules.
 		return DSB_ERROR(ERR_NOMOD,name);
+}
+
+int dsb_module_updateall()
+{
+	int i;
+	for (i=0; i<MAX_LOADED_MODULES; i++)
+	{
+		if (lmods[i] != 0)
+		{
+			if (lmods[i]->mod.update != 0)
+			{
+				lmods[i]->mod.update();
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
 }

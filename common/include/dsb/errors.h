@@ -34,12 +34,10 @@ either expressed or implied, of the FreeBSD Project.
 
 /** @file errors.h */
 
-#ifndef ERRORS_H_
-#define ERRORS_H_
+#ifndef DSB_ERRORS_H_
+#define DSB_ERRORS_H_
 
 #include "dsb/config.h"
-
-struct NID;
 
 /**
  * Error enums used for function return values.
@@ -68,10 +66,24 @@ enum
 	ERR_NETBIND,
 	ERR_NETCONNECT,		///< Could not connect to address.
 	ERR_NET,
+	ERR_NETMSGCHK,
+	ERR_NETMSGDATA,
+	ERR_NETMSGTYPE,
+	ERR_NETLISTEN,
+	ERR_NETMAX,
+	ERR_NETACCEPT,
+	ERR_NETCB,
 
-	ERR_WARNING=2000,
-	ERR_INFO=3000,
-	ERR_DEBUG=4000,
+	WARN_START=0x2000,
+
+	INFO_START=0x3000,
+	INFO_NETACCEPT,
+	INFO_NETLISTEN,
+	INFO_NETDISCONNECT,
+
+	DEBUG_START=0x4000,
+	DEBUG_NETMSG,
+
 	ERR_END   			//!< ERR_END
 };
 
@@ -80,7 +92,7 @@ enum
  * @param err Error number.
  * @return String for the error.
  */
-const char *dsb_error_str(int err);
+const char *dsb_log_str(int err);
 
 /**
  * Log and print error messages, depending upon log and debug settings.
@@ -88,12 +100,20 @@ const char *dsb_error_str(int err);
  * @param data Optional node containing additional error details.
  * @return errno, as passed in the parameter.
  */
-int dsb_error(int errno, const char *str);
+int dsb_log(int msg, const char *str);
+
+#define DSB_ERROR(A,B) dsb_log(A,B)
 
 #ifdef _DEBUG
-#define DSB_ERROR(A,B) dsb_error(A,B)
+#define DSB_INFO(A,B) dsb_log(A,B)
 #else
-#define DSB_ERROR(A,B) A
+#define DSB_INFO(A,B) A
+#endif
+
+#ifdef _DEBUG
+#define DSB_DEBUG(A,B) dsb_log(A,B)
+#else
+#define DSB_DEBUG(A,B) A
 #endif
 
 

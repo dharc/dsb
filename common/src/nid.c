@@ -153,10 +153,6 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 
 int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 {
-	int i = 0;
-	const char *temp;
-
-
 	if (nid->type == NID_SPECIAL)
 	{
 		switch(nid->ll)

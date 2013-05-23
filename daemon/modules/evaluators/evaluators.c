@@ -39,7 +39,7 @@ either expressed or implied, of the FreeBSD Project.
 struct Module evalmod;
 struct HARC;
 
-int eval_basic(struct HARC *harc, void **data);
+int eval_basic(HARC_t *harc);
 
 int eval_init()
 {

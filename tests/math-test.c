@@ -45,8 +45,8 @@ extern struct Module *dsb_math_module();
 void test_math_add()
 {
 	struct Event evt;
-	struct NID a;
-	struct NID b;
+	//struct NID a;
+	//struct NID b;
 
 	//Generate 55 +
 	dsb_iton(55,&evt.d1);

@@ -1,7 +1,7 @@
 /*
- * net.h
+ * handler.c
  *
- *  Created on: 10 May 2013
+ *  Created on: 23 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,64 +32,32 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef NET_H_
-#define NET_H_
+#include "dsb/event.h"
+#include "dsb/net.h"
+#include "dsb/net_protocol.h"
+#include "dsb/errors.h"
 
-#ifdef __cplusplus
-extern "C"
+extern int dsb_send(struct Event *,int);
+
+int net_msg_event(int sock, void *data)
 {
-#endif
+	Event_t *evt = data;
 
-/**
- * @addtogroup Net
- * @{
- */
-
-/**
- * Initialise common network code. Must be called before any network
- * functions are used.
- * @return SUCCESS
- */
-int dsb_net_init();
-
-/**
- * Finalise common network code.
- * @return
- */
-int dsb_net_final();
-
-/**
- * Connect to a dsbd server. If successful the connection is added to
- * available connections and set as default.
- * @param url address[:port], may be ip or host name.
- * @return The socket handle, or -1 on error.
- */
-int dsb_net_connect(const char *url);
-
-/**
- * Manually add socket to available connections. Used by dsbd module which
- * receives connection requests.
- * @param sock
- * @return SUCCESS
- */
-int dsb_net_add(int sock);
-
-int dsb_net_disconnect(int sock);
-
-/**
- * Send a message to a socket. Will determine message size automatically.
- * @param sock Socket.
- * @param msg Must contain a struct DSBNetHeader.
- * @return SUCCESS.
- */
-int dsb_net_send(int sock, int msgtype, void *msg);
-int dsb_net_poll(unsigned int ms);
-int dsb_net_callback(int msgtype, int (*cb)(int,void *));
-
-/** @} */
-
-#ifdef __cplusplus
+	//If GET we need to wait and send result.
+	if (evt->type == EVENT_GET)
+	{
+		struct DSBNetEventResult res;
+		dsb_send(evt,0);
+		res.res = evt->res;
+		res.id = evt->eval;
+		dsb_net_send(sock, DSBNET_EVENTRESULT,&res);
+		return SUCCESS;
+	}
+	else
+	{
+		Event_t *evt2 = dsb_event_allocate();
+		*evt2 = *evt;
+		evt2->flags |= EVTFLAG_FREE;
+		return dsb_send(evt,1);
+	}
 }
-#endif
-
-#endif /* NET_H_ */

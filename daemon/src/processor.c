@@ -36,6 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/event.h"
 #include "dsb/errors.h"
 #include "dsb/router.h"
+#include "dsb/module.h"
 #include "config.h"
 #include <malloc.h>
 #include <unistd.h>
@@ -166,7 +167,10 @@ int dsb_proc_wait(const struct Event *evt)
 	while (!(evt->flags & EVTFLAG_DONE))
 	{
 		//Process other events etc.
-		dsb_proc_single();
+		if (dsb_proc_single() == 0)
+		{
+			break;
+		}
 	}
 
 	return SUCCESS;
@@ -220,6 +224,11 @@ int dsb_proc_run(unsigned int maxfreq)
 		curq = WRITE_QUEUE;
 		while (dsb_proc_single() == 1);
 		curq = READ_QUEUE;
+
+		//Now run module updates...
+		//Put here so that sync gets can be processed immediately.
+		dsb_module_updateall();
+
 		while (dsb_proc_single() == 1);
 		curq = DEPENDENCY_QUEUE;
 		while (dsb_proc_single() == 1);

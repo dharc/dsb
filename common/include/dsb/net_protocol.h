@@ -48,29 +48,26 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #define DSB_NET_VERSION		1
+#define DSB_NET_CHECK		0x9898
 
 #define NET_MAX_EVENT_SEND	100
 
 enum
 {
-	DSBNET_TYPE_INFO_REQ=0,
-	DSBNET_TYPE_INFO_REP,
-	DSBNET_TYPE_AUTH_REQ,
-	DSBNET_TYPE_AUTH_REP,
-	DSBNET_TYPE_SEND_REQ,
-	DSBNET_TYPE_SEND_REP,
+	DSBNET_SENDEVENT = 1,
+	DSBNET_EVENTRESULT,
 	DSBNET_TYPE_END
 };
 
 struct DSBNetHeader
 {
+	unsigned short chck;	///< Check valid message.
 	unsigned short type;	///< Message type.
-	unsigned int sig;		///< Client/Server Signature.
 };
 
 struct DSBNetInfoReq
 {
-	struct DSBNetHeader h;
+	//struct DSBNetHeader h;
 	unsigned short proto_version;
 	unsigned short major;
 	unsigned short minor;
@@ -80,7 +77,7 @@ struct DSBNetInfoReq
 
 struct DSBNetInfoRep
 {
-	struct DSBNetHeader h;
+	//struct DSBNetHeader h;
 	unsigned short proto_version;
 	unsigned short major;
 	unsigned short minor;
@@ -97,15 +94,20 @@ struct DSBNetAuthReq
 
 struct DSBNetAuthRep
 {
-	struct DSBNetHeader h;
+	//struct DSBNetHeader h;
 	unsigned int sig;	//New client signature.
 };
 
-struct DSBNetEventSendReq
+struct DSBNetEventSend
 {
-	struct DSBNetHeader h;
-	unsigned short num_events;
-	Event_t events[NET_MAX_EVENT_SEND];
+	//struct DSBNetHeader h;
+	Event_t evt;
+};
+
+struct DSBNetEventResult
+{
+	int id;
+	NID_t res;
 };
 
 /**
