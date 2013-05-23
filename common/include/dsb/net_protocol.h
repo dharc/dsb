@@ -121,6 +121,8 @@ struct DSBNetEventResult
  */
 int dsb_net_send_event(int sock, Event_t *e);
 
+int dsb_net_cb_event(int sock, void *data);
+
 int dsb_net_send_events(int sock, int count, Event_t *es);
 int dsb_net_send_info(int sock);
 

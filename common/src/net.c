@@ -234,7 +234,12 @@ static int read_messages(int sock)
 	rc = recv(sock, buffer + six, 1000 - six, 0);
 
 	//No data to process.
-	if (rc <= 0) return SUCCESS;
+	if (rc <= 0)
+	{
+		DSB_INFO(INFO_NETDISCONNECT,0);
+		dsb_net_disconnect(sock);
+		return SUCCESS;
+	}
 
 	//Add existing buffer contents to rc and reset index.
 	rc += six;
@@ -381,5 +386,21 @@ int dsb_net_add(int sock)
 	}
 
 	return DSB_ERROR(ERR_NETMAX,0);
+}
+
+int dsb_net_disconnect(int sock)
+{
+	int i;
+	for (i=0; i<MAX_CONNECTIONS; i++)
+	{
+		if (connections[i] == sock)
+		{
+			connections[i] = INVALID_SOCKET;
+			//TODO MOVE ALL OTHER SOCKETS DOWN
+			break;
+		}
+	}
+	close(sock);
+	return SUCCESS;
 }
 

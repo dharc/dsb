@@ -57,10 +57,11 @@ const char *dsb_log_str(int err)
 	case ERR_NET:				return "Generic Network Error";
 	case ERR_NETMSGCHK:			return "Corrupted message";
 	case ERR_NETMSGDATA:		return "Incorrect amount of message data";
-	case ERR_NETMSGTYPE:		return "Invalid messsage type";
+	case ERR_NETMSGTYPE:		return "Invalid message type";
 	case ERR_NETLISTEN:			return "Could not listen on port";
 	case ERR_NETMAX:			return "Max net connections reached";
 	case ERR_NETACCEPT:			return "Could not accept connection";
+	case ERR_NETTIMEOUT:		return "Expected net response timed out";
 	case ERR_NETCB:				return "Net message callback error";
 
 	case INFO_NETACCEPT:		return "New connection.";
