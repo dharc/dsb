@@ -62,6 +62,8 @@ const char *dsb_log_str(int err)
 	case ERR_NETMAX:			return "Max net connections reached";
 	case ERR_NETACCEPT:			return "Could not accept connection";
 	case ERR_NETTIMEOUT:		return "Expected net response timed out";
+	case ERR_NETADDR:			return "Could not find host";
+	case ERR_NETRESULT:			return "Unexpected event result";
 	case ERR_NETCB:				return "Net message callback error";
 
 	case INFO_NETACCEPT:		return "New connection.";

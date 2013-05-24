@@ -16,7 +16,7 @@ set(CMAKE_C_FLAGS "-Wall")
 set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c common/src/net.c)
+set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c common/src/net.c common/src/net_protocol.c)
 set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/modules/net/netmod.c daemon/modules/net/handler.c daemon/modules/math/math.c daemon/modules/volatile/volatile.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/src/evaluator.c)
 
 configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/dsb/config.h )

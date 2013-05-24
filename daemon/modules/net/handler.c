@@ -37,17 +37,23 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net_protocol.h"
 #include "dsb/errors.h"
 
+#include <stdio.h>
+
 extern int dsb_send(struct Event *,int);
 
 int net_msg_event(int sock, void *data)
 {
 	Event_t *evt = data;
+	evt->flags = 0;
+
+	printf("Net event = %d\n", evt->type);
 
 	//If GET we need to wait and send result.
 	if (evt->type == EVENT_GET)
 	{
 		struct DSBNetEventResult res;
 		dsb_send(evt,0);
+		printf("Net get event = %d\n",(int)evt->res.ll);
 		res.res = evt->res;
 		res.id = evt->eval;
 		dsb_net_send(sock, DSBNET_EVENTRESULT,&res);

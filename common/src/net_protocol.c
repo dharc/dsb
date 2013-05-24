@@ -36,12 +36,30 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net_protocol.h"
 #include "dsb/errors.h"
 
+static Event_t *readlist[MAX_READLIST];
+
 int dsb_net_send_event(int sock, Event_t *e, int async)
 {
+	int ix = 0;
 	int count = 0;
 	//msg.evt = *evt;
+
+	if (e->type == EVENT_GET)
+	{
+		//Find a spare slot
+		for (ix=0; ix<MAX_READLIST; ix++)
+		{
+			if (readlist[ix] == 0)
+			{
+				readlist[ix] = e;
+				e->eval = ix;
+				break;
+			}
+		}
+	}
+
 	//Actually send the event
-	dsb_net_send(hostsock, DSBNET_SENDEVENT, e);
+	dsb_net_send(sock, DSBNET_SENDEVENT, e);
 
 	//Block if we need a response.
 	if ((async == 0) && (e->type == EVENT_GET))
@@ -59,5 +77,31 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 
 int dsb_net_cb_event(int sock, void *data)
 {
+	return SUCCESS;
+}
 
+int dsb_net_cb_result(int sock, void *data)
+{
+	struct DSBNetEventResult *res = (struct DSBNetEventResult*)data;
+	Event_t *evt;
+
+	//Is the ID valid
+	if (res->id < 0 || res->id >= MAX_READLIST)
+	{
+		return DSB_ERROR(ERR_NETRESULT,0);
+	}
+
+	//Find event associated with ID.
+	evt = readlist[res->id];
+	if (evt == 0)
+	{
+		return DSB_ERROR(ERR_NETRESULT,0);
+	}
+	readlist[res->id] = 0;
+
+	//Actually update value and mark event as complete.
+	evt->res = res->res;
+	evt->flags |= EVTFLAG_DONE;
+
+	return SUCCESS;
 }

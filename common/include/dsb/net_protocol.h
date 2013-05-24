@@ -47,10 +47,16 @@ either expressed or implied, of the FreeBSD Project.
  * @{
  */
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define DSB_NET_VERSION		1
 #define DSB_NET_CHECK		0x9898
 
 #define NET_MAX_EVENT_SEND	100
+#define MAX_READLIST		100
 
 enum
 {
@@ -119,13 +125,18 @@ struct DSBNetEventResult
  * @param e Event to send.
  * @return SUCCESS, ERR_SOCKET.
  */
-int dsb_net_send_event(int sock, Event_t *e);
+int dsb_net_send_event(int sock, Event_t *evt, int async);
 
 int dsb_net_cb_event(int sock, void *data);
+int dsb_net_cb_result(int sock, void *data);
 
 int dsb_net_send_events(int sock, int count, Event_t *es);
 int dsb_net_send_info(int sock);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NET_PROTOCOL_H_ */

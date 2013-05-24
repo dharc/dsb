@@ -103,7 +103,8 @@ int dsb_net_init()
 
 	//Now insert message details.
 	messages[DSBNET_SENDEVENT].size = sizeof(struct DSBNetEventSend);
-	messages[DSBNET_EVENTRESULT].size = sizeof(NID_t);
+	messages[DSBNET_EVENTRESULT].size = sizeof(struct DSBNetEventResult);
+	messages[DSBNET_EVENTRESULT].cb = dsb_net_cb_result;
 
 	return 0;
 }
@@ -152,6 +153,12 @@ int dsb_net_connect(const char *url)
 	#else
 	host = gethostbyname(addr);
 	#endif
+
+	if (host == 0)
+	{
+		DSB_ERROR(ERR_NETADDR,addr);
+		return -1;
+	}
 
 	destAddr.sin_family = AF_INET;
 	destAddr.sin_addr.s_addr = ((struct in_addr *)(host->h_addr))->s_addr;
