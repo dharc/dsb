@@ -80,6 +80,21 @@ int dsb_net_cb_event(int sock, void *data)
 	return SUCCESS;
 }
 
+int dsb_net_send_error(int sock, int err)
+{
+	struct DSBNetError e;
+	e.err = err;
+	dsb_net_send(sock, DSBNET_ERROR, &e);
+	return SUCCESS;
+}
+
+int dsb_net_cb_error(int sock, void *data)
+{
+	struct DSBNetError *err = (struct DSBNetError*)data;
+	DSB_ERROR(err->err,0);
+	return SUCCESS;
+}
+
 int dsb_net_cb_result(int sock, void *data)
 {
 	struct DSBNetEventResult *res = (struct DSBNetEventResult*)data;

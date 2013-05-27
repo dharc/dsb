@@ -43,6 +43,7 @@ extern int dsb_send(struct Event *,int);
 
 int net_msg_event(int sock, void *data)
 {
+	int ret;
 	Event_t *evt = data;
 	evt->flags = 0;
 
@@ -52,11 +53,18 @@ int net_msg_event(int sock, void *data)
 	if (evt->type == EVENT_GET)
 	{
 		struct DSBNetEventResult res;
-		dsb_send(evt,0);
+		ret = dsb_send(evt,0);
 		printf("Net get event = %d\n",(int)evt->res.ll);
 		res.res = evt->res;
 		res.id = evt->eval;
-		dsb_net_send(sock, DSBNET_EVENTRESULT,&res);
+		if (ret == SUCCESS)
+		{
+			dsb_net_send(sock, DSBNET_EVENTRESULT,&res);
+		}
+		else
+		{
+			dsb_net_send_error(sock,ret);
+		}
 		return SUCCESS;
 	}
 	else

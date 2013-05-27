@@ -62,6 +62,7 @@ enum
 {
 	DSBNET_SENDEVENT = 1,
 	DSBNET_EVENTRESULT,
+	DSBNET_ERROR,
 	DSBNET_TYPE_END
 };
 
@@ -69,39 +70,6 @@ struct DSBNetHeader
 {
 	unsigned short chck;	///< Check valid message.
 	unsigned short type;	///< Message type.
-};
-
-struct DSBNetInfoReq
-{
-	//struct DSBNetHeader h;
-	unsigned short proto_version;
-	unsigned short major;
-	unsigned short minor;
-	unsigned short patch;
-	//Other fields to be added later.
-};
-
-struct DSBNetInfoRep
-{
-	//struct DSBNetHeader h;
-	unsigned short proto_version;
-	unsigned short major;
-	unsigned short minor;
-	unsigned short patch;
-	//Other fields to be added later.
-};
-
-struct DSBNetAuthReq
-{
-	struct DSBNetHeader h;
-	char username[20];
-	char password[20];
-};
-
-struct DSBNetAuthRep
-{
-	//struct DSBNetHeader h;
-	unsigned int sig;	//New client signature.
 };
 
 struct DSBNetEventSend
@@ -116,6 +84,11 @@ struct DSBNetEventResult
 	NID_t res;
 };
 
+struct DSBNetError
+{
+	int err;
+};
+
 /**
  * Send a single event over the network. This function will not block, if the
  * event expects a return value then it will be updated as it is received from
@@ -127,8 +100,11 @@ struct DSBNetEventResult
  */
 int dsb_net_send_event(int sock, Event_t *evt, int async);
 
+int dsb_net_send_error(int sock, int error);
+
 int dsb_net_cb_event(int sock, void *data);
 int dsb_net_cb_result(int sock, void *data);
+int dsb_net_cb_error(int sock, void *data);
 
 int dsb_net_send_events(int sock, int count, Event_t *es);
 int dsb_net_send_info(int sock);

@@ -105,6 +105,8 @@ int dsb_net_init()
 	messages[DSBNET_SENDEVENT].size = sizeof(struct DSBNetEventSend);
 	messages[DSBNET_EVENTRESULT].size = sizeof(struct DSBNetEventResult);
 	messages[DSBNET_EVENTRESULT].cb = dsb_net_cb_result;
+	messages[DSBNET_ERROR].cb = dsb_net_cb_error;
+	messages[DSBNET_ERROR].size = sizeof(struct DSBNetError);
 
 	return 0;
 }
