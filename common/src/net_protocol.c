@@ -47,7 +47,7 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 	if (e->type == EVENT_GET)
 	{
 		//Find a spare slot
-		for (ix=0; ix<MAX_READLIST; ix++)
+		for (ix=0; ix<(MAX_READLIST-1); ix++)
 		{
 			if (readlist[ix] == 0)
 			{
@@ -55,6 +55,15 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 				e->resid = ix;
 				break;
 			}
+		}
+
+		//WARNING: Run out of space for async reads so turn this
+		//one into a sync read to clear.
+		if (ix == MAX_READLIST-1)
+		{
+			async = 0;
+			readlist[MAX_READLIST-1] = e;
+			e->resid = MAX_READLIST-1;
 		}
 	}
 

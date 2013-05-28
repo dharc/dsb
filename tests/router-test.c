@@ -39,6 +39,11 @@ either expressed or implied, of the FreeBSD Project.
 
 int math_handler1_called = 0;
 
+int dsb_send(struct Event *evt)
+{
+	return 0;
+}
+
 int math_handler1(struct Event *evt)
 {
 	CHECK(evt->d1.ll == 55);

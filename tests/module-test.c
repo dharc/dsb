@@ -39,6 +39,11 @@ either expressed or implied, of the FreeBSD Project.
 int mod_hasloaded = 0;
 int mod_hasunloaded = 0;
 
+int dsb_send(struct Event *evt)
+{
+	return 0;
+}
+
 int mod_test_init(const struct NID *b)
 {
 	mod_hasloaded = 1;

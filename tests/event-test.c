@@ -35,6 +35,11 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/test.h"
 #include "dsb/event.h"
 
+int dsb_send(struct Event *evt)
+{
+	return 0;
+}
+
 void test_event_allocate()
 {
 	struct Event *evt;

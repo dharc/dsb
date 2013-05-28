@@ -42,6 +42,11 @@ either expressed or implied, of the FreeBSD Project.
 
 extern struct Module *dsb_math_module();
 
+int dsb_send(struct Event *evt)
+{
+	return 0;
+}
+
 void test_math_add()
 {
 	struct Event evt;

@@ -160,6 +160,7 @@ extern struct Module *dsb_evaluators_module();
 int main(int argc, char *argv[])
 {
 	dsb_nid_init();
+	dsb_event_init();
 	dsb_eval_init();
 
 	init_test_defs();
@@ -172,6 +173,7 @@ int main(int argc, char *argv[])
 	dsb_test(test_eval_basic);
 
 	dsb_eval_final();
+	dsb_event_final();
 	dsb_nid_final();
 	return 0;
 }

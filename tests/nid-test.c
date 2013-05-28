@@ -1,6 +1,11 @@
 #include "dsb/test.h"
 #include "dsb/nid.h"
 
+int dsb_send(struct Event *evt)
+{
+	return 0;
+}
+
 void test_nid_compare()
 {
 	struct NID a;
