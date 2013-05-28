@@ -1,5 +1,5 @@
 /*
- * string.c
+ * array.h
  *
  *  Created on: 28 May 2013
  *      Author: nick
@@ -32,88 +32,27 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/string.h"
-#include "dsb/nid.h"
-#include "dsb/specials.h"
-#include "dsb/errors.h"
-#include "dsb/wrap.h"
-#include <string.h>
-#include <malloc.h>
+#ifndef ARRAY_H_
+#define ARRAY_H_
 
-int dsb_string_cton(const NID_t *dest, const char *str)
-{
-	NID_t attr;
-	NID_t val;
-	int i;
-	int len = strlen(str);
+/**
+ * Write a local C NID array into the DSB graph.
+ * @param src A C array of NIDs.
+ * @param size The size of the source array.
+ * @param dest Destination node in the graph on which to build the array.
+ * @return Number of elements added.
+ */
+int dsb_array_write(const NID_t *src, int size, const NID_t *dest);
 
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
-	dsb_iton(len,&val);
-	dsb_set(dest, &attr,&val);
+/**
+ * Read an array from the graph to a local C NID array.
+ * @param src Graph node containing an array structure.
+ * @param dest Local C array to fill.
+ * @param max Maximum size of local C array.
+ * @return Actual size of read array.
+ */
+int dsb_array_read(const NID_t *src, const NID_t *dest, int max);
 
-	for (i=0; i<len; i++)
-	{
-		dsb_iton(i,&attr);
-		//dsb_nid(NID_CHARACTER,str[i], &val);
-		val.type = NID_CHARACTER;
-		val.chr = str[i];
-		dsb_set(dest, &attr,&val);
-	}
 
-	return SUCCESS;
-}
 
-int dsb_string_ntoc(char *dest, int len, const NID_t *str)
-{
-	NID_t attr;
-	NID_t val;
-	NID_t *vals;
-	int i;
-	int len2;
-
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
-	dsb_get(str,&attr,&val);
-	len2 = dsb_ntoi(&val);
-
-	if (len2 == 0)
-	{
-		dest[0] = 0;
-		return SUCCESS;
-	}
-
-	vals = malloc(sizeof(NID_t)*len2);
-
-	//TODO make sure size exists.
-
-	for (i=0; i<len2; i++)
-	{
-		dsb_iton(i,&attr);
-
-		//If we are not the last then use async read
-		if (i < len2-1)
-		{
-			dsb_getA(str,&attr,&(vals[i]));
-		}
-		else
-		{
-			dsb_get(str,&attr,&(vals[i]));
-		}
-	}
-
-	//Now convert NIDS to characters.
-	for (i=0; i<len2; i++)
-	{
-		if (i >= len)
-		{
-			i--;
-			break;
-		}
-		dest[i] = vals[i].chr;
-	}
-
-	dest[i] = 0;
-	free(vals);
-
-	return SUCCESS;
-}
-
+#endif /* ARRAY_H_ */
