@@ -1,7 +1,7 @@
 /*
- * processor.h
+ * cache.h
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 27 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,40 +32,11 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file processor.h */
+#ifndef CACHE_H_
+#define CACHE_H_
 
-#ifndef PROCESSOR_H_
-#define PROCESSOR_H_
 
-struct Event;
 
-#define SYNC	0
-#define ASYNC	1
 
-int dsb_proc_init();
-int dsb_proc_final();
 
-/**
- * Send an Event to be queued and processed.
- * @param evt Event to send.
- * @param async 0 blocks and 1 returns immediately.
- * @return SUCCESS, ERR_NOROUTE or ERR_INVALIDEVENT
- */
-int dsb_proc_send(struct Event *evt, int async);
-
-/**
- * Wait for an event to complete.
- * @param evt Event to wait for.
- * @return SUCCESS or ERR_NOTSENT.
- */
-int dsb_proc_wait(const struct Event *evt);
-
-int dsb_proc_single();
-
-/**
- * Main event scheduler. Only returns when explicitly terminated.
- * @return
- */
-int dsb_proc_run();
-
-#endif /* PROCESSOR_H_ */
+#endif /* CACHE_H_ */

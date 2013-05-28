@@ -75,16 +75,16 @@ enum
 struct Event
 {
 	enum EventType type;
-	struct NID d1;			///< Destination
-	struct NID d2;			///< Destination
+	NID_t d1;			///< Destination
+	NID_t d2;			///< Destination
 
 	union {
-	struct NID value;		///< Value parameter.
+	NID_t value;		///< Value parameter.
 
-	struct NID res;			///< Returned event result.
+	NID_t res;			///< Returned event result.
 
 	struct {
-	struct NID def;			///< Definition
+	NID_t def;			///< Definition
 	union {
 	int eval;				///< Evaluator to use.
 	int resid;
@@ -94,12 +94,12 @@ struct Event
 
 	union {
 	struct {
-	struct NID d1b;			///< Second destination in multi events.
-	struct NID d2b;			///< Second destination in multi events.
+	NID_t d1b;			///< Second destination in multi events.
+	NID_t d2b;			///< Second destination in multi events.
 	};
 	struct {
-	struct NID dep1;		///< Dependency
-	struct NID dep2;		///< Dependency
+	NID_t dep1;		///< Dependency
+	NID_t dep2;		///< Dependency
 	};
 	};
 
