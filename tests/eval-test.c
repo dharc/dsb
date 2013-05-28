@@ -148,7 +148,7 @@ void test_eval_basic()
 	//Check the single lookup definition
 	dsb_nid(NID_INTEGER,1,&(harc.def));
 	CHECK(dsb_eval_call(&harc) == SUCCESS);
-	CHECK(hassent == 6);
+	CHECK(hassent == 7);
 	CHECK(harc.h.type == NID_INTEGER);
 	CHECK(harc.h.ll == 89);
 

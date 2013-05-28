@@ -51,7 +51,9 @@ const char *dsb_log_str(int err)
 	case ERR_NOMOD:				return "Cannot find module";
 	case ERR_MODEXISTS:			return "Module already exists";
 	case ERR_MODNAME:			return "Invalid module name";
-
+	case ERR_EVALID:			return "Invalid evaluator ID";
+	case ERR_NOEVAL:			return "No evaluator for given ID";
+	case ERR_EVALEXISTS:		return "Evaluator already exists";
 	case ERR_NETBIND:			return "Unable to bind socket";
 	case ERR_NETCONNECT:		return "Could not connect to host";
 	case ERR_NET:				return "Generic Network Error";
