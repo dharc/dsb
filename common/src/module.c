@@ -211,4 +211,6 @@ int dsb_module_updateall()
 			break;
 		}
 	}
+
+	return SUCCESS;
 }

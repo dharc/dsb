@@ -1,7 +1,7 @@
 /*
- * common.h
+ * string.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 28 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,25 +32,85 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
-
+#include "dsb/string.h"
 #include "dsb/nid.h"
-#include "dsb/event.h"
+#include "dsb/specials.h"
 #include "dsb/errors.h"
 #include "dsb/wrap.h"
-#include "dsb/net.h"
+#include <string.h>
+#include <malloc.h>
 
-#ifdef __cplusplus
-extern "C"
+int dsb_string_cton(const NID_t *dest, const char *str)
 {
-#endif
+	NID_t attr;
+	NID_t val;
+	int i;
+	int len = strlen(str);
 
-int dsb_common_init();
-int dsb_common_final();
+	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_iton(len,&val);
+	dsb_set(dest, &attr,&val);
 
-#ifdef __cplusplus
+	for (i=0; i<len; i++)
+	{
+		dsb_iton(i,&attr);
+		//dsb_nid(NID_CHARACTER,str[i], &val);
+		val.type = NID_CHARACTER;
+		val.chr = str[i];
+		dsb_set(dest, &attr,&val);
+	}
+
+	return SUCCESS;
 }
-#endif
 
-#endif /* COMMON_H_ */
+int dsb_string_ntoc(char *dest, int len, const NID_t *str)
+{
+	NID_t attr;
+	NID_t val;
+	NID_t *vals;
+	int i;
+	int len2;
+
+	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_get(str,&attr,&val);
+	len2 = dsb_ntoi(&val);
+
+	if (len2 == 0)
+	{
+		dest[0] = 0;
+		return SUCCESS;
+	}
+
+	vals = malloc(sizeof(NID_t)*len2);
+
+	//TODO make sure size exists.
+
+	for (i=0; i<len2; i++)
+	{
+		dsb_iton(i,&attr);
+		if (i < len2-1)
+		{
+			dsb_getA(str,&attr,&(vals[i]));
+		}
+		else
+		{
+			dsb_get(str,&attr,&(vals[i]));
+		}
+	}
+
+	for (i=0; i<len2; i++)
+	{
+		if (i >= len)
+		{
+			i--;
+			break;
+		}
+		dest[i] = vals[i].chr;
+	}
+
+	dest[i] = 0;
+	free(vals);
+
+	return SUCCESS;
+}
+

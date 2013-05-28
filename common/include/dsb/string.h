@@ -1,7 +1,7 @@
 /*
- * common.h
+ * string.h
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 28 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,25 +32,35 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
-
-#include "dsb/nid.h"
-#include "dsb/event.h"
-#include "dsb/errors.h"
-#include "dsb/wrap.h"
-#include "dsb/net.h"
+#ifndef STRING_H_
+#define STRING_H_
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-int dsb_common_init();
-int dsb_common_final();
+typedef struct NID NID_t;
+
+/**
+ * Convert a C string to a DSB string. Puts the resulting DSB string into the dest object.
+ * @param dest Destination node.
+ * @param str Source C string.
+ * @return SUCCESS.
+ */
+int dsb_string_cton(const NID_t *dest, const char *str);
+
+/**
+ * Convert a DSB string to a C string.
+ * @param dest C string buffer.
+ * @param len Length of C string buffer.
+ * @param str Source string node.
+ * @return SUCCESS.
+ */
+int dsb_string_ntoc(char *dest, int len, const NID_t *str);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* COMMON_H_ */
+#endif /* STRING_H_ */

@@ -55,8 +55,8 @@ int math_arith_add1(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res.type = NID_INTADD;
-		evt->res.ll = num;
+		evt->res->type = NID_INTADD;
+		evt->res->ll = num;
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -74,9 +74,9 @@ int math_arith_add2(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res.type = NID_INTEGER;
+		evt->res->type = NID_INTEGER;
 		//Do the addition
-		evt->res.ll = num1 + num2;
+		evt->res->ll = num1 + num2;
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -93,8 +93,8 @@ int math_arith_sub1(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res.type = NID_INTSUB;
-		evt->res.ll = num;
+		evt->res->type = NID_INTSUB;
+		evt->res->ll = num;
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -112,9 +112,9 @@ int math_arith_sub2(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res.type = NID_INTEGER;
+		evt->res->type = NID_INTEGER;
 		//Do the addition
-		evt->res.ll = num2 - num1;
+		evt->res->ll = num2 - num1;
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}

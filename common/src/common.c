@@ -40,12 +40,16 @@ int dsb_common_init()
 	ret = dsb_nid_init();
 	if (ret != SUCCESS) return ret;
 	ret = dsb_event_init();
+	if (ret != SUCCESS) return ret;
+	ret = dsb_net_init();
 	return ret;
 }
 
 int dsb_common_final()
 {
 	int ret;
+	ret = dsb_net_final();
+	if (ret != SUCCESS) return ret;
 	ret = dsb_event_final();
 	if (ret != SUCCESS) return ret;
 	ret = dsb_nid_final();

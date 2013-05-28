@@ -47,8 +47,21 @@ int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r)
 	evt.d2 = *d2;
 	evt.flags = 0;
 	evt.type = EVENT_GET;
+	evt.res = r;
 	res = dsb_send(&evt,0);
-	*r = evt.res;
+	return res;
+}
+
+int dsb_getA(const struct NID *d1, const struct NID *d2, struct NID *r)
+{
+	struct Event *evt = dsb_event_allocate();
+	int res;
+	evt->d1 = *d1;
+	evt->d2 = *d2;
+	evt->flags = EVTFLAG_FREE;
+	evt->type = EVENT_GET;
+	evt->res = r;
+	res = dsb_send(evt,1);
 	return res;
 }
 

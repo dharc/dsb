@@ -220,7 +220,7 @@ long long getTicks()
 int dsb_proc_run(unsigned int maxfreq)
 {
 	long long tick;
-	long long maxticks = maxfreq * 1000000;
+	long long maxticks = maxfreq * 100000;
 	long long sleeptime;
 
 	while(1)

@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 
 	//Need to call all module update code.
 	//Need to process queues until empty.
-	dsb_proc_run(40);
+	dsb_proc_run(10);
 
 	dsb_proc_final();
 	dsb_eval_final();

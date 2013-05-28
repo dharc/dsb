@@ -78,7 +78,7 @@ int dsb_send(struct Event *evt)
 		//Is it asking for SIZE?
 		if ((evt->d2.type == NID_SPECIAL) && (evt->d2.ll == SPECIAL_SIZE))
 		{
-			evt->res = sizes[whichdef];
+			*(evt->res) = sizes[whichdef];
 		}
 		//Is it asking for an integer indexed element?
 		else if (evt->d2.type == NID_INTEGER)
@@ -86,19 +86,22 @@ int dsb_send(struct Event *evt)
 			//If an invalid number then return NULL.
 			if (evt->d2.ll < 0 || evt->d2.ll >= 30)
 			{
-				evt->res.type = NID_SPECIAL;
-				evt->res.ll = SPECIAL_NULL;
+				if (evt->res != 0)
+				{
+					evt->res->type = NID_SPECIAL;
+					evt->res->ll = SPECIAL_NULL;
+				}
 			}
 			//Otherwise return definition NID element at index.
 			else
 			{
-				evt->res = defs[whichdef][evt->d2.ll];
+				*(evt->res) = defs[whichdef][evt->d2.ll];
 			}
 		}
 		else
 		{
-			evt->res.type = NID_SPECIAL;
-			evt->res.ll = SPECIAL_NULL;
+			evt->res->type = NID_SPECIAL;
+			evt->res->ll = SPECIAL_NULL;
 		}
 	}
 

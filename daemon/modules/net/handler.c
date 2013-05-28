@@ -51,10 +51,10 @@ int net_msg_event(int sock, void *data)
 	if (evt->type == EVENT_GET)
 	{
 		struct DSBNetEventResult res;
+		evt->res = &(res.res);
 		ret = dsb_send(evt,0);
 		if ((evt->flags & EVTFLAG_ERRO) == 0)
 		{
-			res.res = evt->res;
 			res.id = evt->eval;
 			if (ret == SUCCESS)
 			{

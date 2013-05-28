@@ -45,6 +45,7 @@ extern struct Module *dsb_math_module();
 void test_math_add()
 {
 	struct Event evt;
+	NID_t res;
 	//struct NID a;
 	//struct NID b;
 
@@ -54,23 +55,24 @@ void test_math_add()
 	evt.d2.ll = SPECIAL_ADD;
 	evt.type = EVENT_GET;
 	evt.flags = 0;
+	evt.res = &res;
 
 	//Send 55 + get event
 	CHECK(dsb_route(&evt) == SUCCESS);
 	CHECK(evt.flags & EVTFLAG_DONE);
-	CHECK(evt.res.type == NID_INTADD);
-	CHECK(evt.res.ll == 55);
+	CHECK(res.type == NID_INTADD);
+	CHECK(res.ll == 55);
 
 	//Generate 55+ 55
-	evt.d2 = evt.res;
+	evt.d2 = res;
 	evt.type = EVENT_GET;
 	evt.flags = 0;
 
 	//Send 55+ 55 get event
 	CHECK(dsb_route(&evt) == SUCCESS);
 	CHECK(evt.flags & EVTFLAG_DONE);
-	CHECK(evt.res.type == NID_INTEGER);
-	CHECK(evt.res.ll == 110);
+	CHECK(res.type == NID_INTEGER);
+	CHECK(res.ll == 110);
 
 	DONE;
 }

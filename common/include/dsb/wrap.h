@@ -64,6 +64,8 @@ typedef struct NID NID_t;
  */
 int dsb_get(const NID_t *d1, const NID_t *d2, NID_t *r);
 
+int dsb_getA(const NID_t *d1, const NID_t *d2, NID_t *r);
+
 /**
  * Set the node a hyperarc points to. This function returns immediately
  * and does not guarantee that the change has been performed.

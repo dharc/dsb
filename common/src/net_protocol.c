@@ -52,7 +52,7 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 			if (readlist[ix] == 0)
 			{
 				readlist[ix] = e;
-				e->eval = ix;
+				e->resid = ix;
 				break;
 			}
 		}
@@ -64,13 +64,16 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 	//Block if we need a response.
 	if ((async == 0) && (e->type == EVENT_GET))
 	{
-		while (((e->flags & EVTFLAG_DONE) == 0) && count < 10)
+		while (((e->flags & EVTFLAG_DONE) == 0) && count < 100)
 		{
-			dsb_net_poll(100);
+			dsb_net_poll(1);
 			count++;
 		}
 
-		return DSB_ERROR(ERR_NETTIMEOUT,0);
+		if ((e->flags & EVTFLAG_DONE) == 0)
+		{
+			return DSB_ERROR(ERR_NETTIMEOUT,0);
+		}
 	}
 	return SUCCESS;
 }
@@ -115,7 +118,7 @@ int dsb_net_cb_result(int sock, void *data)
 	readlist[res->id] = 0;
 
 	//Actually update value and mark event as complete.
-	evt->res = res->res;
+	*(evt->res) = res->res;
 	evt->flags |= EVTFLAG_DONE;
 
 	return SUCCESS;

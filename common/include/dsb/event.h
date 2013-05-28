@@ -82,7 +82,7 @@ struct Event
 	union {
 	NID_t value;		///< Value parameter.
 
-	NID_t res;			///< Returned event result.
+	NID_t *res;			///< Returned event result.
 	int err;			///< Error number, if error flag set.
 
 	struct {

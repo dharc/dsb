@@ -72,10 +72,10 @@ int eval_basic(struct HARC *harc, void **data)
 		}
 		else
 		{
+			//Add the dependency
+			dsb_dependency(&res,&tmp,&(harc->t1),&(harc->t2));
 			//Do the actual lookup, apply last element with current.
 			dsb_get(&res,&tmp,&res);
-
-			//TODO Add dependency.
 		}
 	}
 

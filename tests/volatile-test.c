@@ -49,6 +49,7 @@ void test_vol_getset()
 	struct Event evt;
 	struct NID a;
 	struct NID b;
+	NID_t res;
 
 	//Create tail NIDs
 	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&a);
@@ -64,14 +65,15 @@ void test_vol_getset()
 
 	//Generate GET event;
 	dsb_event(EVENT_GET,&a,&b,&evt);
+	evt.res = &res;
 
 	//Send GET event.
 	CHECK(dsb_route(&evt) == 0);
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(evt.res.type == NID_INTEGER);
-	CHECK(evt.res.ll == 55);
+	CHECK(res.type == NID_INTEGER);
+	CHECK(res.ll == 55);
 
 	DONE;
 }
@@ -81,6 +83,7 @@ void test_vol_region()
 	struct Event evt;
 	struct NID a;
 	struct NID b;
+	NID_t res;
 
 	//Create tail NIDs
 	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&a);
@@ -99,26 +102,28 @@ void test_vol_region()
 
 	//Generate GET event;
 	dsb_event(EVENT_GET,&a,&b,&evt);
+	evt.res = &res;
 
 	//Send GET event.
 	CHECK(dsb_route(&evt) == 0);
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(evt.res.type == NID_INTEGER);
-	CHECK(evt.res.ll == 66);
+	CHECK(res.type == NID_INTEGER);
+	CHECK(res.ll == 66);
 
 	//Generate GET event;
 	b.ll = 20;
 	dsb_event(EVENT_GET,&a,&b,&evt);
+	evt.res = &res;
 
 	//Send GET event.
 	CHECK(dsb_route(&evt) == 0);
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(evt.res.type == NID_INTEGER);
-	CHECK(evt.res.ll == 66);
+	CHECK(res.type == NID_INTEGER);
+	CHECK(res.ll == 66);
 	DONE;
 }
 

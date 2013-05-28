@@ -258,7 +258,7 @@ static int read_messages(int sock)
 	//We have enough for a header... so repeatedly process until we don't
 	while (rc >= sizeof(struct DSBNetHeader))
 	{
-		header = (struct DSBNetHeader*)buffer+ix;
+		header = (struct DSBNetHeader*)(buffer+ix);
 		ix += sizeof(struct DSBNetHeader);
 
 		//Make sure it is a valid message.
@@ -299,9 +299,9 @@ static int read_messages(int sock)
 	if (rc != 0)
 	{
 		//Yes, so move to bottom for processing next time.
-		memcpy(buffer, buffer+six, rc-six);
+		memcpy(buffer, buffer+six, rc);
 		//Set start index to next free buffer location.
-		six = rc-six;
+		six = rc;
 	}
 	else
 	{
@@ -323,7 +323,7 @@ int dsb_net_poll(unsigned int ms)
 
 	//Timeout immediately.
 	block.tv_sec = 0;
-	block.tv_usec = ms * 10;
+	block.tv_usec = ms * 1000;
 	selres = select(n+1, &fdread, 0, &fderror, &block);
 
 	//Some kind of error occurred, it is usually possible to recover from this.

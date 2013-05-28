@@ -23,11 +23,15 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 {
 	Dependency_t *dep;
 	Dependency_t *temp;
+	int ret;
 
 	if (harc == 0)
 	{
-			event->res.type = 0;
-			event->res.ll = 0;
+			if (event->type == EVENT_GET)
+			{
+				event->res->type = 0;
+				event->res->ll = 0;
+			}
 		return SUCCESS;
 	}
 
@@ -38,13 +42,17 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						if ((harc->flags & HARC_OUTOFDATE) != 0)
 						{
 							//Get evaluator and use to get result.
-							dsb_eval_call(harc);
+							ret = dsb_eval_call(harc);
+							if (ret != SUCCESS)
+							{
+								return ret;
+							}
 
 							//No longer out-of-date
 							harc->flags &= ~HARC_OUTOFDATE;
 						}
 
-						event->res = harc->h;
+						*(event->res) = harc->h;
 						event->flags |= EVTFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
