@@ -179,6 +179,7 @@ int dsb_proc_wait(const struct Event *evt)
 int dsb_proc_single()
 {
 	int q = curq;
+	int ret;
 	Event_t *e;
 	//Choose an event
 	e = queue_pop(q);
@@ -189,7 +190,12 @@ int dsb_proc_single()
 	else
 	{
 		//If an event was found then route it.
-		dsb_route(e);
+		ret = dsb_route(e);
+		if (ret != SUCCESS)
+		{
+			e->err = ret;
+			e->flags |= EVTFLAG_ERRO;
+		}
 		return 1;
 	}
 }

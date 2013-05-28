@@ -68,6 +68,7 @@ enum
 #define EVTFLAG_SENT		4	///< The event has been sent.
 #define EVTFLAG_MULT		8	///< An event with a destination region.
 #define EVTFLAG_VIRT		16  ///< Virtual, do not use memory.
+#define EVTFLAG_ERRO		32	///< There was an error in processing the event.
 
 /**
  * DSB Event structure.
@@ -82,12 +83,13 @@ struct Event
 	NID_t value;		///< Value parameter.
 
 	NID_t res;			///< Returned event result.
+	int err;			///< Error number, if error flag set.
 
 	struct {
 	NID_t def;			///< Definition
 	union {
-	int eval;				///< Evaluator to use.
-	int resid;
+	int eval;			///< Evaluator to use.
+	int resid;			///< Result ID to match on network
 	};
 	};
 	};

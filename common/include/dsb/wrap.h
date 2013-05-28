@@ -98,6 +98,14 @@ int dsb_getdef(
 		int *eval
 		);
 
+int dsb_notify(const NID_t *d1, const NID_t *d2);
+int dsb_dependency(
+		const NID_t *d1,
+		const NID_t *d2,
+		const NID_t *dep1,
+		const NID_t *dep2
+		);
+
 int dsb_new(NID_t *n);
 int dsb_delete(NID_t *n);
 

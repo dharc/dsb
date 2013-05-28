@@ -34,7 +34,23 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/test.h"
 #include "dsb/harc.h"
+#include "dsb/harc_d.h"
 #include "dsb/nid.h"
+#include "dsb/wrap.h"
+#include "dsb/event.h"
+#include "dsb/evaluator.h"
+#include "dsb/errors.h"
+#include "dsb/module.h"
+#include "dsb/dependency.h"
+#include <malloc.h>
+
+Event_t lastevt;
+
+int dsb_send(struct Event *evt)
+{
+	lastevt = *evt;
+	return 0;
+}
 
 void test_harc_gen()
 {
@@ -46,10 +62,142 @@ void test_harc_compare()
 
 }
 
+void test_harc_get()
+{
+	Event_t evt;
+	HARC_t harc;
+
+	//Initialise an event.
+	evt.type = EVENT_GET;
+	evt.flags = 0;
+	dsb_iton(2,&(evt.d1));
+	dsb_iton(3,&(evt.d2));
+
+	//Initialise the hyperarc
+	dsb_harc(&(evt.d1),&(evt.d2),&harc);
+	dsb_iton(55,&(harc.def));
+
+	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((harc.flags & HARC_OUTOFDATE) == 0);
+	CHECK(harc.h.ll == 55);
+
+	DONE;
+}
+
+void test_harc_define()
+{
+	Event_t evt;
+	HARC_t harc;
+
+	//Initialise an event.
+	evt.type = EVENT_DEFINE;
+	evt.flags = 0;
+	dsb_iton(2,&(evt.d1));
+	dsb_iton(3,&(evt.d2));
+	dsb_iton(66,&(evt.def));
+
+	//Initialise the hyperarc
+	dsb_harc(&(evt.d1),&(evt.d2),&harc);
+	dsb_iton(55,&(harc.def));
+	harc.flags = 0;
+
+	harc.deps = malloc(sizeof(Dependency_t));
+	dsb_iton(8,&(harc.deps->a));
+	dsb_iton(9,&(harc.deps->b));
+	harc.deps->next = 0;
+
+	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((harc.flags & HARC_OUTOFDATE) != 0);
+	CHECK(harc.def.ll == 66);
+	CHECK(lastevt.type == EVENT_NOTIFY);
+	CHECK(lastevt.d1.ll == 8);
+	CHECK(lastevt.d2.ll == 9);
+	CHECK(harc.deps == 0);
+
+	DONE;
+}
+
+void test_harc_notify()
+{
+	Event_t evt;
+	HARC_t harc;
+
+	//Initialise an event.
+	evt.type = EVENT_NOTIFY;
+	evt.flags = 0;
+	dsb_iton(2,&(evt.d1));
+	dsb_iton(3,&(evt.d2));
+
+	//Initialise the hyperarc
+	dsb_harc(&(evt.d1),&(evt.d2),&harc);
+	harc.flags = 0;
+
+	harc.deps = malloc(sizeof(Dependency_t));
+	dsb_iton(10,&(harc.deps->a));
+	dsb_iton(11,&(harc.deps->b));
+	harc.deps->next = 0;
+
+	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((harc.flags & HARC_OUTOFDATE) != 0);
+	CHECK(lastevt.type == EVENT_NOTIFY);
+	CHECK(lastevt.d1.ll == 10);
+	CHECK(lastevt.d2.ll == 11);
+	CHECK(harc.deps == 0);
+
+	DONE;
+}
+
+void test_harc_dep()
+{
+	Event_t evt;
+	HARC_t harc;
+
+	//Initialise an event.
+	evt.type = EVENT_DEP;
+	evt.flags = 0;
+	dsb_iton(2,&(evt.d1));
+	dsb_iton(3,&(evt.d2));
+	dsb_iton(5,&(evt.dep1));
+	dsb_iton(6,&(evt.dep2));
+
+	//Initialise the hyperarc
+	dsb_harc(&(evt.d1),&(evt.d2),&harc);
+	harc.flags = 0;
+
+	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(harc.deps != 0);
+	if (harc.deps != 0)
+	{
+		CHECK(harc.deps->a.ll == 5);
+		CHECK(harc.deps->b.ll == 6);
+		CHECK(harc.deps->next == 0);
+	}
+
+	DONE;
+}
+
+extern struct Module *dsb_evaluators_module();
+
 int main(int argc, char *argv[])
 {
-	//dsb_test(test_harc_gen);
-	//dsb_test(test_harc_compare);
+	dsb_event_init();
+	dsb_eval_init();
+
+	//Load the evaluators module
+	dsb_module_register("evaluators",dsb_evaluators_module());
+	dsb_module_load("evaluators",0);
+
+	dsb_test(test_harc_get);
+	dsb_test(test_harc_define);
+	dsb_test(test_harc_notify);
+	dsb_test(test_harc_dep);
+
+	dsb_eval_final();
+	dsb_event_final();
 	return 0;
 }
 

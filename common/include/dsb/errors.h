@@ -39,6 +39,11 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/config.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * Error enums used for function return values.
  */
@@ -119,5 +124,8 @@ int dsb_log(int msg, const char *str);
 #define DSB_DEBUG(A,B) A
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ERRORS_H_ */

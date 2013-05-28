@@ -74,6 +74,8 @@ struct HARC
 
 typedef struct HARC HARC_t;
 
+HARC_t *dsb_harc(const NID_t *t1, const NID_t *t2, HARC_t *harc);
+
 /** @} */
 
 #endif

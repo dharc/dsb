@@ -59,7 +59,7 @@ int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 	evt->d2 = *d2;
 	evt->def = *v;
 	evt->eval = 0;
-	evt->flags = 0;
+	evt->flags = EVTFLAG_FREE;
 	evt->type = EVENT_DEFINE;
 	return dsb_send(evt,1);
 }
@@ -76,7 +76,34 @@ int dsb_define(
 	evt->d2 = *d2;
 	evt->def = *def;
 	evt->eval = eval;
-	evt->flags = 0;
+	evt->flags = EVTFLAG_FREE;
 	evt->type = EVENT_DEFINE;
+	return dsb_send(evt,1);
+}
+
+int dsb_notify(const struct NID *d1, const struct NID *d2)
+{
+	struct Event *evt = dsb_event_allocate();
+	evt->d1 = *d1;
+	evt->d2 = *d2;
+	evt->flags = EVTFLAG_FREE;
+	evt->type = EVENT_NOTIFY;
+	return dsb_send(evt,1);
+}
+
+int dsb_dependency(
+		const NID_t *d1,
+		const NID_t *d2,
+		const NID_t *dep1,
+		const NID_t *dep2
+		)
+{
+	struct Event *evt = dsb_event_allocate();
+	evt->d1 = *d1;
+	evt->d2 = *d2;
+	evt->dep1 = *dep1;
+	evt->dep2 = *dep2;
+	evt->flags = EVTFLAG_FREE;
+	evt->type = EVENT_DEP;
 	return dsb_send(evt,1);
 }

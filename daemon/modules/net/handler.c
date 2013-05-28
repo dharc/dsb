@@ -52,17 +52,25 @@ int net_msg_event(int sock, void *data)
 	{
 		struct DSBNetEventResult res;
 		ret = dsb_send(evt,0);
-		res.res = evt->res;
-		res.id = evt->eval;
-		if (ret == SUCCESS)
+		if ((evt->flags & EVTFLAG_ERRO) == 0)
 		{
-			dsb_net_send(sock, DSBNET_EVENTRESULT,&res);
+			res.res = evt->res;
+			res.id = evt->eval;
+			if (ret == SUCCESS)
+			{
+				dsb_net_send(sock, DSBNET_EVENTRESULT,&res);
+			}
+			else
+			{
+				dsb_net_send_error(sock,ret);
+			}
+			return SUCCESS;
 		}
 		else
 		{
-			dsb_net_send_error(sock,ret);
+			dsb_net_send_error(sock,evt->err);
+			return SUCCESS;
 		}
-		return SUCCESS;
 	}
 	else
 	{

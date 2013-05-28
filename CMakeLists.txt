@@ -30,8 +30,8 @@ target_link_libraries(dsbd dsbcommon dl)
 add_executable(nid-test tests/nid-test.c)
 target_link_libraries(nid-test dsbcommon)
 
-add_executable(harc-test tests/harc-test.c)
-target_link_libraries(harc-test dsbcommon)
+add_executable(harc-test tests/harc-test.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/src/evaluator.c)
+target_link_libraries(harc-test dsbcommon dl)
 
 add_executable(event-test tests/event-test.c)
 target_link_libraries(event-test dsbcommon)
