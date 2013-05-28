@@ -263,13 +263,13 @@ static int read_messages(int sock)
 		if (header->chck != DSB_NET_CHECK) return DSB_ERROR(ERR_NETMSGCHK,0);
 		if (header->type >= DSBNET_TYPE_END) return DSB_ERROR(ERR_NETMSGTYPE,0);
 
-		char temp[10];
-		sprintf(temp, "%d",header->type);
-		DSB_DEBUG(DEBUG_NETMSG,temp);
-
 		//Do we have the entire message contents?
 		if (rc-sizeof(struct DSBNetHeader) >= messages[header->type].size)
 		{
+			char temp[10];
+			sprintf(temp, "%d",header->type);
+			DSB_DEBUG(DEBUG_NETMSG,temp);
+
 			//YES, so look for the callback
 			if (messages[header->type].cb != 0)
 			{
