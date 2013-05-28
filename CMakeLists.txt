@@ -54,7 +54,7 @@ target_link_libraries(eval-test dsbcommon dl)
 add_executable(proc-test tests/proc-test.c daemon/src/processor.c daemon/src/router.c)
 target_link_libraries(proc-test dsbcommon)
 
-install(FILES "${PROJECT_BINARY_DIR}/libdsbcommon.so" DESTINATION lib)
+install(PROGRAMS "${PROJECT_BINARY_DIR}/libdsbcommon.so" DESTINATION lib)
 install(FILES "${PROJECT_BINARY_DIR}/dsb/config.h" DESTINATION include/dsb)
 install(DIRECTORY common/include/dsb DESTINATION include)
 

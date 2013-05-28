@@ -4,11 +4,33 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 NID_t local_base;
+static unsigned char macaddr[6];
 
 int dsb_nid_init()
 {
+	int netf;
+	char buf[18];
+
+	netf = open("/sys/class/net/eth0/address", O_RDONLY);
+	if (netf != -1)
+	{
+		int lmac[6];
+		read(netf, buf, 17);
+		buf[17] = 0;
+		sscanf(buf, "%x:%x:%x:%x:%x:%x", &(lmac[0]), &(lmac[1]), &(lmac[2]), &(lmac[3]), &(lmac[4]), &(lmac[5]));
+		close(netf);
+		macaddr[0] = (unsigned char)lmac[0];
+		macaddr[1] = (unsigned char)lmac[1];
+		macaddr[2] = (unsigned char)lmac[2];
+		macaddr[3] = (unsigned char)lmac[3];
+		macaddr[4] = (unsigned char)lmac[4];
+		macaddr[5] = (unsigned char)lmac[5];
+		printf("Mac Addr: %s\n",buf);
+	}
+
 	local_base.type = NID_USER;
 	local_base.ll = 0;
 	return SUCCESS;
