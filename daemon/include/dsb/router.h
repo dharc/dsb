@@ -40,8 +40,10 @@ either expressed or implied, of the FreeBSD Project.
 struct Event;
 struct NID;
 
+#define ROUTE_VOLATILE		0x0
 #define ROUTE_PERSISTENT	0x1
 #define ROUTE_REMOTE		0x2
+#define ROUTE_LOCAL			0x0
 
 /**
  * @addtogroup Router

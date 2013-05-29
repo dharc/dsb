@@ -181,6 +181,14 @@ int dsb_nid_geq(const NID_t *n1, const NID_t *n2);
 int dsb_nid_isLocal(const NID_t *n);
 
 /**
+ * Get the local persistent or volatile base NID.
+ * @param persistent 0 gets a volatile base, 1 gets a persistent base.
+ * @param n NID to fill with local base.
+ * @return SUCCESS
+ */
+int dsb_nid_local(int persistent, NID_t *n);
+
+/**
  * Convert a NID to a string.
  *
  * The generated string is placed in the `str` buffer with a maximum length
