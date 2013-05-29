@@ -86,10 +86,14 @@ int dsb_net_send_event(int sock, Event_t *evt, int async);
 
 int dsb_net_send_result(int sock, int id, const NID_t *res);
 int dsb_net_send_error(int sock, int error);
+int dsb_net_send_login(int sock, const char *user, const char *pass);
+int dsb_net_send_root(int sock, const NID_t *root);
 
 int dsb_net_cb_event(int sock, void *data);
 int dsb_net_cb_result(int sock, void *data);
 int dsb_net_cb_error(int sock, void *data);
+int dsb_net_cb_login(int sock, void *data);
+int dsb_net_cb_root(int sock, void *data);
 
 int dsb_net_send_events(int sock, int count, Event_t *es);
 int dsb_net_send_info(int sock);
