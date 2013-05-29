@@ -35,6 +35,8 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef ARRAY_H_
 #define ARRAY_H_
 
+typedef struct NID NID_t;
+
 /**
  * Write a local C NID array into the DSB graph.
  * @param src A C array of NIDs.
@@ -51,7 +53,7 @@ int dsb_array_write(const NID_t *src, int size, const NID_t *dest);
  * @param max Maximum size of local C array.
  * @return Actual size of read array.
  */
-int dsb_array_read(const NID_t *src, const NID_t *dest, int max);
+int dsb_array_read(const NID_t *src, NID_t *dest, int max);
 
 
 

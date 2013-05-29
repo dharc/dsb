@@ -1,7 +1,7 @@
 /*
- * math-test.c
+ * array.c
  *
- *  Created on: 7 May 2013
+ *  Created on: 29 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,75 +32,60 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/test.h"
+#include "dsb/array.h"
 #include "dsb/nid.h"
-#include "dsb/event.h"
-#include "dsb/router.h"
-#include "dsb/module.h"
 #include "dsb/specials.h"
-#include "dsb/errors.h"
+#include "dsb/wrap.h"
 
-extern struct Module *dsb_math_module();
-
-int dsb_send(struct Event *evt)
+int dsb_array_write(const NID_t *src, int size, const NID_t *dest)
 {
-	return 0;
+	NID_t attr;
+	NID_t val;
+	int i;
+
+	//Set the size attribute
+	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_iton(size,&val);
+	dsb_set(dest, &attr,&val);
+
+	//Set each element.
+	for (i=0; i<size; i++)
+	{
+		dsb_iton(i,&attr);
+		dsb_set(dest, &attr,&(src[i]));
+	}
+
+	return size;
 }
 
-void test_math_add()
+int dsb_array_read(const NID_t *src, NID_t *dest, int max)
 {
-	struct Event evt;
-	NID_t res;
-	//struct NID a;
-	//struct NID b;
+	NID_t attr;
+	NID_t val;
+	int i;
+	int len2;
 
-	//Generate 55 +
-	dsb_iton(55,&evt.d1);
-	evt.d2.header = 0;
-	evt.d2.t = NID_SPECIAL;
-	evt.d2.ll = SPECIAL_ADD;
-	evt.type = EVENT_GET;
-	evt.flags = 0;
-	evt.res = &res;
+	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_get(src,&attr,&val);
+	len2 = dsb_ntoi(&val);
 
-	//Send 55 + get event
-	CHECK(dsb_route(&evt) == SUCCESS);
-	CHECK(evt.flags & EVTFLAG_DONE);
-	CHECK(res.t == NID_INTADD);
-	CHECK(res.ll == 55);
+	//TODO make sure size exists.
 
-	//Generate 55+ 55
-	evt.d2 = res;
-	evt.type = EVENT_GET;
-	evt.flags = 0;
+	for (i=0; i<len2; i++)
+	{
+		dsb_iton(i,&attr);
 
-	//Send 55+ 55 get event
-	CHECK(dsb_route(&evt) == SUCCESS);
-	CHECK(evt.flags & EVTFLAG_DONE);
-	CHECK(res.t == NID_INTEGER);
-	CHECK(res.ll == 110);
+		//If we are not the last then use async read
+		if (i < len2-1)
+		{
+			dsb_getA(src,&attr,&(dest[i]));
+		}
+		else
+		{
+			dsb_get(src,&attr,&(dest[i]));
+		}
+	}
 
-	DONE;
-}
-
-
-
-int main(int argc, char *argv[])
-{
-	dsb_nid_init();
-	dsb_event_init();
-	dsb_route_init();
-
-	//Load the math module
-	dsb_module_register("math",dsb_math_module());
-	dsb_module_load("math",0);
-
-	dsb_test(test_math_add);
-
-	dsb_route_final();
-	dsb_event_final();
-	dsb_nid_final();
-
-	return 0;
+	return len2;
 }
 

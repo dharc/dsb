@@ -55,8 +55,7 @@ int math_arith_add1(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res->type = NID_INTADD;
-		evt->res->ll = num;
+		dsb_nid(NID_INTADD,num,evt->res);
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -74,9 +73,7 @@ int math_arith_add2(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res->type = NID_INTEGER;
-		//Do the addition
-		evt->res->ll = num1 + num2;
+		dsb_iton(num1+num2,evt->res);
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -93,8 +90,7 @@ int math_arith_sub1(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res->type = NID_INTSUB;
-		evt->res->ll = num;
+		dsb_nid(NID_INTSUB,num,evt->res);
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -112,9 +108,7 @@ int math_arith_sub2(struct Event *evt)
 
 	if (evt->type == EVENT_GET)
 	{
-		evt->res->type = NID_INTEGER;
-		//Do the addition
-		evt->res->ll = num2 - num1;
+		dsb_iton(num2-num1,evt->res);
 		//TODO Make threadsafe
 		evt->flags |= EVTFLAG_DONE;
 	}
@@ -136,17 +130,19 @@ int math_init(const struct NID *base)
 	struct NID y2;
 
 	//Route for the first part of ADD operator.
-	x1.type = NID_SPECIAL;
-	x1.ll = SPECIAL_ADD;
+	dsb_nid(NID_SPECIAL,SPECIAL_ADD,&x1);
 	x2 = x1;
 	dsb_iton(0,&y1);
-	y2.type = NID_INTEGER;
+	y2.header = 0;
+	y2.t = NID_INTEGER;
 	y2.ll = 0xFFFFFFFFFFFFFFFF;
 	dsb_route_map(&x1,&x2,&y1,&y2,math_arith_add1);
 	//Route for the second part of ADD operator.
-	x1.type = NID_INTADD;
+	x1.header = 0;
+	x1.t = NID_INTADD;
 	x1.ll = 0;
-	x2.type = NID_INTADD;
+	x2.header = 0;
+	x2.t = NID_INTADD;
 	x2.ll = 0xFFFFFFFFFFFFFFFF;
 	dsb_route_map(&x1,&x2,&y1,&y2,math_arith_add2);
 

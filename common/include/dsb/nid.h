@@ -92,6 +92,45 @@ enum NIDType
  */
 struct NID
 {
+	//NID Header
+	union
+	{
+		struct
+		{
+			unsigned int hasMac : 1;
+			unsigned int r1 : 3;
+			unsigned int cat : 4;
+		};
+		unsigned char header;
+	};
+
+	union
+	{
+		//Has MAC = 1
+		struct
+		{
+			unsigned char mac[6];
+			unsigned long long n : 40;
+		};
+		//Has MAC = 0
+		struct
+		{
+			unsigned char r2;
+			unsigned short t;
+			union
+			{
+				long long ll;
+				unsigned long long ull;
+				double dbl;
+				char chr;
+			};
+		};
+	};
+};
+
+
+/*struct NID
+{
 	enum NIDType type;				///< Node type.
 
 	union
@@ -107,7 +146,7 @@ struct NID
 	};
 
 	//TODO Add security tag.
-};
+};*/
 
 typedef struct NID NID_t;
 
@@ -124,17 +163,14 @@ int dsb_nid_init();
  */
 int dsb_nid_final();
 
+void dsb_nid_null(NID_t *n);
+
 int dsb_nid_pack(const NID_t *n, char *buf, int max);
 int dsb_nid_unpack(const char *buf, NID_t *n);
 
-/**
- * Compare two NIDs. If both are equal then 0 is returned, otherwise if a < b
- * then a negative number is returned, otherwise a positive number.
- * @param a First NID
- * @param b Second NID
- * @return 0 for equality, negative if a<b, positive if a>b.
- */
-int dsb_nid_compare(const struct NID *a, const struct NID *b);
+int dsb_nid_eq(const NID_t *n1, const NID_t *n2);
+int dsb_nid_leq(const NID_t *n1, const NID_t *n2);
+int dsb_nid_geq(const NID_t *n1, const NID_t *n2);
 
 /**
  * Convert a NID to a string.
@@ -190,6 +226,9 @@ void dsb_iton(int,struct NID*);
  * @return Integer converted from the NID.
  */
 int dsb_ntoi(const struct NID*);
+
+void dsb_cton(char chr, NID_t *n);
+char dsb_ntoc(const NID_t *n);
 
 /** @} */
 

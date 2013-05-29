@@ -32,8 +32,6 @@ int dsb_nid_init()
 		printf("Mac Addr: %s\n",buf);
 	}
 
-	local_base.type = NID_USER;
-	local_base.ll = 0;
 	return SUCCESS;
 }
 
@@ -44,23 +42,32 @@ int dsb_nid_final()
 
 int dsb_nid_pack(const NID_t *n, char *buf, int max)
 {
-	*((int*)buf) = n->type;
-	buf += sizeof(int);
+	*buf = n->header;
+	buf++;
+	*buf = n->r2;
+	buf++;
+	*((short*)buf) = n->t;
+	buf += sizeof(short);
 	*((long long*)buf) = n->ll;
-	return sizeof(int)+sizeof(long long);
+	return 2+sizeof(short)+sizeof(long long);
 }
 
 int dsb_nid_unpack(const char *buf, NID_t *n)
 {
-	n->type = *((int*)buf);
-	buf += sizeof(int);
+	n->header = *buf;
+	buf++;
+	n->r2 = *buf;
+	buf++;
+	n->t = *((short*)buf);
+	buf += sizeof(short);
 	n->ll = *((long long*)buf);
-	return sizeof(int)+sizeof(long long);
+	return 2+sizeof(short)+sizeof(long long);
 }
 
 struct NID *dsb_nid(enum NIDType type, unsigned long long ll, struct NID *nid)
 {
-	nid->type = type;
+	nid->header = 0;
+	nid->t = type;
 	nid->ll = ll;
 	return nid;
 }
@@ -77,26 +84,31 @@ int dsb_nid_free(const struct NID *nid)
 	return ERR_NID_FREE;
 }
 
-int dsb_nid_compare(const struct NID *a, const struct NID *b)
+int dsb_nid_eq(const NID_t *n1, const NID_t *n2)
 {
-	if (a->type < b->type) return -1;
-	if (a->type > b->type) return 1;
-	if (a->a < b->a) return -1;
-	if (a->a > b->a) return 1;
-	if (a->b < b->b) return -1;
-	if (a->b > b->b) return 1;
-	return 0;
+	return ((n1->header == n2->header) && (n1->t == n2->t) && (n1->ll == n2->ll));
+}
+
+int dsb_nid_leq(const NID_t *n1, const NID_t *n2)
+{
+	return ((n1->header <= n2->header) && (n1->t <= n2->t) && (n1->ll <= n2->ll));
+}
+
+int dsb_nid_geq(const NID_t *n1, const NID_t *n2)
+{
+	return ((n1->header >= n2->header) && (n1->t >= n2->t) && (n1->ll >= n2->ll));
 }
 
 void dsb_iton(int i, struct NID *n)
 {
-	n->type = NID_INTEGER;
+	n->header = 0;
+	n->t = NID_INTEGER;
 	n->ll = i;
 }
 
 int dsb_ntoi(const struct NID *n)
 {
-	if (n->type == NID_INTEGER)
+	if ((n->header == 0) && (n->t == NID_INTEGER))
 	{
 		return n->ll;
 	}
@@ -104,6 +116,30 @@ int dsb_ntoi(const struct NID *n)
 	{
 		return 0;
 	}
+}
+
+void dsb_cton(char chr, NID_t *n)
+{
+	n->header = 0;
+	n->t = NID_CHARACTER;
+	n->chr = chr;
+}
+
+char dsb_ntoc(const NID_t *n)
+{
+	if ((n->header == 0) && (n->t == NID_CHARACTER))
+	{
+		return n->chr;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void dsb_nid_null(NID_t *n)
+{
+	memset(n,0,sizeof(NID_t));
 }
 
 int dsb_nid_fromStr(const char *str, struct NID *nid)
@@ -142,7 +178,8 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 
 		//Read ]
 
-		nid->type = a;
+		nid->header = 0;
+		nid->t = a;
 		nid->ll = b;
 		return SUCCESS;
 	}
@@ -150,8 +187,9 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 	{
 			if (strchr(str, '.'))
 			{
+				nid->header = 0;
 				nid->dbl = atof(str);
-				nid->type = NID_REAL;
+				nid->t = NID_REAL;
 				return SUCCESS;
 			}
 			else
@@ -173,7 +211,8 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 					i++;
 				}
 				if (neg == 1) num = -num;
-				nid->type = NID_INTEGER;
+				nid->header = 0;
+				nid->t = NID_INTEGER;
 				nid->ll = num;
 				return SUCCESS;
 			}
@@ -192,28 +231,31 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 
 int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 {
-	if (nid->type == NID_SPECIAL)
+	if (nid->header == 0)
 	{
-		switch(nid->ll)
+		if (nid->t == NID_SPECIAL)
 		{
-		case SPECIAL_NULL:		strcpy(str, "null"); return SUCCESS;
-		case SPECIAL_TRUE:		strcpy(str, "true"); return SUCCESS;
-		case SPECIAL_FALSE:		strcpy(str, "false"); return SUCCESS;
-		default: break;
+			switch(nid->ll)
+			{
+			case SPECIAL_NULL:		strcpy(str, "null"); return SUCCESS;
+			case SPECIAL_TRUE:		strcpy(str, "true"); return SUCCESS;
+			case SPECIAL_FALSE:		strcpy(str, "false"); return SUCCESS;
+			default: break;
+			}
+		}
+		else if (nid->t == NID_INTEGER)
+		{
+			sprintf(str, "%d", (unsigned int)nid->ll);
+			return SUCCESS;
+		}
+		else if (nid->t == NID_REAL)
+		{
+			sprintf(str, "%0.4f", (float)nid->dbl);
+			return SUCCESS;
 		}
 	}
-	else if (nid->type == NID_INTEGER)
-	{
-		sprintf(str, "%d", (unsigned int)nid->ll);
-		return SUCCESS;
-	}
-	else if (nid->type == NID_REAL)
-	{
-		sprintf(str, "%0.4f", (float)nid->dbl);
-		return SUCCESS;
-	}
 
-	sprintf(str,"[%d:%d]",nid->type,(unsigned int)nid->ll);
+	sprintf(str,"[%d:%d:%d]",nid->header,nid->t,(unsigned int)nid->ll);
 	return SUCCESS;
 }
 

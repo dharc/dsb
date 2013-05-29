@@ -72,7 +72,7 @@ void test_vol_getset()
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(res.type == NID_INTEGER);
+	CHECK(res.t == NID_INTEGER);
 	CHECK(res.ll == 55);
 
 	DONE;
@@ -109,7 +109,7 @@ void test_vol_region()
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(res.type == NID_INTEGER);
+	CHECK(res.t == NID_INTEGER);
 	CHECK(res.ll == 66);
 
 	//Generate GET event;
@@ -122,7 +122,7 @@ void test_vol_region()
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(res.type == NID_INTEGER);
+	CHECK(res.t == NID_INTEGER);
 	CHECK(res.ll == 66);
 	DONE;
 }

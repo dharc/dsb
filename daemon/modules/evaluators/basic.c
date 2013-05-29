@@ -66,7 +66,7 @@ int eval_basic(struct HARC *harc, void **data)
 		dsb_iton(i,&tmp);
 		dsb_get(&(harc->def),&tmp,&tmp);
 
-		if (tmp.type == NID_OPERATOR)
+		if (tmp.t == NID_OPERATOR)
 		{
 
 		}

@@ -99,7 +99,7 @@ int dsb_route_map(
 inline int nid_withinrange(const struct NID *a, const struct NID *b, const struct NID *n)
 {
 	//NOTE: Assumption about a being less than b!!!!
-	return ((dsb_nid_compare(a,n) <= 0) && (dsb_nid_compare(b,n) >= 0)) ? 0 : 1;
+	return ((dsb_nid_leq(a,n) == 1) && (dsb_nid_geq(b,n) == 1)) ? 1 : 0;
 }
 
 int dsb_route(struct Event *evt)

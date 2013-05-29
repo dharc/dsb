@@ -54,9 +54,7 @@ int dsb_string_cton(const NID_t *dest, const char *str)
 	for (i=0; i<len; i++)
 	{
 		dsb_iton(i,&attr);
-		//dsb_nid(NID_CHARACTER,str[i], &val);
-		val.type = NID_CHARACTER;
-		val.chr = str[i];
+		dsb_cton(str[i],&val);
 		dsb_set(dest, &attr,&val);
 	}
 

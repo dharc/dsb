@@ -105,8 +105,7 @@ struct VolRegionEntry *vol_createregion(const struct NID *x1, const struct NID *
 	res->flags = 0;
 	res->data = 0;
 	res->eval = 0;
-	res->def.type = 0;
-	res->def.ll = 0;
+	dsb_nid_null(&(res->def));
 
 	//Find a space for the region and insert it.
 	//TODO Use 2D search structure for better performance.
@@ -126,17 +125,17 @@ struct VolRegionEntry *vol_createregion(const struct NID *x1, const struct NID *
  * Return 0 if n is within the range of a and b. 1 otherwise.
  * Copied from router.
  */
-inline int nid_withinrange2(const struct NID *a, const struct NID *b, const struct NID *n)
+/*inline int nid_withinrange2(const struct NID *a, const struct NID *b, const struct NID *n)
 {
 	//NOTE: Assumption about a being less than b!!!!
 	return ((dsb_nid_compare(a,n) <= 0) && (dsb_nid_compare(b,n) >= 0)) ? 0 : 1;
-}
+}*/
 
 /*
  * Search for and return a region that matches the HARC tail given as
  * parameters a and b. 0 is returned if no match is found.
  */
-struct VolRegionEntry *vol_getregion(const struct NID *a, const struct NID *b)
+/*struct VolRegionEntry *vol_getregion(const struct NID *a, const struct NID *b)
 {
 	//TODO Use search algorithm.
 	int i;
@@ -164,7 +163,7 @@ struct VolRegionEntry *vol_getregion(const struct NID *a, const struct NID *b)
 	}
 
 	return 0;
-}
+}*/
 
 /*
  * Construct a new HARC entry in the hash table.
@@ -177,10 +176,8 @@ struct VolHARCEntry *vol_createentry(const struct NID *a, const struct NID *b)
 	res = malloc(sizeof(struct VolHARCEntry));
 	res->harc.t1 = *a;
 	res->harc.t2 = *b;
-	res->harc.h.type = NID_SPECIAL;
-	res->harc.h.ll = 0;
-	res->harc.def.type = NID_SPECIAL;
-	res->harc.def.ll = 0;
+	dsb_nid_null(&res->harc.h);
+	dsb_nid_null(&res->harc.def);
 	res->harc.e = 0;
 	res->flags = 0;
 
@@ -203,7 +200,7 @@ HARC_t *vol_getharc(const NID_t *a, const NID_t *b, int create)
 	while (res != 0)
 	{
 		//Does this HARC entry match?
-		if ((dsb_nid_compare(a,&(res->harc.t1)) == 0) && (dsb_nid_compare(b,&(res->harc.t2)) == 0))
+		if ((dsb_nid_eq(a,&(res->harc.t1)) == 1) && (dsb_nid_eq(b, &(res->harc.t2)) == 1))
 		{
 			return &(res->harc);
 		}
@@ -323,9 +320,9 @@ int vol_init(const NID_t *base)
 	NID_t x2;
 
 	//The entire Node space below user nodes.
-	x1.type = 0;
-	x1.ll = 0;
-	x2.type = NID_USER-1;
+	dsb_nid_null(&x1);
+	x2.header = 0;
+	x2.t = NID_USER-1;
 	x2.ll = 0xFFFFFFFFFFFFFFFF;
 	dsb_route_map(&x1,&x2,&x1,&x2,vol_handler);
 

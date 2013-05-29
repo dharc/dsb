@@ -51,8 +51,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 	{
 			if (event->type == EVENT_GET)
 			{
-				event->res->type = 0;
-				event->res->ll = 0;
+				dsb_nid_null(event->res);
 			}
 		return SUCCESS;
 	}

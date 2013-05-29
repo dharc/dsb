@@ -76,19 +76,19 @@ int dsb_send(struct Event *evt)
 		whichdef = evt->d1.ll;
 
 		//Is it asking for SIZE?
-		if ((evt->d2.type == NID_SPECIAL) && (evt->d2.ll == SPECIAL_SIZE))
+		if ((evt->d2.t == NID_SPECIAL) && (evt->d2.ll == SPECIAL_SIZE))
 		{
 			*(evt->res) = sizes[whichdef];
 		}
 		//Is it asking for an integer indexed element?
-		else if (evt->d2.type == NID_INTEGER)
+		else if (evt->d2.t == NID_INTEGER)
 		{
 			//If an invalid number then return NULL.
 			if (evt->d2.ll < 0 || evt->d2.ll >= 30)
 			{
 				if (evt->res != 0)
 				{
-					evt->res->type = NID_SPECIAL;
+					evt->res->t = NID_SPECIAL;
 					evt->res->ll = SPECIAL_NULL;
 				}
 			}
@@ -100,7 +100,7 @@ int dsb_send(struct Event *evt)
 		}
 		else
 		{
-			evt->res->type = NID_SPECIAL;
+			evt->res->t = NID_SPECIAL;
 			evt->res->ll = SPECIAL_NULL;
 		}
 	}
@@ -142,14 +142,14 @@ void test_eval_basic()
 	dsb_nid(NID_INTEGER,0,&(harc.def));
 	CHECK(dsb_eval_call(&harc) == SUCCESS);
 	CHECK(hassent == 2);
-	CHECK(harc.h.type == NID_INTEGER);
+	CHECK(harc.h.t == NID_INTEGER);
 	CHECK(harc.h.ll == 89);
 
 	//Check the single lookup definition
 	dsb_nid(NID_INTEGER,1,&(harc.def));
 	CHECK(dsb_eval_call(&harc) == SUCCESS);
 	CHECK(hassent == 7);
-	CHECK(harc.h.type == NID_INTEGER);
+	CHECK(harc.h.t == NID_INTEGER);
 	CHECK(harc.h.ll == 89);
 
 	DONE;

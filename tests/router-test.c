@@ -60,19 +60,15 @@ void test_router_simple()
 	struct NID y2;
 
 	evt.type = EVENT_GET;
-	evt.d1.type = NID_INTEGER;
-	evt.d1.ll = 55;
-	evt.d2.type = 0;
-	evt.d2.ll = 0;
+	dsb_iton(55,&evt.d1);
+	dsb_nid_null(&evt.d2);
 
-	x1.type = NID_INTEGER;
-	y1.type = 0;
-	x1.ll = 0;
-	y1.ll = 0;
-	x2.type = NID_INTEGER;
-	y2.type = 0;
+	dsb_iton(0,&x1);
+	dsb_nid_null(&y1);
+	dsb_nid_null(&y2);
+	x2.header = 0;
+	x2.t = NID_INTEGER;
 	x2.ll = 0x7FFFFFFFFFFFFFFF;
-	y2.ll = 0;
 
 	CHECK(dsb_route_init() == 0);
 
@@ -80,7 +76,7 @@ void test_router_simple()
 	CHECK(dsb_route(&evt) == 0);
 	CHECK(math_handler1_called == 1);
 
-	evt.d1.type = NID_REAL;
+	evt.d1.t = NID_REAL;
 	CHECK(dsb_route(&evt) != 0);
 
 	CHECK(dsb_route_final() == 0);
