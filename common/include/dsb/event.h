@@ -42,6 +42,11 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/harc.h"
 #include "dsb/nid.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 enum EventType
 {
 	EVENT_DEFINE=0x000,	//!< Define a HARC
@@ -136,6 +141,24 @@ int dsb_event_init();
 int dsb_event_final();
 
 /**
+ * Serialise the event structure into a packed byte array. The number of bytes
+ * it packs down to depends upon the event type.
+ * @param e Source event to be serialised.
+ * @param buf Output buffer.
+ * @param max Maximum size of output buffer.
+ * @return Number of bytes output.
+ */
+int dsb_event_pack(const Event_t *e, char *buf, int max);
+
+/**
+ * De-serialise from a packed byte array into an event structure.
+ * @param buf Source buffer.
+ * @param e Output event structure to populate.
+ * @return Number of bytes read from buffer.
+ */
+int dsb_event_unpack(const char *buf, Event_t *e);
+
+/**
  * Allocate an event from the event pool.
  * @return Event pointer or NULL if no spare events.
  */
@@ -155,6 +178,10 @@ void dsb_event_free(struct Event *evt);
 int dsb_event_params(const struct Event *evt);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

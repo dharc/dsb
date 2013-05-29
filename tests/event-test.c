@@ -56,6 +56,57 @@ void test_event_allocate()
 	DONE;
 }
 
+void test_event_packunpack()
+{
+	Event_t source;
+	Event_t result;
+	char buffer[200];
+
+	//----- GET -----
+	source.type = EVENT_GET;
+	dsb_iton(44,&source.d1);
+	dsb_iton(55,&source.d2);
+	source.resid = 30;
+
+	CHECK(dsb_event_pack(&source,buffer,200) == 32);
+	CHECK(dsb_event_unpack(buffer, &result) == 32);
+
+	CHECK(result.type == EVENT_GET);
+	CHECK(result.d1.ll == 44);
+	CHECK(result.d2.ll == 55);
+	CHECK(result.resid == 30);
+
+	//----- DEFINE -----
+	source.type = EVENT_DEFINE;
+	dsb_iton(66,&source.d1);
+	dsb_iton(77,&source.d2);
+	dsb_iton(88,&source.def);
+	source.eval = 1;
+
+	CHECK(dsb_event_pack(&source,buffer,200) == 44);
+	CHECK(dsb_event_unpack(buffer, &result) == 44);
+
+	CHECK(result.type == EVENT_DEFINE);
+	CHECK(result.eval == 1);
+	CHECK(result.def.ll == 88);
+
+	//----- DEP -----
+	source.type = EVENT_DEP;
+	dsb_iton(99,&source.d1);
+	dsb_iton(111,&source.d2);
+	dsb_iton(222,&source.dep1);
+	dsb_iton(333,&source.dep2);
+
+	CHECK(dsb_event_pack(&source,buffer,200) == 52);
+	CHECK(dsb_event_unpack(buffer, &result) == 52);
+
+	CHECK(result.type == EVENT_DEP);
+	CHECK(result.dep1.ll == 222);
+	CHECK(result.dep2.ll == 333);
+
+	DONE;
+}
+
 void test_event_params()
 {
 	DONE;
@@ -63,7 +114,10 @@ void test_event_params()
 
 int main(int argc, char *argv[])
 {
+	//dsb_event_init();
 	dsb_test(test_event_allocate);
 	dsb_test(test_event_params);
+	dsb_test(test_event_packunpack);
+	//dsb_event_final();
 	return 0;
 }

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 NID_t local_base;
 static unsigned char macaddr[6];
@@ -39,6 +40,22 @@ int dsb_nid_init()
 int dsb_nid_final()
 {
 	return SUCCESS;
+}
+
+int dsb_nid_pack(const NID_t *n, char *buf, int max)
+{
+	*((int*)buf) = n->type;
+	buf += sizeof(int);
+	*((long long*)buf) = n->ll;
+	return sizeof(int)+sizeof(long long);
+}
+
+int dsb_nid_unpack(const char *buf, NID_t *n)
+{
+	n->type = *((int*)buf);
+	buf += sizeof(int);
+	n->ll = *((long long*)buf);
+	return sizeof(int)+sizeof(long long);
 }
 
 struct NID *dsb_nid(enum NIDType type, unsigned long long ll, struct NID *nid)

@@ -108,6 +108,7 @@ int dsb_route(struct Event *evt)
 	//TODO Properly support regional events.
 	int i;
 	int t1,t2;
+
 	for (i=0; i<MAX_HANDLERS; i++)
 	{
 		//Check first order is in the range

@@ -144,7 +144,7 @@ int net_init(const NID_t *base)
 	//Init common net code
 	dsb_net_init();
 
-	dsb_net_callback(DSBNET_SENDEVENT,net_msg_event);
+	//dsb_net_callback(DSBNET_SENDEVENT,net_msg_event);
 
 	//Set up listener socket.
 	net_listen(5555);

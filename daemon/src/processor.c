@@ -50,6 +50,8 @@ either expressed or implied, of the FreeBSD Project.
 
 #define QUEUE_SIZE		10000
 
+//TODO Need to properly support rix and wix.
+
 /*
  * A threadsafe event queue. There should be 3 of these.
  */
@@ -149,12 +151,12 @@ int dsb_proc_send(struct Event *evt, int async)
 	if (async == SYNC)
 	{
 		ret = dsb_proc_wait(evt);
+		if (evt->flags & EVTFLAG_FREE)
+		{
+			dsb_event_free(evt);
+		}
 	}
 
-	if (evt->flags & EVTFLAG_FREE)
-	{
-		dsb_event_free(evt);
-	}
 	return ret;
 }
 
@@ -195,6 +197,10 @@ int dsb_proc_single()
 		{
 			e->err = ret;
 			e->flags |= EVTFLAG_ERRO;
+		}
+		if (e->flags & EVTFLAG_FREE)
+		{
+			dsb_event_free(e);
 		}
 		return 1;
 	}

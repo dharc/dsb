@@ -39,44 +39,5 @@ either expressed or implied, of the FreeBSD Project.
 
 #include <stdio.h>
 
-extern int dsb_send(struct Event *,int);
 
-int net_msg_event(int sock, void *data)
-{
-	int ret;
-	Event_t *evt = data;
-	evt->flags = 0;
 
-	//If GET we need to wait and send result.
-	if (evt->type == EVENT_GET)
-	{
-		struct DSBNetEventResult res;
-		evt->res = &(res.res);
-		ret = dsb_send(evt,0);
-		if ((evt->flags & EVTFLAG_ERRO) == 0)
-		{
-			res.id = evt->eval;
-			if (ret == SUCCESS)
-			{
-				dsb_net_send(sock, DSBNET_EVENTRESULT,&res);
-			}
-			else
-			{
-				dsb_net_send_error(sock,ret);
-			}
-			return SUCCESS;
-		}
-		else
-		{
-			dsb_net_send_error(sock,evt->err);
-			return SUCCESS;
-		}
-	}
-	else
-	{
-		Event_t *evt2 = dsb_event_allocate();
-		*evt2 = *evt;
-		evt2->flags |= EVTFLAG_FREE;
-		return dsb_send(evt,1);
-	}
-}

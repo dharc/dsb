@@ -38,10 +38,14 @@ either expressed or implied, of the FreeBSD Project.
 
 static Event_t *readlist[MAX_READLIST];
 
+extern int dsb_send(struct Event *,int);
+
+
 int dsb_net_send_event(int sock, Event_t *e, int async)
 {
 	int ix = 0;
 	int count = 0;
+	char buffer[100];
 	//msg.evt = *evt;
 
 	if (e->type == EVENT_GET)
@@ -67,15 +71,19 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 		}
 	}
 
+	//Pack the event to a buffer.
+	count = dsb_event_pack(e, buffer, 100);
+
 	//Actually send the event
-	dsb_net_send(sock, DSBNET_SENDEVENT, e);
+	dsb_net_send(sock, DSBNET_SENDEVENT, buffer, count);
 
 	//Block if we need a response.
+	count = 0;
 	if ((async == 0) && (e->type == EVENT_GET))
 	{
 		while (((e->flags & EVTFLAG_DONE) == 0) && count < 100)
 		{
-			dsb_net_poll(1);
+			dsb_net_poll(10);
 			count++;
 		}
 
@@ -89,46 +97,97 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 
 int dsb_net_cb_event(int sock, void *data)
 {
-	return SUCCESS;
+	int ret;
+	Event_t *evt;
+	int count;
+
+	evt = dsb_event_allocate();
+	count = dsb_event_unpack(data, evt);
+	evt->flags = 0;
+
+	//If GET we need to wait and send result.
+	if (evt->type == EVENT_GET)
+	{
+		NID_t res;
+		evt->res = &res;
+		ret = dsb_send(evt,0);
+		if ((evt->flags & EVTFLAG_ERRO) == 0)
+		{
+			if (ret == SUCCESS)
+			{
+				dsb_net_send_result(sock, evt->resid, &res);
+			}
+			else
+			{
+				dsb_net_send_error(sock,ret);
+			}
+			dsb_event_free(evt);
+			return count;
+		}
+		else
+		{
+			dsb_net_send_error(sock,evt->err);
+			dsb_event_free(evt);
+			return count;
+		}
+	}
+	else
+	{
+		evt->flags |= EVTFLAG_FREE;
+		dsb_send(evt,1);
+		return count;
+	}
 }
 
 int dsb_net_send_error(int sock, int err)
 {
-	struct DSBNetError e;
-	e.err = err;
-	dsb_net_send(sock, DSBNET_ERROR, &e);
+	dsb_net_send(sock, DSBNET_ERROR, &err, sizeof(int));
 	return SUCCESS;
 }
 
 int dsb_net_cb_error(int sock, void *data)
 {
-	struct DSBNetError *err = (struct DSBNetError*)data;
-	DSB_ERROR(err->err,0);
+	DSB_ERROR(*((int*)data),0);
+	return sizeof(int);
+}
+
+int dsb_net_send_result(int sock, int id, const NID_t *res)
+{
+	char buf[100];
+	int count = sizeof(int);
+
+	(*(int*)buf) = id;
+	count += dsb_nid_pack(res, buf+sizeof(int),100);
+	dsb_net_send(sock, DSBNET_EVENTRESULT, buf, count);
 	return SUCCESS;
 }
 
 int dsb_net_cb_result(int sock, void *data)
 {
-	struct DSBNetEventResult *res = (struct DSBNetEventResult*)data;
+	int resid = *((int*)data);
+	NID_t res;
 	Event_t *evt;
+	int count = sizeof(int);
+
+	count += dsb_nid_unpack(data+sizeof(int), &res);
 
 	//Is the ID valid
-	if (res->id < 0 || res->id >= MAX_READLIST)
+	if (resid < 0 || resid >= MAX_READLIST)
 	{
 		return DSB_ERROR(ERR_NETRESULT,0);
 	}
 
 	//Find event associated with ID.
-	evt = readlist[res->id];
+	evt = readlist[resid];
 	if (evt == 0)
 	{
 		return DSB_ERROR(ERR_NETRESULT,0);
 	}
-	readlist[res->id] = 0;
+	readlist[resid] = 0;
 
 	//Actually update value and mark event as complete.
-	*(evt->res) = res->res;
+	*(evt->res) = res;
 	evt->flags |= EVTFLAG_DONE;
 
-	return SUCCESS;
+	return count;
 }

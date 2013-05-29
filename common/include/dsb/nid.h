@@ -124,6 +124,9 @@ int dsb_nid_init();
  */
 int dsb_nid_final();
 
+int dsb_nid_pack(const NID_t *n, char *buf, int max);
+int dsb_nid_unpack(const char *buf, NID_t *n);
+
 /**
  * Compare two NIDs. If both are equal then 0 is returned, otherwise if a < b
  * then a negative number is returned, otherwise a positive number.

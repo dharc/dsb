@@ -70,24 +70,8 @@ struct DSBNetHeader
 {
 	unsigned short chck;	///< Check valid message.
 	unsigned short type;	///< Message type.
-};
-
-struct DSBNetEventSend
-{
-	//struct DSBNetHeader h;
-	Event_t evt;
-};
-
-struct DSBNetEventResult
-{
-	int id;
-	NID_t res;
-};
-
-struct DSBNetError
-{
-	int err;
-};
+	unsigned short size;
+} __attribute__((__packed__));
 
 /**
  * Send a single event over the network. This function will not block, if the
@@ -100,6 +84,7 @@ struct DSBNetError
  */
 int dsb_net_send_event(int sock, Event_t *evt, int async);
 
+int dsb_net_send_result(int sock, int id, const NID_t *res);
 int dsb_net_send_error(int sock, int error);
 
 int dsb_net_cb_event(int sock, void *data);

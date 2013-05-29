@@ -80,9 +80,10 @@ int dsb_net_disconnect(int sock);
  * Send a message to a socket. Will determine message size automatically.
  * @param sock Socket.
  * @param msg Must contain a struct DSBNetHeader.
+ * @param size Size of the message data.
  * @return SUCCESS.
  */
-int dsb_net_send(int sock, int msgtype, void *msg);
+int dsb_net_send(int sock, int msgtype, void *msg, int size);
 int dsb_net_poll(unsigned int ms);
 int dsb_net_callback(int msgtype, int (*cb)(int,void *));
 

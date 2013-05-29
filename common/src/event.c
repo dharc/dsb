@@ -46,6 +46,82 @@ int dsb_event_final()
 	return ERR_NOINIT;
 }
 
+int dsb_event_pack(const Event_t *e, char *buf, int max)
+{
+	char *oldbuf = buf;
+	//Pack the type and destination NIDs.
+	*((int*)buf) = e->type;
+	buf += sizeof(int);
+	buf += dsb_nid_pack(&(e->d1),buf,max);
+	buf += dsb_nid_pack(&(e->d2),buf,max);
+
+	//Pack type specific details.
+	switch (e->type)
+	{
+	//---------------------------------------------------------------------
+	case EVENT_GET:
+		*((int*)buf) = e->resid;
+		buf += sizeof(int);
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_DEFINE:
+		*((int*)buf) = e->eval;
+		buf += sizeof(int);
+		buf += dsb_nid_pack(&(e->def),buf,max);
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_DEP:
+		buf += dsb_nid_pack(&(e->dep1),buf,max);
+		buf += dsb_nid_pack(&(e->dep2),buf,max);
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_NOTIFY:
+		break;
+	//---------------------------------------------------------------------
+	default: break;
+	}
+
+	return (int)(buf-oldbuf);
+}
+
+int dsb_event_unpack(const char *buf, Event_t *e)
+{
+	const char *oldbuf = buf;
+	//Unpack the type and destination NIDs.
+	e->type = *((int*)buf);
+	buf += sizeof(int);
+	buf += dsb_nid_unpack(buf,&(e->d1));
+	buf += dsb_nid_unpack(buf,&(e->d2));
+
+	//Unpack type specific details.
+	switch (e->type)
+	{
+	//---------------------------------------------------------------------
+	case EVENT_GET:
+		e->resid = *((int*)buf);
+		buf += sizeof(int);
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_DEFINE:
+		e->eval = *((int*)buf);
+		buf += sizeof(int);
+		buf += dsb_nid_unpack(buf,&(e->def));
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_DEP:
+		buf += dsb_nid_unpack(buf,&(e->dep1));
+		buf += dsb_nid_unpack(buf,&(e->dep2));
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_NOTIFY:
+		break;
+	//---------------------------------------------------------------------
+	default: break;
+	}
+
+	return (int)(buf-oldbuf);
+}
+
 struct Event *dsb_event(enum EventType type, const struct NID *d1, const struct NID *d2, struct Event *evt)
 {
 	evt->type = type;

@@ -102,11 +102,9 @@ int dsb_net_init()
 	}
 
 	//Now insert message details.
-	messages[DSBNET_SENDEVENT].size = sizeof(struct DSBNetEventSend);
-	messages[DSBNET_EVENTRESULT].size = sizeof(struct DSBNetEventResult);
+	messages[DSBNET_SENDEVENT].cb = dsb_net_cb_event;
 	messages[DSBNET_EVENTRESULT].cb = dsb_net_cb_result;
 	messages[DSBNET_ERROR].cb = dsb_net_cb_error;
-	messages[DSBNET_ERROR].size = sizeof(struct DSBNetError);
 
 	return 0;
 }
@@ -266,7 +264,7 @@ static int read_messages(int sock)
 		if (header->type >= DSBNET_TYPE_END) return DSB_ERROR(ERR_NETMSGTYPE,0);
 
 		//Do we have the entire message contents?
-		if (rc-sizeof(struct DSBNetHeader) >= messages[header->type].size)
+		if (rc-sizeof(struct DSBNetHeader) >= header->size)
 		{
 			char temp[10];
 			sprintf(temp, "%d",header->type);
@@ -282,8 +280,8 @@ static int read_messages(int sock)
 				DSB_ERROR(ERR_NETCB,0);
 			}
 
-			rc -= sizeof(struct DSBNetHeader)+messages[header->type].size;
-			ix += messages[header->type].size;
+			rc -= sizeof(struct DSBNetHeader)+header->size;
+			ix += header->size;
 
 			//Completed message so move to next.
 			six = ix;
@@ -364,7 +362,7 @@ int dsb_net_callback(int msgtype, int (*cb)(int,void *))
 	return SUCCESS;
 }
 
-int dsb_net_send(int sock, int msgtype, void *msg)
+int dsb_net_send(int sock, int msgtype, void *msg, int size)
 {
 	struct DSBNetHeader header;
 
@@ -375,9 +373,10 @@ int dsb_net_send(int sock, int msgtype, void *msg)
 
 	header.type = msgtype;
 	header.chck = DSB_NET_CHECK;
+	header.size = size;
 	//TODO check for errors.
 	send(sock, &header, sizeof(header),0);
-	send(sock, msg, messages[msgtype].size,0);
+	send(sock, msg, size,0);
 	return SUCCESS;
 }
 
