@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 
 	//Register the internal modules
 	dsb_module_register("volatile",dsb_volatile_module());
-	dsb_module_register("math",dsb_math_module());
+	//dsb_module_register("math",dsb_math_module());
 	dsb_module_register("evaluators",dsb_evaluators_module());
 	dsb_module_register("net",dsb_network_module());
 

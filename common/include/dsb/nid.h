@@ -97,9 +97,9 @@ struct NID
 	{
 		struct
 		{
-			unsigned int hasMac : 1;
-			unsigned int r1 : 3;
-			unsigned int cat : 4;
+			unsigned int hasMac : 1;	///< Has a MAC address component.
+			unsigned int persist : 1;	///< Is persistent.
+			unsigned int r1 : 6;		///< Reserved
 		};
 		unsigned char header;
 	};
@@ -109,14 +109,14 @@ struct NID
 		//Has MAC = 1
 		struct
 		{
-			unsigned char mac[6];
-			unsigned long long n : 40;
+			unsigned char mac[6];		///< MAC Address
+			unsigned long long n : 40;	///< Node number
 		};
 		//Has MAC = 0
 		struct
 		{
-			unsigned char r2;
-			unsigned short t;
+			unsigned char r2;			///< Reserved
+			unsigned short t;			///< Type
 			union
 			{
 				long long ll;
@@ -171,6 +171,14 @@ int dsb_nid_unpack(const char *buf, NID_t *n);
 int dsb_nid_eq(const NID_t *n1, const NID_t *n2);
 int dsb_nid_leq(const NID_t *n1, const NID_t *n2);
 int dsb_nid_geq(const NID_t *n1, const NID_t *n2);
+
+/**
+ * Checks the MAC component against the local MAC. If there is no MAC then it
+ * assumes it is local.
+ * @param n NID to check.
+ * @return 1 for Local, 0 for remote.
+ */
+int dsb_nid_isLocal(const NID_t *n);
 
 /**
  * Convert a NID to a string.

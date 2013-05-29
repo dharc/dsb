@@ -99,6 +99,13 @@ int dsb_nid_geq(const NID_t *n1, const NID_t *n2)
 	return ((n1->header >= n2->header) && (n1->t >= n2->t) && (n1->ll >= n2->ll));
 }
 
+int dsb_nid_isLocal(const NID_t *n)
+{
+	if (n->hasMac == 0) return 1;
+	if (memcmp(n->mac,macaddr,6) == 0) return 1;
+	return 0;
+}
+
 void dsb_iton(int i, struct NID *n)
 {
 	n->header = 0;

@@ -66,10 +66,12 @@ void test_harc_get()
 {
 	Event_t evt;
 	HARC_t harc;
+	NID_t res;
 
 	//Initialise an event.
 	evt.type = EVENT_GET;
 	evt.flags = 0;
+	evt.res = &res;
 	dsb_iton(2,&(evt.d1));
 	dsb_iton(3,&(evt.d2));
 

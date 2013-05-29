@@ -38,26 +38,12 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/harc.h"
 
-struct RouterEntry
-{
-	int (*handler)(struct Event *);
-	struct NID x1;
-	struct NID x2;
-	struct NID y1;
-	struct NID y2;
-};
-
-#define MAX_HANDLERS	20
-
-struct RouterEntry route_table[MAX_HANDLERS];
+static int (*localvolatile[16])(struct Event *);
+static int (*localpersist[16])(struct Event *);
+static int (*remote[16])(struct Event *);
 
 int dsb_route_init(void)
 {
-	int i;
-	for (i=0; i<MAX_HANDLERS; i++)
-	{
-		route_table[i].handler = 0;
-	}
 	return SUCCESS;
 }
 
@@ -67,79 +53,59 @@ int dsb_route_final(void)
 }
 
 int dsb_route_map(
-		const struct NID *x1,
-		const struct NID *x2,
-		const struct NID *y1,
-		const struct NID *y2,
+		int flags, int num,
 		int (*handler)(struct Event *))
 {
-	//TODO Consider making threadsafe.
-	//TODO Check for overlapping node regions.
-	//TODO optimise using 2D binary search.
-	int ff;
-	for (ff=0; ff<MAX_HANDLERS; ff++)
+	if (flags & ROUTE_REMOTE)
 	{
-		if (route_table[ff].handler == 0) break;
+		//TODO Use num later.
+		remote[0] = handler;
 	}
-
-	if (ff == MAX_HANDLERS-1) return DSB_ERROR(ERR_ROUTE_SLOT,0);
-
-	route_table[ff].x1 = *x1;
-	route_table[ff].x2 = *x2;
-	route_table[ff].y1 = *y1;
-	route_table[ff].y2 = *y2;
-	route_table[ff].handler = handler;
+	else
+	{
+		if (flags & ROUTE_PERSISTENT)
+		{
+			localpersist[0] = handler;
+		}
+		else
+		{
+			localvolatile[0] = handler;
+		}
+	}
 
 	return SUCCESS;
 }
 
-/*
- * Return 0 if n is within the range of a and b. 1 otherwise.
- */
-inline int nid_withinrange(const struct NID *a, const struct NID *b, const struct NID *n)
-{
-	//NOTE: Assumption about a being less than b!!!!
-	return ((dsb_nid_leq(a,n) == 1) && (dsb_nid_geq(b,n) == 1)) ? 1 : 0;
-}
-
 int dsb_route(struct Event *evt)
 {
-	//TODO Use a more efficient search strategy.
-	//TODO Properly support regional events.
-	int i;
-	int t1,t2;
+	int (*handler)(struct Event *);
 
-	for (i=0; i<MAX_HANDLERS; i++)
+	//Choose the correct handler...
+	if (dsb_nid_isLocal(&evt->d1) == 0)
 	{
-		//Check first order is in the range
-		t1 = nid_withinrange(&(route_table[i].x1),&(route_table[i].x2),&(evt->d1));
-		t2 = nid_withinrange(&(route_table[i].y1),&(route_table[i].y2),&(evt->d2));
-		if (t1 == 0 && t2 == 0)
+		//TODO Use num later.
+		handler = remote[0];
+	}
+	else
+	{
+		if (evt->d1.persist == 1)
 		{
-			if (route_table[i].handler != 0)
-			{
-				return route_table[i].handler(evt);
-			}
-			else
-			{
-				return DSB_ERROR(ERR_ROUTE_MISSING,0);
-			}
+			handler = localpersist[0];
 		}
+		else
+		{
+			handler = localvolatile[0];
+		}
+	}
 
-		//For symmetry, check the alternative order.
-		t1 = nid_withinrange(&(route_table[i].x1),&(route_table[i].x2),&(evt->d2));
-		t2 = nid_withinrange(&(route_table[i].y1),&(route_table[i].y2),&(evt->d1));
-		if (t1 == 0 && t2 == 0)
-		{
-			if (route_table[i].handler != 0)
-			{
-				return route_table[i].handler(evt);
-			}
-			else
-			{
-				return DSB_ERROR(ERR_ROUTE_MISSING,0);
-			}
-		}
+	//Call the handler if it exists.
+	if (handler != 0)
+	{
+		return handler(evt);
+	}
+	else
+	{
+		return DSB_ERROR(ERR_ROUTE_MISSING,0);
 	}
 
 	//Failed to find a matching handler.

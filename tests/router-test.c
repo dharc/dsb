@@ -54,30 +54,19 @@ int math_handler1(struct Event *evt)
 void test_router_simple()
 {
 	struct Event evt;
-	struct NID x1;
-	struct NID x2;
-	struct NID y1;
-	struct NID y2;
 
 	evt.type = EVENT_GET;
 	dsb_iton(55,&evt.d1);
 	dsb_nid_null(&evt.d2);
 
-	dsb_iton(0,&x1);
-	dsb_nid_null(&y1);
-	dsb_nid_null(&y2);
-	x2.header = 0;
-	x2.t = NID_INTEGER;
-	x2.ll = 0x7FFFFFFFFFFFFFFF;
-
 	CHECK(dsb_route_init() == 0);
 
-	CHECK(dsb_route_map(&x1,&x2,&y1,&y2,math_handler1) == 0);
+	CHECK(dsb_route_map(0,0,math_handler1) == 0);
 	CHECK(dsb_route(&evt) == 0);
 	CHECK(math_handler1_called == 1);
 
 	evt.d1.t = NID_REAL;
-	CHECK(dsb_route(&evt) != 0);
+	CHECK(dsb_route(&evt) == 0);
 
 	CHECK(dsb_route_final() == 0);
 

@@ -316,15 +316,8 @@ int vol_handler(Event_t *evt)
 
 int vol_init(const NID_t *base)
 {
-	NID_t x1;
-	NID_t x2;
-
-	//The entire Node space below user nodes.
-	dsb_nid_null(&x1);
-	x2.header = 0;
-	x2.t = NID_USER-1;
-	x2.ll = 0xFFFFFFFFFFFFFFFF;
-	dsb_route_map(&x1,&x2,&x1,&x2,vol_handler);
+	//A local volatile handler
+	dsb_route_map(0,0,vol_handler);
 
 	return SUCCESS;
 }

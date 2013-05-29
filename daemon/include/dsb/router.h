@@ -40,6 +40,9 @@ either expressed or implied, of the FreeBSD Project.
 struct Event;
 struct NID;
 
+#define ROUTE_PERSISTENT	0x1
+#define ROUTE_REMOTE		0x2
+
 /**
  * @addtogroup Router
  * The router will route events to event handlers as described in its internal
@@ -60,19 +63,14 @@ int dsb_route_final(void);
  * for that region will be routed to the handler. A region is
  * 2-dimensional and so has an x range and y range but it does not matter
  * which range is x or y and they can be flipped.
- * @param x1		Start of first dimension.
- * @param x2		End of first dimension.
- * @param y1		Start of second dimension.
- * @param y2		End of second dimension.
+ * @param flags		Kind of handler.
+ * @param num		Number of that kind (should be 0 at present).
  * @param handler	Event handler for the region.
  * @return SUCCESS, ERR_ROUTE_SLOT.
  * @author Nick Pope
  */
 int dsb_route_map(
-		const struct NID *x1,
-		const struct NID *x2,
-		const struct NID *y1,
-		const struct NID *y2,
+		int flags, int num,
 		int (*handler)(struct Event *));
 
 /**
