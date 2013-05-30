@@ -62,19 +62,19 @@ int dsb_net_final();
  * Connect to a dsbd server. If successful the connection is added to
  * available connections and set as default.
  * @param url address[:port], may be ip or host name.
- * @return The socket handle, or -1 on error.
+ * @return The socket object, or 0 on error.
  */
-int dsb_net_connect(const char *url);
+void *dsb_net_connect(const char *url);
 
 /**
  * Manually add socket to available connections. Used by dsbd module which
  * receives connection requests.
- * @param sock
- * @return SUCCESS
+ * @param sock Socket handle.
+ * @return DSB Socket object.
  */
-int dsb_net_add(int sock);
+void *dsb_net_add(int sock);
 
-int dsb_net_disconnect(int sock);
+int dsb_net_disconnect(void *sock);
 
 /**
  * Send a message to a socket. Will determine message size automatically.
@@ -83,9 +83,9 @@ int dsb_net_disconnect(int sock);
  * @param size Size of the message data.
  * @return SUCCESS.
  */
-int dsb_net_send(int sock, int msgtype, void *msg, int size);
+int dsb_net_send(void *sock, int msgtype, void *msg, int size);
 int dsb_net_poll(unsigned int ms);
-int dsb_net_callback(int msgtype, int (*cb)(int,void *));
+int dsb_net_callback(int msgtype, int (*cb)(void*,void *));
 
 /** @} */
 

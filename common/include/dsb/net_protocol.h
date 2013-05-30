@@ -63,6 +63,8 @@ enum
 	DSBNET_SENDEVENT = 1,
 	DSBNET_EVENTRESULT,
 	DSBNET_ERROR,
+	DSBNET_DEBUGEVENT,
+	DSBNET_DEBUGGER,
 	DSBNET_TYPE_END
 };
 
@@ -82,21 +84,23 @@ struct DSBNetHeader
  * @param e Event to send.
  * @return SUCCESS, ERR_SOCKET.
  */
-int dsb_net_send_event(int sock, Event_t *evt, int async);
+int dsb_net_send_event(void *sock, Event_t *evt, int async);
 
-int dsb_net_send_result(int sock, int id, const NID_t *res);
-int dsb_net_send_error(int sock, int error);
-int dsb_net_send_login(int sock, const char *user, const char *pass);
-int dsb_net_send_root(int sock, const NID_t *root);
+int dsb_net_send_result(void *sock, int id, const NID_t *res);
+int dsb_net_send_error(void *sock, int error);
+int dsb_net_send_login(void *sock, const char *user, const char *pass);
+int dsb_net_send_root(void *sock, const NID_t *root);
+int dsb_net_send_dbgevent(void *sock, Event_t *evt);
+int dsb_net_send_debugger(void *sock, int flags);
 
-int dsb_net_cb_event(int sock, void *data);
-int dsb_net_cb_result(int sock, void *data);
-int dsb_net_cb_error(int sock, void *data);
-int dsb_net_cb_login(int sock, void *data);
-int dsb_net_cb_root(int sock, void *data);
+int dsb_net_cb_event(void *sock, void *data);
+int dsb_net_cb_result(void *sock, void *data);
+int dsb_net_cb_error(void *sock, void *data);
+int dsb_net_cb_login(void *sock, void *data);
+int dsb_net_cb_root(void *sock, void *data);
 
-int dsb_net_send_events(int sock, int count, Event_t *es);
-int dsb_net_send_info(int sock);
+int dsb_net_send_events(void *sock, int count, Event_t *es);
+int dsb_net_send_info(void *sock);
 
 /** @} */
 

@@ -35,6 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <malloc.h>
 
 #ifndef WIN32
 #include <unistd.h>
@@ -66,22 +67,30 @@ typedef int socklen_t;
 
 #define MAX_CONNECTIONS		100
 
-static int connections[MAX_CONNECTIONS];
+/*
+ * Represents a socket connection. Contains the receive buffer and index.
+ */
+struct DSBNetConnection
+{
+	int sockfd;
+	char buffer[1000];
+	int six;
+};
+
+static struct DSBNetConnection *connections[MAX_CONNECTIONS];
 static fd_set fdread;
 static fd_set fderror;
 
 struct NetMessages
 {
-	int size;
-	int (*cb)(int,void*);
+	//int size;
+	int (*cb)(void*,void*);
 };
 
 static struct NetMessages messages[DSBNET_TYPE_END];
 
 int dsb_net_init()
 {
-	int i;
-
 	//Initialise windows sockets
 	#ifdef WIN32
 	WSAData wsaData;
@@ -92,16 +101,7 @@ int dsb_net_init()
 	}
 	#endif
 
-	for (i=0; i<MAX_CONNECTIONS; i++) connections[i] = INVALID_SOCKET;
-
-	//Clear all message details
-	for (i=0; i<DSBNET_TYPE_END; i++)
-	{
-		messages[i].size = 0;
-		messages[i].cb = 0;
-	}
-
-	//Now insert message details.
+	//Now insert default message handlers.
 	messages[DSBNET_SENDEVENT].cb = dsb_net_cb_event;
 	messages[DSBNET_EVENTRESULT].cb = dsb_net_cb_result;
 	messages[DSBNET_ERROR].cb = dsb_net_cb_error;
@@ -114,7 +114,7 @@ int dsb_net_final()
 	return 0;
 }
 
-int dsb_net_connect(const char *url)
+void *dsb_net_connect(const char *url)
 {
 	int rc;
 	struct sockaddr_in destAddr;
@@ -144,7 +144,7 @@ int dsb_net_connect(const char *url)
 
 	if (sock == INVALID_SOCKET) {
 		DSB_ERROR(ERR_NETCONNECT,url);
-		return -1;
+		return 0;
 	}
 
 	//DNS lookup the IP.
@@ -157,7 +157,7 @@ int dsb_net_connect(const char *url)
 	if (host == 0)
 	{
 		DSB_ERROR(ERR_NETADDR,addr);
-		return -1;
+		return 0;
 	}
 
 	destAddr.sin_family = AF_INET;
@@ -175,7 +175,7 @@ int dsb_net_connect(const char *url)
 		#endif
 
 		DSB_ERROR(ERR_NETCONNECT,url);
-		return -1;
+		return 0;
 	}
 
 	//Non-block from here.
@@ -186,10 +186,12 @@ int dsb_net_connect(const char *url)
 	//Now need to store connection socket.
 	for (i=0; i<MAX_CONNECTIONS; i++)
 	{
-		if (connections[i] == -1)
+		if (connections[i] == 0)
 		{
-			connections[i] = sock;
-			return sock;
+			connections[i] = malloc(sizeof(struct DSBNetConnection));
+			connections[i]->sockfd = sock;
+			connections[i]->six = 0;
+			return connections[i];
 		}
 	}
 
@@ -199,7 +201,7 @@ int dsb_net_connect(const char *url)
 	closesocket(sock);
 	#endif
 	DSB_ERROR(ERR_NETCONNECT,url);
-	return -1;
+	return 0;
 }
 
 static int set_descriptors()
@@ -216,29 +218,30 @@ static int set_descriptors()
 		#ifdef WIN32
 		if (connections[i] != INVALID_SOCKET) {
 		#else
-		if (connections[i] >= 0) {
+		if ((connections[i] != 0) && (connections[i]->sockfd >= 0)) {
 		#endif
-			if (connections[i] > n) {
-				n = connections[i];
+			if (connections[i]->sockfd > n) {
+				n = connections[i]->sockfd;
 			}
-			FD_SET(connections[i], &fdread);
-			FD_SET(connections[i], &fderror);
+			FD_SET(connections[i]->sockfd, &fdread);
+			FD_SET(connections[i]->sockfd, &fderror);
 		}
 	}
 
 	return n;
 }
 
-static int read_messages(int sock)
+static int read_messages(void *s)
 {
+	struct DSBNetConnection *sock = s;
 	int rc;
 	struct DSBNetHeader *header;
-	static char buffer[1000];
-	static int six = 0;
 	int ix = 0;
 
+	if (sock == 0) return SUCCESS;
+
 	//Read into remaining buffer space.
-	rc = recv(sock, buffer + six, 1000 - six, 0);
+	rc = recv(sock->sockfd, sock->buffer + sock->six, 1000 - sock->six, 0);
 
 	//No data to process.
 	if (rc <= 0)
@@ -249,14 +252,14 @@ static int read_messages(int sock)
 	}
 
 	//Add existing buffer contents to rc and reset index.
-	rc += six;
-	six = 0;
+	rc += sock->six;
+	sock->six = 0;
 	ix = 0;
 
 	//We have enough for a header... so repeatedly process until we don't
 	while (rc >= sizeof(struct DSBNetHeader))
 	{
-		header = (struct DSBNetHeader*)(buffer+ix);
+		header = (struct DSBNetHeader*)(sock->buffer+ix);
 		ix += sizeof(struct DSBNetHeader);
 
 		//Make sure it is a valid message.
@@ -266,14 +269,10 @@ static int read_messages(int sock)
 		//Do we have the entire message contents?
 		if (rc-sizeof(struct DSBNetHeader) >= header->size)
 		{
-			char temp[10];
-			sprintf(temp, "%d",header->type);
-			DSB_DEBUG(DEBUG_NETMSG,temp);
-
 			//YES, so look for the callback
 			if (messages[header->type].cb != 0)
 			{
-				messages[header->type].cb(sock, (void*)buffer+ix);
+				messages[header->type].cb(sock, (void*)sock->buffer+ix);
 			}
 			else
 			{
@@ -284,7 +283,7 @@ static int read_messages(int sock)
 			ix += header->size;
 
 			//Completed message so move to next.
-			six = ix;
+			sock->six = ix;
 		}
 		else
 		{
@@ -297,13 +296,13 @@ static int read_messages(int sock)
 	if (rc != 0)
 	{
 		//Yes, so move to bottom for processing next time.
-		memcpy(buffer, buffer+six, rc);
+		memcpy(sock->buffer, sock->buffer+sock->six, rc);
 		//Set start index to next free buffer location.
-		six = rc;
+		sock->six = rc;
 	}
 	else
 	{
-		six = 0;
+		sock->six = 0;
 	}
 
 	return 0;
@@ -334,16 +333,17 @@ int dsb_net_poll(unsigned int ms)
 		#ifdef WIN32
 		if (connections[i] != INVALID_SOCKET) {
 		#else
-		if (connections[i] >= 0) {
+		if ((connections[i] != 0) && (connections[i]->sockfd >= 0)) {
 		#endif
 			//If message received from this client then deal with it
-			if (FD_ISSET(connections[i], &fdread)) {
+			if (FD_ISSET(connections[i]->sockfd, &fdread)) {
 				//Loop until no more messages to read.
 				read_messages(connections[i]);
 			//An error occurred with this client.
-			} else if (FD_ISSET(connections[i], &fderror)) {
+			} else if (FD_ISSET(connections[i]->sockfd, &fderror)) {
 				//s_conns[i]->error();
-				connections[i] = -1;
+				free(connections[i]);
+				connections[i] = 0;
 				DSB_INFO(INFO_NETDISCONNECT,0);
 			}
 		}
@@ -351,7 +351,7 @@ int dsb_net_poll(unsigned int ms)
 	return 0;
 }
 
-int dsb_net_callback(int msgtype, int (*cb)(int,void *))
+int dsb_net_callback(int msgtype, int (*cb)(void*,void *))
 {
 	if (msgtype < 0 || msgtype >= DSBNET_TYPE_END)
 	{
@@ -362,10 +362,12 @@ int dsb_net_callback(int msgtype, int (*cb)(int,void *))
 	return SUCCESS;
 }
 
-int dsb_net_send(int sock, int msgtype, void *msg, int size)
+int dsb_net_send(void *s, int msgtype, void *msg, int size)
 {
 	struct DSBNetHeader header;
+	struct DSBNetConnection *sock = s;
 
+	if (s == 0) return SUCCESS;
 	if (msgtype < 0 || msgtype >= DSBNET_TYPE_END)
 	{
 		return DSB_ERROR(ERR_NETMSGTYPE,0);
@@ -375,40 +377,42 @@ int dsb_net_send(int sock, int msgtype, void *msg, int size)
 	header.chck = DSB_NET_CHECK;
 	header.size = size;
 	//TODO check for errors.
-	send(sock, &header, sizeof(header),0);
-	send(sock, msg, size,0);
+	send(sock->sockfd, &header, sizeof(header),0);
+	send(sock->sockfd, msg, size,0);
 	return SUCCESS;
 }
 
-int dsb_net_add(int sock)
+void *dsb_net_add(int sock)
 {
 	int i;
 
 	for (i=0; i<MAX_CONNECTIONS; i++)
 	{
-		if (connections[i] == INVALID_SOCKET)
+		if (connections[i] == 0)
 		{
-			connections[i] = sock;
-			return SUCCESS;
+			connections[i] = malloc(sizeof(struct DSBNetConnection));
+			connections[i]->sockfd = sock;
+			connections[i]->six = 0;
+			return connections[i];
 		}
 	}
 
-	return DSB_ERROR(ERR_NETMAX,0);
+	return 0;
 }
 
-int dsb_net_disconnect(int sock)
+int dsb_net_disconnect(void *sock)
 {
 	int i;
 	for (i=0; i<MAX_CONNECTIONS; i++)
 	{
 		if (connections[i] == sock)
 		{
-			connections[i] = INVALID_SOCKET;
-			//TODO MOVE ALL OTHER SOCKETS DOWN
+			close(connections[i]->sockfd);
+			free(connections[i]);
+			connections[i] = 0;
 			break;
 		}
 	}
-	close(sock);
 	return SUCCESS;
 }
 

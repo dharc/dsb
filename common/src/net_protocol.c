@@ -41,7 +41,18 @@ static Event_t *readlist[MAX_READLIST];
 extern int dsb_send(struct Event *,int);
 
 
-int dsb_net_send_event(int sock, Event_t *e, int async)
+int dsb_net_send_dbgevent(void *sock, Event_t *evt)
+{
+	char buffer[100];
+	int count;
+	//Pack the event.
+	count = dsb_event_pack(evt, buffer, 100);
+	//Actually send the event
+	dsb_net_send(sock, DSBNET_DEBUGEVENT, buffer, count);
+	return SUCCESS;
+}
+
+int dsb_net_send_event(void *sock, Event_t *e, int async)
 {
 	int ix = 0;
 	int count = 0;
@@ -95,7 +106,7 @@ int dsb_net_send_event(int sock, Event_t *e, int async)
 	return SUCCESS;
 }
 
-int dsb_net_cb_event(int sock, void *data)
+int dsb_net_cb_event(void *sock, void *data)
 {
 	int ret;
 	Event_t *evt;
@@ -139,19 +150,19 @@ int dsb_net_cb_event(int sock, void *data)
 	}
 }
 
-int dsb_net_send_error(int sock, int err)
+int dsb_net_send_error(void *sock, int err)
 {
 	dsb_net_send(sock, DSBNET_ERROR, &err, sizeof(int));
 	return SUCCESS;
 }
 
-int dsb_net_cb_error(int sock, void *data)
+int dsb_net_cb_error(void *sock, void *data)
 {
 	DSB_ERROR(*((int*)data),0);
 	return sizeof(int);
 }
 
-int dsb_net_send_result(int sock, int id, const NID_t *res)
+int dsb_net_send_result(void *sock, int id, const NID_t *res)
 {
 	char buf[100];
 	int count = sizeof(int);
@@ -162,7 +173,7 @@ int dsb_net_send_result(int sock, int id, const NID_t *res)
 	return SUCCESS;
 }
 
-int dsb_net_cb_result(int sock, void *data)
+int dsb_net_cb_result(void *sock, void *data)
 {
 	int resid = *((int*)data);
 	NID_t res;
