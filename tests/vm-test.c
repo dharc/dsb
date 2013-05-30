@@ -67,7 +67,7 @@ void test_vm_const()
 	dsb_iton(55,&code[1]);			// reg 0 = 55
 	code[2].ll = VM_RET(0);			// Return reg 0.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 55);
 
 	//Actual code.
@@ -75,7 +75,7 @@ void test_vm_const()
 	dsb_iton(66,&code[1]);			// reg 0 = 55
 	code[2].ll = VM_RET(15);			// Return reg 0.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 66);
 
 	DONE;
@@ -100,7 +100,7 @@ void test_vm_copy()
 	code[2].ll = VM_COPY(0,1);
 	code[3].ll = VM_RET(1);			// Return reg 0.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 55);
 
 	DONE;
@@ -128,7 +128,7 @@ void test_vm_jump()
 	code[5].ll = VM_RET(0);			// Return reg 0.
 	code[6].ll = VM_RET(1);			// Return reg 1.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 88);
 
 	//Backward jump.
@@ -141,7 +141,7 @@ void test_vm_jump()
 	code[6].ll = VM_JUMP(-1);
 	code[7].ll = VM_RET(1);			// Return reg 1.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 99);
 
 	DONE;
@@ -173,12 +173,12 @@ void test_vm_jeq()
 	code[9].ll = VM_RET(0);			// Return reg 0.
 	code[10].ll = VM_RET(1);			// Return reg 1.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 3);
 
 	dsb_iton(5,&code[5]);
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 2);
 
 	DONE;
@@ -210,12 +210,12 @@ void test_vm_jneq()
 	code[9].ll = VM_RET(0);			// Return reg 0.
 	code[10].ll = VM_RET(1);			// Return reg 1.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 2);
 
 	dsb_iton(5,&code[5]);
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 	CHECK(harc.h.ll == 3);
 
 	DONE;
@@ -242,7 +242,7 @@ void test_vm_read()
 	code[4].ll = VM_READ(0,1,0);	// reg 0 = GET(reg 0, reg 1)
 	code[5].ll = VM_RET(0);			// Return reg 0.
 
-	CHECK(dsb_vm_interpret(&harc,code,100) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
 
 	DONE;
 }

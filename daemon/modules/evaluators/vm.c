@@ -36,10 +36,6 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/harc.h"
 #include "dsb/errors.h"
 #include "dsb/nid.h"
-#include "dsb/specials.h"
-#include "dsb/wrap.h"
-#include "dsb/array.h"
-#include <malloc.h>
 
 /*
  * DSB Virtual Machine Evaluator. Takes DSB intermediate code and interprets it
@@ -47,16 +43,8 @@ either expressed or implied, of the FreeBSD Project.
  */
 int eval_vm(struct HARC *harc)
 {
-	int maxip;	//End of instructions.
-	NID_t *code = malloc(sizeof(NID_t)*1000);
-
-	//Read in the code
-	maxip = dsb_array_read(&harc->def, code, 1000);
-
 	//Run the interpreter.
-	dsb_vm_interpret(harc,code,maxip);
-
-	free(code);
+	dsb_vm_call(&harc->def,&harc->t1,2,&harc->h);
 
 	return SUCCESS;
 }

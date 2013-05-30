@@ -73,6 +73,8 @@ typedef struct NID NID_t;
 
 #define VM_OP(A)			((A) & 0xFF0000)
 
-int dsb_vm_interpret(HARC_t *harc, NID_t *code, int maxip);
+int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res);
+
+int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res);
 
 #endif /* VM_H_ */

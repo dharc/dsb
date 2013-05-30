@@ -38,8 +38,26 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/nid.h"
 #include "dsb/specials.h"
 #include "dsb/wrap.h"
+#include "dsb/array.h"
+#include <malloc.h>
 
-int dsb_vm_interpret(HARC_t *harc, NID_t *code, int maxip)
+int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
+{
+	int maxip;	//End of instructions.
+	NID_t *code = malloc(sizeof(NID_t)*1000);
+
+	//Read in the code
+	maxip = dsb_array_read(func, code, 1000);
+
+	//Run the interpreter.
+	dsb_vm_interpret(code,maxip,params,pn,res);
+
+	free(code);
+
+	return SUCCESS;
+}
+
+int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res)
 {
 	int ip = 0; //Instruction pointer.
 	NID_t reg[16]; //Context registers.
@@ -56,7 +74,7 @@ int dsb_vm_interpret(HARC_t *harc, NID_t *code, int maxip)
 		switch(VM_OP(op))
 		{
 		case VMOP_CONST:	reg[VMREG_A(op)] = code[++ip]; break;
-		case VMOP_RET:		harc->h = reg[VMREG_A(op)]; return 0;
+		case VMOP_RET:		*res = reg[VMREG_A(op)]; return 0;
 		case VMOP_COPY:		reg[VMREG_B(op)] = reg[VMREG_A(op)]; break;
 		case VMOP_JUMP:		ip += (char)(op & 0xFF); continue;
 		case VMOP_JEQ:		if (dsb_nid_eq(&reg[VMREG_A(op)],&reg[VMREG_B(op)]) == 1)
