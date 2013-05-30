@@ -40,6 +40,7 @@ either expressed or implied, of the FreeBSD Project.
 typedef struct HARC HARC_t;
 typedef struct NID NID_t;
 
+//Op codes
 #define VMOP_READ		0x010000	///< Read a,b -> c. Sync GET event.
 #define VMOP_WRITE		0x020000	///< Write c,d -> a,b. DEFINE event where c is evaluator.
 #define VMOP_JUMP		0x030000	///< Jump a
@@ -50,12 +51,14 @@ typedef struct NID NID_t;
 #define VMOP_CONST		0x080000	///< Put a constant NID into a.
 #define VMOP_RET		0x090000	///< Return a value as the result.
 
+//Generate op codes with register info
 #define VMOP0(O)			(O)
 #define VMOP1(O,A)			(VMOP0(O) | ((A) << 12))
 #define VMOP2(O,A,B)		(VMOP1(O,A) | (B << 8))
 #define VMOP3(O,A,B,C)		(VMOP2(O,A,B) | (C << 4))
 #define VMOP4(O,A,B,C,D)	(VMOP3(O,A,B,C) | (D))
 
+//High-level op code generation
 #define VM_READ(A,B,C)		VMOP3(VMOP_READ,A,B,C)
 #define VM_WRITE(A,B,C,D)	VMOP4(VMOP_WRITE,A,B,C,D)
 #define VM_JUMP(A)			(VMOP_JUMP | ((unsigned char)(A) & 0xFF))
@@ -66,15 +69,45 @@ typedef struct NID NID_t;
 #define VM_CONST(A)			VMOP1(VMOP_CONST,A)
 #define VM_RET(A)			VMOP1(VMOP_RET,A)
 
+//Extract register values
 #define VMREG_A(A)			(((A) >> 12) & 0xF)
 #define VMREG_B(A)			(((A) >> 8) & 0xF)
 #define VMREG_C(A)			(((A) >> 4) & 0xF)
 #define VMREG_D(A)			((A) & 0xF)
 
+//Extract op code without register options.
 #define VM_OP(A)			((A) & 0xFF0000)
 
+/**
+ * Call a VM function stored at a particular node.
+ * @param func An array structure in the graph at this node.
+ * @param params An array of parameters
+ * @param pn Number of parameters
+ * @param res Location to put the result.
+ * @return SUCCESS.
+ */
 int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res);
 
+/**
+ * Interpret a NID array as VM code. Instead of getting the code from the graph
+ * it directly uses an array of the code. This is used by dsb_vm_call.
+ * @param code Array of NIDs containing the code.
+ * @param maxip Size of the code array.
+ * @param params An array of parameters.
+ * @param pn Number of parameters.
+ * @param res Location to put the result.
+ * @return SUCCESS.
+ */
 int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res);
+
+/**
+ * Compile DSB assembly into byte code. The resulting byte code can be
+ * interpreted using dsb_vm_interpret.
+ * @param source Assembly string.
+ * @param output Array of NIDs to put the byte code into.
+ * @param max Size of the output array.
+ * @return SUCCESS or assembly error.
+ */
+int dsb_vm_assemble(const char *source, NID_t *output, int max);
 
 #endif /* VM_H_ */

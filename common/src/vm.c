@@ -40,6 +40,59 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/wrap.h"
 #include "dsb/array.h"
 #include <malloc.h>
+#include <string.h>
+
+struct VMLabel
+{
+	char label[10];
+	int lip;
+};
+
+#define MAX_LABELS		100
+
+/*
+ * Assemble a single line, fill output and return number of elements
+ * written to the output.
+ */
+static int vm_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+{
+	int i = 0;
+	//Remove leading white space.
+	while (line[i] == ' ' || line[i] == '\t') ++i;
+
+	//Check for blank line or end of input.
+	if (line[i] == 0 || line[i] == '\n') return SUCCESS;
+	//Check for a comment line.
+	if (line[i] == '#') return SUCCESS;
+
+	//Now check which command is given.
+	if (strncmp(&line[i],"CONST",5) == 0)
+	{
+		i+=6;
+		//Get a register.
+		//Get a NID.
+	}
+
+	return SUCCESS;
+}
+
+int dsb_vm_assemble(const char *source, NID_t *output, int max)
+{
+	int ip = 0;
+	struct VMLabel *labels = malloc(sizeof(struct VMLabel)*MAX_LABELS);
+
+	//For every line
+	while(1)
+	{
+		vm_assemble_line(labels,source,output,&ip);
+		source = strchr(source,'\n');
+		if (source == 0) break;
+		source++;
+	}
+
+	free(labels);
+	return SUCCESS;
+}
 
 int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
 {
