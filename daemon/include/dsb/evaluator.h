@@ -59,6 +59,7 @@ enum
 {
 	EVAL_CONSTANT=0,		//!< Constant definitions (same as =).
 	EVAL_BASIC,				//!< Basic DASM style definition evaluator
+	EVAL_DSBVM,				//!< DSB Virtual Machine Evaluator.
 	EVAL_LUA,				//!< LUA Evaluator
 	EVAL_CUSTOM=100,		//!< EVAL_CUSTOM
 	EVAL_MAX=MAX_EVALUATORS	//!< EVAL_MAX

@@ -62,6 +62,7 @@ enum NIDType
 	NID_CHARACTER,		///< A node corresponding to a unicode character.
 	NID_LABEL,			///< Nodes used as labels.
 	NID_OPERATOR,		///< Definition operators.
+	NID_VMOP,
 	//---- Integer Operations -----
 	NID_INTADD,   //!< NID_INTADD
 	NID_INTSUB,   //!< NID_INTSUB
@@ -171,6 +172,8 @@ int dsb_nid_unpack(const char *buf, NID_t *n);
 int dsb_nid_eq(const NID_t *n1, const NID_t *n2);
 int dsb_nid_leq(const NID_t *n1, const NID_t *n2);
 int dsb_nid_geq(const NID_t *n1, const NID_t *n2);
+
+int dsb_nid_op(unsigned int op, NID_t *n);
 
 /**
  * Checks the MAC component against the local MAC. If there is no MAC then it

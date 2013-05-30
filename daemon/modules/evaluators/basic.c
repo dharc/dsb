@@ -41,7 +41,7 @@ either expressed or implied, of the FreeBSD Project.
 /*
  * The most basic DSB definition evaluator. Does not compile the def.
  */
-int eval_basic(struct HARC *harc, void **data)
+int eval_basic(struct HARC *harc)
 {
 	struct NID tmp;
 	struct NID res;

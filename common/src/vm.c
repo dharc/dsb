@@ -1,7 +1,7 @@
 /*
- * evaluators.c
+ * vm.c
  *
- *  Created on: 9 May 2013
+ *  Created on: 30 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,37 +32,50 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/evaluator.h"
-#include "dsb/module.h"
+#include "dsb/vm.h"
+#include "dsb/harc.h"
 #include "dsb/errors.h"
+#include "dsb/nid.h"
+#include "dsb/specials.h"
+#include "dsb/wrap.h"
 
-struct Module evalmod;
-struct HARC;
-
-int eval_basic(HARC_t *harc);
-int eval_vm(HARC_t *harc);
-
-int eval_init()
+int dsb_vm_interpret(HARC_t *harc, NID_t *code, int maxip)
 {
-	dsb_eval_register(EVAL_BASIC,eval_basic);
-	dsb_eval_register(EVAL_DSBVM,eval_vm);
-	return SUCCESS;
+	int ip = 0; //Instruction pointer.
+	NID_t reg[16]; //Context registers.
+	unsigned int op;
+
+	//Main VM loop.
+	while (ip < maxip)
+	{
+		//Not a valid instruction.
+		if (code[ip].t != NID_VMOP)	return 0;
+		op = (unsigned int)code[ip].ll;
+
+		//Switch on operation type.
+		switch(VM_OP(op))
+		{
+		case VMOP_CONST:	reg[VMREG_A(op)] = code[++ip]; break;
+		case VMOP_RET:		harc->h = reg[VMREG_A(op)]; return 0;
+		case VMOP_COPY:		reg[VMREG_B(op)] = reg[VMREG_A(op)]; break;
+		case VMOP_JUMP:		ip += (char)(op & 0xFF); continue;
+		case VMOP_JEQ:		if (dsb_nid_eq(&reg[VMREG_A(op)],&reg[VMREG_B(op)]) == 1)
+							{
+								ip += (char)(op & 0xFF); continue;
+							}
+							break;
+		case VMOP_JNEQ:		if (dsb_nid_eq(&reg[VMREG_A(op)],&reg[VMREG_B(op)]) == 0)
+							{
+								ip += (char)(op & 0xFF); continue;
+							}
+							break;
+
+		default: break;
+		}
+
+		ip++;
+	}
+
+	return 0;
 }
 
-int eval_final()
-{
-	dsb_eval_register(EVAL_BASIC,0);
-	dsb_eval_register(EVAL_DSBVM,0);
-	return SUCCESS;
-}
-
-/*
- * Module registration structure.
- */
-struct Module *dsb_evaluators_module()
-{
-	evalmod.init = eval_init;
-	evalmod.update = 0;
-	evalmod.final = eval_final;
-	return &evalmod;
-}

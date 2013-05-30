@@ -1,7 +1,7 @@
 /*
- * evaluators.c
+ * vm.c
  *
- *  Created on: 9 May 2013
+ *  Created on: 30 May 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,37 +32,32 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/evaluator.h"
-#include "dsb/module.h"
+#include "dsb/vm.h"
+#include "dsb/harc.h"
 #include "dsb/errors.h"
-
-struct Module evalmod;
-struct HARC;
-
-int eval_basic(HARC_t *harc);
-int eval_vm(HARC_t *harc);
-
-int eval_init()
-{
-	dsb_eval_register(EVAL_BASIC,eval_basic);
-	dsb_eval_register(EVAL_DSBVM,eval_vm);
-	return SUCCESS;
-}
-
-int eval_final()
-{
-	dsb_eval_register(EVAL_BASIC,0);
-	dsb_eval_register(EVAL_DSBVM,0);
-	return SUCCESS;
-}
+#include "dsb/nid.h"
+#include "dsb/specials.h"
+#include "dsb/wrap.h"
+#include "dsb/array.h"
+#include <malloc.h>
 
 /*
- * Module registration structure.
+ * DSB Virtual Machine Evaluator. Takes DSB intermediate code and interprets it
+ * to evaluate a definition.
  */
-struct Module *dsb_evaluators_module()
+int eval_vm(struct HARC *harc)
 {
-	evalmod.init = eval_init;
-	evalmod.update = 0;
-	evalmod.final = eval_final;
-	return &evalmod;
+	int maxip;	//End of instructions.
+	NID_t *code = malloc(sizeof(NID_t)*1000);
+
+	//Read in the code
+	maxip = dsb_array_read(&harc->def, code, 1000);
+
+	//Run the interpreter.
+	dsb_vm_interpret(harc,code,maxip);
+
+	free(code);
+
+	return SUCCESS;
 }
+
