@@ -73,7 +73,7 @@ int dsb_vm_interpret_reg(const NID_t *code, int maxip, NID_t *reg, const NID_t *
 	while (ip < maxip)
 	{
 		//Not a valid instruction.
-		if (code[ip].t != NID_VMOP)	return 0;
+		if (code[ip].t != NID_VMOP)	return -1;
 		op = (unsigned int)code[ip].ll;
 
 		//Switch on operation type.
@@ -82,7 +82,7 @@ int dsb_vm_interpret_reg(const NID_t *code, int maxip, NID_t *reg, const NID_t *
 		case VMOP_CONST:	reg[VMREG_A(op)] = code[++ip];
 							break;
 		case VMOP_RET:		*res = reg[VMREG_A(op)];
-							return 0;
+							return -1;
 		case VMOP_COPY:		reg[VMREG_B(op)] = reg[VMREG_A(op)];
 							break;
 		case VMOP_JUMP:		ip += (char)(op & 0xFF);
@@ -106,6 +106,6 @@ int dsb_vm_interpret_reg(const NID_t *code, int maxip, NID_t *reg, const NID_t *
 		ip++;
 	}
 
-	return 0;
+	return ip;
 }
 
