@@ -309,7 +309,7 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 
 				if (str[i] == 0) return ERR_NIDSTR;
 
-				while (str[i] != 0) {
+				while (str[i] >= '0' && str[i] <= '9') {
 					num *= 10;
 					num += str[i] - '0';
 					i++;

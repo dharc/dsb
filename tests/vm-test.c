@@ -37,6 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/event.h"
 #include "dsb/vm.h"
+#include "dsb/assembler.h"
 
 int vm_interpret(HARC_t *harc, NID_t *code, int maxip);
 
@@ -46,6 +47,11 @@ int vm_interpret(HARC_t *harc, NID_t *code, int maxip);
  */
 int dsb_send(struct Event *evt)
 {
+	if (evt->type == EVENT_GET)
+	{
+		dsb_iton(666,evt->res);
+		evt->flags |= EVTFLAG_DONE;
+	}
 	return 0;
 }
 
@@ -243,6 +249,64 @@ void test_vm_read()
 	code[5].ll = VM_RET(0);			// Return reg 0.
 
 	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(harc.h.ll == 666);
+
+	DONE;
+}
+
+void test_vm_asmconst()
+{
+	NID_t code[50];
+
+	CHECK(dsb_assemble("CONST %2 55", code, 50) == 2);
+	CHECK(VMREG_A(code[0].ll) == 2);
+	CHECK(VM_OP(code[0].ll) == VMOP_CONST);
+	CHECK(code[1].ll == 55);
+
+	CHECK(dsb_assemble("CONST %4 66\n", code, 50) == 2);
+	CHECK(VMREG_A(code[0].ll) == 4);
+	CHECK(VM_OP(code[0].ll) == VMOP_CONST);
+	CHECK(code[1].ll == 66);
+
+	DONE;
+}
+
+void test_vm_asmjump()
+{
+	NID_t code[10];
+
+	CHECK(dsb_assemble("JUMP 55", code, 50) == 1);
+	CHECK((char)(code[0].ll & 0xFF) == 55);
+	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
+
+	CHECK(dsb_assemble("JUMP -55", code, 50) == 1);
+	CHECK((char)(code[0].ll & 0xFF) == -55);
+	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
+
+	CHECK(dsb_assemble("JUMP -128", code, 50) == 1);
+	CHECK((char)(code[0].ll & 0xFF) == -128);
+	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
+
+	DONE;
+}
+
+void test_vm_asmcopy()
+{
+	NID_t code[10];
+
+	CHECK(dsb_assemble("COPY %3 %4", code, 50) == 1);
+	CHECK(VMREG_A(code[0].ll) == 3);
+	CHECK(VMREG_B(code[0].ll) == 4);
+	CHECK(VM_OP(code[0].ll) == VMOP_COPY);
+
+	DONE;
+}
+
+void test_vm_asmcomments()
+{
+	NID_t code[50];
+
+	CHECK(dsb_assemble("\n\n#fhfthfhf\n\nCONST %4 4\n",code,50) == 2);
 
 	DONE;
 }
@@ -258,6 +322,11 @@ int main(int argc, char *argv[])
 	dsb_test(test_vm_jeq);
 	dsb_test(test_vm_jneq);
 	dsb_test(test_vm_read);
+
+	dsb_test(test_vm_asmconst);
+	dsb_test(test_vm_asmjump);
+	dsb_test(test_vm_asmcomments);
+	dsb_test(test_vm_asmcopy);
 
 	dsb_event_final();
 	dsb_nid_final();

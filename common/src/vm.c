@@ -40,59 +40,6 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/wrap.h"
 #include "dsb/array.h"
 #include <malloc.h>
-#include <string.h>
-
-struct VMLabel
-{
-	char label[10];
-	int lip;
-};
-
-#define MAX_LABELS		100
-
-/*
- * Assemble a single line, fill output and return number of elements
- * written to the output.
- */
-static int vm_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i = 0;
-	//Remove leading white space.
-	while (line[i] == ' ' || line[i] == '\t') ++i;
-
-	//Check for blank line or end of input.
-	if (line[i] == 0 || line[i] == '\n') return SUCCESS;
-	//Check for a comment line.
-	if (line[i] == '#') return SUCCESS;
-
-	//Now check which command is given.
-	if (strncmp(&line[i],"CONST",5) == 0)
-	{
-		i+=6;
-		//Get a register.
-		//Get a NID.
-	}
-
-	return SUCCESS;
-}
-
-int dsb_vm_assemble(const char *source, NID_t *output, int max)
-{
-	int ip = 0;
-	struct VMLabel *labels = malloc(sizeof(struct VMLabel)*MAX_LABELS);
-
-	//For every line
-	while(1)
-	{
-		vm_assemble_line(labels,source,output,&ip);
-		source = strchr(source,'\n');
-		if (source == 0) break;
-		source++;
-	}
-
-	free(labels);
-	return SUCCESS;
-}
 
 int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
 {
@@ -112,8 +59,14 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
 
 int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res)
 {
+	NID_t reg[16];
+	return dsb_vm_interpret_reg(code,maxip,reg,params,pn,res);
+}
+
+int dsb_vm_interpret_reg(const NID_t *code, int maxip, NID_t *reg, const NID_t *params, int pn, NID_t *res)
+{
 	int ip = 0; //Instruction pointer.
-	NID_t reg[16]; //Context registers.
+	//NID_t reg[16]; //Context registers.
 	unsigned int op;
 
 	//Main VM loop.
@@ -126,10 +79,14 @@ int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, 
 		//Switch on operation type.
 		switch(VM_OP(op))
 		{
-		case VMOP_CONST:	reg[VMREG_A(op)] = code[++ip]; break;
-		case VMOP_RET:		*res = reg[VMREG_A(op)]; return 0;
-		case VMOP_COPY:		reg[VMREG_B(op)] = reg[VMREG_A(op)]; break;
-		case VMOP_JUMP:		ip += (char)(op & 0xFF); continue;
+		case VMOP_CONST:	reg[VMREG_A(op)] = code[++ip];
+							break;
+		case VMOP_RET:		*res = reg[VMREG_A(op)];
+							return 0;
+		case VMOP_COPY:		reg[VMREG_B(op)] = reg[VMREG_A(op)];
+							break;
+		case VMOP_JUMP:		ip += (char)(op & 0xFF);
+							continue;
 		case VMOP_JEQ:		if (dsb_nid_eq(&reg[VMREG_A(op)],&reg[VMREG_B(op)]) == 1)
 							{
 								ip += (char)(op & 0xFF); continue;
@@ -139,6 +96,8 @@ int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, 
 							{
 								ip += (char)(op & 0xFF); continue;
 							}
+							break;
+		case VMOP_READ:		dsb_get(&reg[VMREG_A(op)],&reg[VMREG_B(op)],&reg[VMREG_C(op)]);
 							break;
 
 		default: break;

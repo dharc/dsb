@@ -37,6 +37,11 @@ either expressed or implied, of the FreeBSD Project.
 
 /** @file vm.h */
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct HARC HARC_t;
 typedef struct NID NID_t;
 
@@ -100,14 +105,11 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res);
  */
 int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res);
 
-/**
- * Compile DSB assembly into byte code. The resulting byte code can be
- * interpreted using dsb_vm_interpret.
- * @param source Assembly string.
- * @param output Array of NIDs to put the byte code into.
- * @param max Size of the output array.
- * @return SUCCESS or assembly error.
- */
-int dsb_vm_assemble(const char *source, NID_t *output, int max);
+int dsb_vm_interpret_reg(const NID_t *code, int maxip, NID_t *reg, const NID_t *params, int pn, NID_t *res);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* VM_H_ */

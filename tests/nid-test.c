@@ -165,6 +165,21 @@ void test_nid_geq()
 	DONE;
 }*/
 
+void test_nid_fromstr()
+{
+	NID_t t;
+
+	dsb_nid_fromStr("55",&t);
+	CHECK(t.ll == 55);
+	CHECK(t.t == NID_INTEGER);
+
+	dsb_nid_fromStr("66\n",&t);
+	CHECK(t.ll == 66);
+	CHECK(t.t == NID_INTEGER);
+
+	DONE;
+}
+
 int main(int argc, char *argv[])
 {
 	//dsb_test(test_nid_compare);
@@ -176,6 +191,6 @@ int main(int argc, char *argv[])
 	dsb_test(test_nid_eq);
 	dsb_test(test_nid_leq);
 	dsb_test(test_nid_geq);
-	//dsb_test(test_nid_allocate);
+	dsb_test(test_nid_fromstr);
 	return 0;
 }
