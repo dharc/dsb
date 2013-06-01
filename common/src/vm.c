@@ -59,53 +59,56 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
 
 int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res)
 {
-	NID_t reg[16];
-	return dsb_vm_interpret_reg(code,maxip,reg,params,pn,res);
+	struct VMContext ctx;
+	ctx.ip = 0;
+	ctx.timeout = 10000;
+	ctx.code = code;
+	ctx.codesize = maxip;
+	ctx.result = res;
+	return dsb_vm_interpret_ctx(&ctx);
 }
 
-int dsb_vm_interpret_reg(const NID_t *code, int maxip, NID_t *reg, const NID_t *params, int pn, NID_t *res)
+int dsb_vm_interpret_ctx(struct VMContext *ctx)
 {
-	int ip = 0; //Instruction pointer.
-	//NID_t reg[16]; //Context registers.
 	unsigned int op;
 
 	//Main VM loop.
-	while (ip < maxip)
+	while ((ctx->ip < ctx->codesize) && (ctx->timeout-- > 0))
 	{
 		//Not a valid instruction.
-		if (code[ip].t != NID_VMOP)	return -1;
-		op = (unsigned int)code[ip].ll;
+		if (ctx->code[ctx->ip].t != NID_VMOP)	return -1;
+		op = (unsigned int)ctx->code[ctx->ip].ll;
 
 		//Switch on operation type.
 		switch(VM_OP(op))
 		{
-		case VMOP_CONST:	reg[VMREG_A(op)] = code[++ip];
+		case VMOP_LOAD:		ctx->reg[VMREG_A(op)] = ctx->code[op & 0xFF];
 							break;
-		case VMOP_RET:		*res = reg[VMREG_A(op)];
+		case VMOP_RET:		*ctx->result = ctx->reg[VMREG_A(op)];
 							return -1;
-		case VMOP_COPY:		reg[VMREG_B(op)] = reg[VMREG_A(op)];
+		case VMOP_COPY:		ctx->reg[VMREG_B(op)] = ctx->reg[VMREG_A(op)];
 							break;
-		case VMOP_JUMP:		ip += (char)(op & 0xFF);
+		case VMOP_JUMP:		ctx->ip += (char)(op & 0xFF) + 1;
 							continue;
-		case VMOP_JEQ:		if (dsb_nid_eq(&reg[VMREG_A(op)],&reg[VMREG_B(op)]) == 1)
+		case VMOP_JEQ:		if (dsb_nid_eq(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)]) == 1)
 							{
-								ip += (char)(op & 0xFF); continue;
+								ctx->ip += (char)(op & 0xFF); continue;
 							}
 							break;
-		case VMOP_JNEQ:		if (dsb_nid_eq(&reg[VMREG_A(op)],&reg[VMREG_B(op)]) == 0)
+		case VMOP_JNEQ:		if (dsb_nid_eq(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)]) == 0)
 							{
-								ip += (char)(op & 0xFF); continue;
+								ctx->ip += (char)(op & 0xFF); continue;
 							}
 							break;
-		case VMOP_READ:		dsb_get(&reg[VMREG_A(op)],&reg[VMREG_B(op)],&reg[VMREG_C(op)]);
+		case VMOP_READ:		dsb_get(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)]);
 							break;
 
 		default: break;
 		}
 
-		ip++;
+		ctx->ip++;
 	}
 
-	return ip;
+	return SUCCESS;
 }
 

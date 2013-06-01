@@ -100,27 +100,28 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 	if (line[i] == '#') return SUCCESS;
 
 	//Now check which command is given.
-	if (strncmp(&line[i],"CONST",5) == 0)
+	if (strncmp(&line[i],"load",4) == 0)
 	{
-		i+=6; //CONST + space.
+		i+=5; //LOAD + space.
 
 		//Get a register
 		tmp = vm_assemble_reg(&line[i],&regA);
 		if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
 		i += tmp;
 
+		++i; //White space
+
+		//Get an offset value
+		tmp = vm_assemble_off(&line[i],&regB);
+		if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
+		i += tmp;
+
 		//Insert OP into output
-		dsb_nid_op(VM_CONST(regA),&output[*ip]);
-		*ip = *ip + 1;
-
-		++i; //White space.
-
-		//Parse a NID
-		dsb_nid_fromStr(&line[i],&output[*ip]);
+		dsb_nid_op(VM_LOAD(regA,regB),&output[*ip]);
 		*ip = *ip + 1;
 	}
 	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"JUMP",4) == 0)
+	else if (strncmp(&line[i],"jump",4) == 0)
 	{
 		i+=5; //JUMP + space.
 
@@ -137,7 +138,7 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		*ip = *ip + 1;
 	}
 	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"COPY",4) == 0)
+	else if (strncmp(&line[i],"copy",4) == 0)
 	{
 		i+=5; //COPY + space.
 
@@ -158,7 +159,7 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		*ip = *ip + 1;
 	}
 	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"JEQ",3) == 0)
+	else if (strncmp(&line[i],"jeq",3) == 0)
 	{
 		i+=4; //JEQ + space.
 
@@ -189,7 +190,7 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		*ip = *ip + 1;
 	}
 	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"JNEQ",4) == 0)
+	else if (strncmp(&line[i],"jneq",4) == 0)
 	{
 		i+=5; //JNEQ + space.
 
@@ -220,7 +221,7 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		*ip = *ip + 1;
 	}
 	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"RET",3) == 0)
+	else if (strncmp(&line[i],"ret",3) == 0)
 	{
 		i+=4; //RET + space.
 
@@ -234,7 +235,16 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		*ip = *ip + 1;
 	}
 	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"READ",4) == 0)
+	else if (strncmp(&line[i],"data",4) == 0)
+	{
+		i+=5; //DATA + space.
+
+		//Insert OP into output
+		dsb_nid_fromStr(&line[i],&output[*ip]);
+		*ip = *ip + 1;
+	}
+	//-------------------------------------------------------------------------
+	else if (strncmp(&line[i],"read",4) == 0)
 	{
 		i+=5; //READ + space.
 

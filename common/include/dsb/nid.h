@@ -120,6 +120,11 @@ struct NID
 			unsigned short t;			///< Type
 			union
 			{
+				struct
+				{
+					unsigned int a;
+					unsigned int b;
+				};
 				long long ll;
 				unsigned long long ull;
 				double dbl;

@@ -42,8 +42,9 @@ extern "C"
 {
 #endif
 
+#include "dsb/nid.h"
+
 typedef struct HARC HARC_t;
-typedef struct NID NID_t;
 
 //Op codes
 #define VMOP_READ		0x010000	///< Read a,b -> c. Sync GET event.
@@ -53,7 +54,7 @@ typedef struct NID NID_t;
 #define VMOP_JEQ		0x050000	///< Jump a when b == c.
 #define VMOP_JNEQ		0x060000	///< Jump a when b != c.
 #define VMOP_DEP		0x070000	///< Add dependency on a,b. DEP event.
-#define VMOP_CONST		0x080000	///< Put a constant NID into a.
+#define VMOP_LOAD		0x080000	///< Put a constant NID into a.
 #define VMOP_RET		0x090000	///< Return a value as the result.
 
 //Generate op codes with register info
@@ -71,7 +72,7 @@ typedef struct NID NID_t;
 #define VM_JEQ(A,B,C)		(VMOP2(VMOP_JEQ,A,B) | ((unsigned char)(C) & 0xFF))
 #define VM_JNEQ(A,B,C)		(VMOP2(VMOP_JNEQ,A,B) | ((unsigned char)(C) & 0xFF))
 #define VM_DEP(A,B)			VMOP2(VMOP_DEP,A,B)
-#define VM_CONST(A)			VMOP1(VMOP_CONST,A)
+#define VM_LOAD(A,B)		(VMOP1(VMOP_LOAD,A) | ((unsigned char)(B) & 0xFF))
 #define VM_RET(A)			VMOP1(VMOP_RET,A)
 
 //Extract register values
@@ -84,7 +85,24 @@ typedef struct NID NID_t;
 #define VM_OP(A)			((A) & 0xFF0000)
 
 /**
- * Call a VM function stored at a particular node.
+ * Virtual Machine Context structure. Stores state information for a
+ * particular execution block.
+ * @see dsb_vm_interpret_ctx
+ */
+struct VMContext
+{
+	NID_t *code;		///< NID array containing the code
+	int codesize;			///< Size of the code array.
+	const NID_t *params[4];	///< Parameters passed to the code.
+	int ip;					///< Instruction pointer.
+	int timeout;			///< Max instructions to execute before halt.
+	NID_t *result;			///< Any return value from script.
+	NID_t reg[16];			///< Registers.
+};
+
+/**
+ * Call a VM function stored at a particular node. Loads the node as an array
+ * and then interprets the array as DSB byte code.
  * @param func An array structure in the graph at this node.
  * @param params An array of parameters
  * @param pn Number of parameters
@@ -96,6 +114,7 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res);
 /**
  * Interpret a NID array as VM code. Instead of getting the code from the graph
  * it directly uses an array of the code. This is used by dsb_vm_call.
+ * @see dsb_vm_call
  * @param code Array of NIDs containing the code.
  * @param maxip Size of the code array.
  * @param params An array of parameters.
@@ -105,7 +124,7 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res);
  */
 int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res);
 
-int dsb_vm_interpret_reg(const NID_t *code, int maxip, NID_t *reg, const NID_t *params, int pn, NID_t *res);
+int dsb_vm_interpret_ctx(struct VMContext *ctx);
 
 
 #ifdef __cplusplus

@@ -69,19 +69,19 @@ void test_vm_const()
 	}
 
 	//Actual code.
-	code[0].ll = VM_CONST(0);
-	dsb_iton(55,&code[1]);			// reg 0 = 55
-	code[2].ll = VM_RET(0);			// Return reg 0.
+	code[0].ll = VM_LOAD(0,2);
+	code[1].ll = VM_RET(0);			// Return reg 0.
+	dsb_iton(55,&code[2]);			// reg 0 = 55
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 55);
 
 	//Actual code.
-	code[0].ll = VM_CONST(15);
-	dsb_iton(66,&code[1]);			// reg 0 = 55
-	code[2].ll = VM_RET(15);			// Return reg 0.
+	code[0].ll = VM_LOAD(15,2);
+	code[1].ll = VM_RET(15);			// Return reg 0.
+	dsb_iton(66,&code[2]);			// reg 0 = 55
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	DONE;
@@ -101,12 +101,12 @@ void test_vm_copy()
 	}
 
 	//Actual code.
-	code[0].ll = VM_CONST(0);
-	dsb_iton(55,&code[1]);			// reg 0 = 55
-	code[2].ll = VM_COPY(0,1);
-	code[3].ll = VM_RET(1);			// Return reg 0.
+	code[0].ll = VM_LOAD(0,3);
+	code[1].ll = VM_COPY(0,1);
+	code[2].ll = VM_RET(1);			// Return reg 0.
+	dsb_iton(55,&code[3]);			// reg 0 = 55
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 55);
 
 	DONE;
@@ -126,28 +126,28 @@ void test_vm_jump()
 	}
 
 	//Actual code for forward jump
-	code[0].ll = VM_CONST(0);
-	dsb_iton(77,&code[1]);			// reg 0 = 77
-	code[2].ll = VM_CONST(1);
-	dsb_iton(88,&code[3]);			// reg 1 = 88
-	code[4].ll = VM_JUMP(2);		// Jump to IP 6.
-	code[5].ll = VM_RET(0);			// Return reg 0.
-	code[6].ll = VM_RET(1);			// Return reg 1.
+	code[0].ll = VM_LOAD(0,5);
+	code[1].ll = VM_LOAD(1,6);
+	code[2].ll = VM_JUMP(2);		// Jump to IP 6.
+	code[3].ll = VM_RET(0);			// Return reg 0.
+	code[4].ll = VM_RET(1);			// Return reg 1.
+	dsb_iton(77,&code[5]);			// reg 0 = 77
+	dsb_iton(88,&code[6]);			// reg 1 = 88
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 88);
 
 	//Backward jump.
-	code[0].ll = VM_CONST(0);
-	dsb_iton(99,&code[1]);			// reg 0 = 99
-	code[2].ll = VM_CONST(1);
-	dsb_iton(33,&code[3]);			// reg 1 = 33
-	code[4].ll = VM_JUMP(2);		// Jump to IP 6.
-	code[5].ll = VM_RET(0);			// Return reg 0.
-	code[6].ll = VM_JUMP(-1);
-	code[7].ll = VM_RET(1);			// Return reg 1.
+	code[0].ll = VM_LOAD(0,6);
+	code[1].ll = VM_LOAD(1,7);
+	code[2].ll = VM_JUMP(2);		// Jump to IP 6.
+	code[3].ll = VM_RET(0);			// Return reg 0.
+	code[4].ll = VM_JUMP(-1);
+	code[5].ll = VM_RET(1);			// Return reg 1.
+	dsb_iton(99,&code[6]);			// reg 0 = 99
+	dsb_iton(33,&code[7]);			// reg 1 = 33
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 99);
 
 	DONE;
@@ -167,24 +167,24 @@ void test_vm_jeq()
 	}
 
 	//Actual code for forward jeq
-	code[0].ll = VM_CONST(0);
-	dsb_iton(2,&code[1]);			// reg 0 = 2
-	code[2].ll = VM_CONST(1);
-	dsb_iton(3,&code[3]);			// reg 1 = 3
-	code[4].ll = VM_CONST(2);
-	dsb_iton(4,&code[5]);			// reg 2 = 4
-	code[6].ll = VM_CONST(3);
-	dsb_iton(4,&code[7]);			// reg 3 = 4
-	code[8].ll = VM_JEQ(2,3,2);		// Jump to IP 10 if reg2 == reg3
-	code[9].ll = VM_RET(0);			// Return reg 0.
-	code[10].ll = VM_RET(1);			// Return reg 1.
+	code[0].ll = VM_LOAD(0,7);
+	code[1].ll = VM_LOAD(1,8);
+	code[2].ll = VM_LOAD(2,9);
+	code[3].ll = VM_LOAD(3,10);
+	code[4].ll = VM_JEQ(2,3,2);		// Jump to IP 10 if reg2 == reg3
+	code[5].ll = VM_RET(0);			// Return reg 0.
+	code[6].ll = VM_RET(1);			// Return reg 1.
+	dsb_iton(2,&code[7]);			// reg 0 = 2
+	dsb_iton(3,&code[8]);			// reg 1 = 3
+	dsb_iton(4,&code[9]);			// reg 2 = 4
+	dsb_iton(4,&code[10]);			// reg 3 = 4
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 3);
 
-	dsb_iton(5,&code[5]);
+	dsb_iton(5,&code[9]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 2);
 
 	DONE;
@@ -204,24 +204,24 @@ void test_vm_jneq()
 	}
 
 	//Actual code for forward jeq
-	code[0].ll = VM_CONST(0);
-	dsb_iton(2,&code[1]);			// reg 0 = 2
-	code[2].ll = VM_CONST(1);
-	dsb_iton(3,&code[3]);			// reg 1 = 3
-	code[4].ll = VM_CONST(2);
-	dsb_iton(4,&code[5]);			// reg 2 = 4
-	code[6].ll = VM_CONST(3);
-	dsb_iton(4,&code[7]);			// reg 3 = 4
-	code[8].ll = VM_JNEQ(2,3,2);		// Jump to IP 10 if reg2 == reg3
-	code[9].ll = VM_RET(0);			// Return reg 0.
-	code[10].ll = VM_RET(1);			// Return reg 1.
+	code[0].ll = VM_LOAD(0,7);
+	code[1].ll = VM_LOAD(1,8);
+	code[2].ll = VM_LOAD(2,9);
+	code[3].ll = VM_LOAD(3,10);
+	code[4].ll = VM_JNEQ(2,3,2);		// Jump to IP 10 if reg2 == reg3
+	code[5].ll = VM_RET(0);			// Return reg 0.
+	code[6].ll = VM_RET(1);			// Return reg 1.
+	dsb_iton(2,&code[7]);			// reg 0 = 2
+	dsb_iton(3,&code[8]);			// reg 1 = 3
+	dsb_iton(4,&code[9]);			// reg 2 = 4
+	dsb_iton(4,&code[10]);			// reg 3 = 4
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 2);
 
-	dsb_iton(5,&code[5]);
+	dsb_iton(5,&code[9]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 3);
 
 	DONE;
@@ -241,14 +241,14 @@ void test_vm_read()
 	}
 
 	//Actual code.
-	code[0].ll = VM_CONST(0);
-	dsb_iton(55,&code[1]);			// reg 0 = 55
-	code[2].ll = VM_CONST(1);
-	dsb_iton(0,&code[3]);			// reg 1 = 0
-	code[4].ll = VM_READ(0,1,0);	// reg 0 = GET(reg 0, reg 1)
-	code[5].ll = VM_RET(0);			// Return reg 0.
+	code[0].ll = VM_LOAD(0,4);
+	code[1].ll = VM_LOAD(1,5);
+	code[2].ll = VM_READ(0,1,0);	// reg 0 = GET(reg 0, reg 1)
+	code[3].ll = VM_RET(0);			// Return reg 0.
+	dsb_iton(55,&code[4]);			// reg 0 = 55
+	dsb_iton(0,&code[5]);			// reg 1 = 0
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == 0);
+	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
 	CHECK(harc.h.ll == 666);
 
 	DONE;
@@ -258,15 +258,15 @@ void test_vm_asmconst()
 {
 	NID_t code[50];
 
-	CHECK(dsb_assemble("CONST %2 55", code, 50) == 2);
+	CHECK(dsb_assemble("load %2 1", code, 50) == 1);
 	CHECK(VMREG_A(code[0].ll) == 2);
-	CHECK(VM_OP(code[0].ll) == VMOP_CONST);
-	CHECK(code[1].ll == 55);
+	CHECK((char)(code[0].ll & 0xFF) == 1);
+	CHECK(VM_OP(code[0].ll) == VMOP_LOAD);
 
-	CHECK(dsb_assemble("CONST %4 66\n", code, 50) == 2);
+	CHECK(dsb_assemble("load %4 66\n", code, 50) == 1);
+	CHECK((char)(code[0].ll & 0xFF) == 66);
 	CHECK(VMREG_A(code[0].ll) == 4);
-	CHECK(VM_OP(code[0].ll) == VMOP_CONST);
-	CHECK(code[1].ll == 66);
+	CHECK(VM_OP(code[0].ll) == VMOP_LOAD);
 
 	DONE;
 }
@@ -275,15 +275,15 @@ void test_vm_asmjump()
 {
 	NID_t code[10];
 
-	CHECK(dsb_assemble("JUMP 55", code, 50) == 1);
+	CHECK(dsb_assemble("jump 55", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == 55);
 	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
 
-	CHECK(dsb_assemble("JUMP -55", code, 50) == 1);
+	CHECK(dsb_assemble("jump -55", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == -55);
 	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
 
-	CHECK(dsb_assemble("JUMP -128", code, 50) == 1);
+	CHECK(dsb_assemble("jump -128", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == -128);
 	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
 
@@ -294,7 +294,7 @@ void test_vm_asmcopy()
 {
 	NID_t code[10];
 
-	CHECK(dsb_assemble("COPY %3 %4", code, 50) == 1);
+	CHECK(dsb_assemble("copy %3 %4", code, 50) == 1);
 	CHECK(VMREG_A(code[0].ll) == 3);
 	CHECK(VMREG_B(code[0].ll) == 4);
 	CHECK(VM_OP(code[0].ll) == VMOP_COPY);
@@ -306,7 +306,7 @@ void test_vm_asmcomments()
 {
 	NID_t code[50];
 
-	CHECK(dsb_assemble("\n\n#fhfthfhf\n\nCONST %4 4\n",code,50) == 2);
+	CHECK(dsb_assemble("\n\n#fhfthfhf\n\nload %4 4\n",code,50) == 1);
 
 	DONE;
 }
