@@ -95,9 +95,9 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 	while (line[i] == ' ' || line[i] == '\t') ++i;
 
 	//Check for blank line or end of input.
-	if (line[i] == 0 || line[i] == '\n') return SUCCESS;
+	if (line[i] == 0 || line[i] == '\n') return 0;
 	//Check for a comment line.
-	if (line[i] == '#') return SUCCESS;
+	if (line[i] == '#') return 0;
 
 	//Now check which command is given.
 	if (strncmp(&line[i],"load",4) == 0)
@@ -235,6 +235,20 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		*ip = *ip + 1;
 	}
 	//-------------------------------------------------------------------------
+	else if (strncmp(&line[i],"inc",3) == 0)
+	{
+		i+=4; //INC + space.
+
+		//Get a register
+		tmp = vm_assemble_reg(&line[i],&regA);
+		if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
+		i += tmp;
+
+		//Insert OP into output
+		dsb_nid_op(VM_INC(regA),&output[*ip]);
+		*ip = *ip + 1;
+	}
+	//-------------------------------------------------------------------------
 	else if (strncmp(&line[i],"data",4) == 0)
 	{
 		i+=5; //DATA + space.
@@ -275,7 +289,7 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		*ip = *ip + 1;
 	}
 
-	return SUCCESS;
+	return 1;
 }
 
 int dsb_assemble(const char *source, NID_t *output, int max)

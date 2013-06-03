@@ -56,6 +56,7 @@ typedef struct HARC HARC_t;
 #define VMOP_DEP		0x070000	///< Add dependency on a,b. DEP event.
 #define VMOP_LOAD		0x080000	///< Put a constant NID into a.
 #define VMOP_RET		0x090000	///< Return a value as the result.
+#define VMOP_INC		0x0A0000	///< Increment a register containing an integer.
 
 //Generate op codes with register info
 #define VMOP0(O)			(O)
@@ -74,6 +75,7 @@ typedef struct HARC HARC_t;
 #define VM_DEP(A,B)			VMOP2(VMOP_DEP,A,B)
 #define VM_LOAD(A,B)		(VMOP1(VMOP_LOAD,A) | ((unsigned char)(B) & 0xFF))
 #define VM_RET(A)			VMOP1(VMOP_RET,A)
+#define VM_INC(A)			VMOP1(VMOP_INC,A)
 
 //Extract register values
 #define VMREG_A(A)			(((A) >> 12) & 0xF)
