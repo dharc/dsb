@@ -42,12 +42,16 @@ int dsb_common_init()
 	ret = dsb_event_init();
 	if (ret != SUCCESS) return ret;
 	ret = dsb_net_init();
+	if (ret != SUCCESS) return ret;
+	ret = dsb_module_init();
 	return ret;
 }
 
 int dsb_common_final()
 {
 	int ret;
+	ret = dsb_module_final();
+	if (ret != SUCCESS) return ret;
 	ret = dsb_net_final();
 	if (ret != SUCCESS) return ret;
 	ret = dsb_event_final();

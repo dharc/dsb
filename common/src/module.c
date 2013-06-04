@@ -68,6 +68,19 @@ int dsb_module_init()
 
 int dsb_module_final()
 {
+	//Unload all modules
+	int i;
+	for (i=0; i<MAX_LOADED_MODULES; i++)
+	{
+		if (lmods[i] != 0)
+		{
+			if (lmods[i]->mod.final != 0)
+			{
+				lmods[i]->mod.final();
+			}
+		}
+	}
+
 	return SUCCESS;
 }
 

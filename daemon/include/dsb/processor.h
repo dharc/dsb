@@ -68,4 +68,11 @@ int dsb_proc_single();
  */
 int dsb_proc_run();
 
+/**
+ * Stops the currently running system. Causes dsb_proc_run to return. Should
+ * be called from a signal or from within some definition/module.
+ * @return SUCCESS
+ */
+int dsb_proc_stop();
+
 #endif /* PROCESSOR_H_ */

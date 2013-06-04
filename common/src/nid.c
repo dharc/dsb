@@ -44,24 +44,66 @@ int dsb_nid_pack(const NID_t *n, char *buf, int max)
 {
 	*buf = n->header;
 	buf++;
-	*buf = n->r2;
-	buf++;
-	*((short*)buf) = n->t;
-	buf += sizeof(short);
-	*((long long*)buf) = n->ll;
-	return 2+sizeof(short)+sizeof(long long);
+
+	if (n->hasMac == 0)
+	{
+		*buf = n->r2;
+		buf++;
+		*((short*)buf) = n->t;
+		buf += sizeof(short);
+		*((long long*)buf) = n->ll;
+		return 2+sizeof(short)+sizeof(long long);
+	}
+	else
+	{
+		*buf = n->mac[0];
+		buf++;
+		*buf = n->mac[1];
+		buf++;
+		*buf = n->mac[2];
+		buf++;
+		*buf = n->mac[3];
+		buf++;
+		*buf = n->mac[4];
+		buf++;
+		*buf = n->mac[5];
+		buf++;
+		*((long long*)buf) = n->n;
+		return 7+sizeof(long long);
+	}
 }
 
 int dsb_nid_unpack(const char *buf, NID_t *n)
 {
 	n->header = *buf;
 	buf++;
-	n->r2 = *buf;
-	buf++;
-	n->t = *((short*)buf);
-	buf += sizeof(short);
-	n->ll = *((long long*)buf);
-	return 2+sizeof(short)+sizeof(long long);
+
+	if (n->hasMac == 0)
+	{
+		n->r2 = *buf;
+		buf++;
+		n->t = *((short*)buf);
+		buf += sizeof(short);
+		n->ll = *((long long*)buf);
+		return 2+sizeof(short)+sizeof(long long);
+	}
+	else
+	{
+		n->mac[0] = *buf;
+		buf++;
+		n->mac[1] = *buf;
+		buf++;
+		n->mac[2] = *buf;
+		buf++;
+		n->mac[3] = *buf;
+		buf++;
+		n->mac[4] = *buf;
+		buf++;
+		n->mac[5] = *buf;
+		buf++;
+		n->n = *((long long*)buf);
+		return 7+sizeof(long long);
+	}
 }
 
 struct NID *dsb_nid(enum NIDType type, unsigned long long ll, struct NID *nid)
@@ -176,7 +218,7 @@ static int readHex(char a, char b)
 	}
 	else
 	{
-		res = (a-'a') << 4;
+		res = ((a-'a')+10) << 4;
 	}
 
 	if ((b >= '0') && (b <= '9'))
@@ -185,7 +227,7 @@ static int readHex(char a, char b)
 	}
 	else
 	{
-		res += (b-'a');
+		res += (b-'a')+10;
 	}
 	return res;
 }

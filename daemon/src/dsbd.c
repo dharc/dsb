@@ -40,6 +40,12 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/evaluator.h"
 #include "config.h"
 #include <stdio.h>
+#include <signal.h>
+
+void sigint(int s)
+{
+	dsb_proc_stop();
+}
 
 void print_help()
 {
@@ -95,6 +101,7 @@ int process_args(int argc, char *argv[])
 //Internally compiled modules.
 extern struct Module *dsb_math_module();
 extern struct Module *dsb_volatile_module();
+extern struct Module *dsb_persistent_module();
 extern struct Module *dsb_evaluators_module();
 extern struct Module *dsb_network_module();
 
@@ -111,6 +118,7 @@ int main(int argc, char *argv[])
 
 	//Register the internal modules
 	dsb_module_register("volatile",dsb_volatile_module());
+	dsb_module_register("persistent",dsb_persistent_module());
 	//dsb_module_register("math",dsb_math_module());
 	dsb_module_register("evaluators",dsb_evaluators_module());
 	dsb_module_register("net",dsb_network_module());
@@ -119,9 +127,14 @@ int main(int argc, char *argv[])
 	ret = process_args(argc,argv);
 	if (ret != 0) return ret;
 
+	//Set signal handler
+	signal(SIGINT, sigint);
+
 	//Need to call all module update code.
 	//Need to process queues until empty.
 	dsb_proc_run(10);
+
+	printf("Terminating...\n");
 
 	dsb_proc_final();
 	dsb_eval_final();

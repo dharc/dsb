@@ -87,6 +87,10 @@ int dsb_module_exists(const char *name);
 
 int dsb_module_updateall();
 
+int dsb_module_init();
+
+int dsb_module_final();
+
 /** @} */
 
 #endif /* MODULE_H_ */

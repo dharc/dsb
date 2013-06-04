@@ -69,8 +69,9 @@ struct EventQueue
 #define READ_QUEUE			1
 #define DEPENDENCY_QUEUE	2
 
-struct EventQueue queue[3];
-unsigned int curq;	//Current queue being processed.
+static struct EventQueue queue[3];
+static unsigned int curq;	//Current queue being processed.
+static int procisrunning;
 
 int queue_insert(int q, Event_t *e)
 {
@@ -178,6 +179,12 @@ int dsb_proc_wait(const struct Event *evt)
 	return SUCCESS;
 }
 
+int dsb_proc_stop()
+{
+	procisrunning = 0;
+	return SUCCESS;
+}
+
 int dsb_proc_single()
 {
 	int q = curq;
@@ -206,7 +213,7 @@ int dsb_proc_single()
 	}
 }
 
-long long getTicks()
+static long long getTicks()
 {
 	#ifdef UNIX
 	unsigned long long ticks;
@@ -229,7 +236,9 @@ int dsb_proc_run(unsigned int maxfreq)
 	long long maxticks = maxfreq * 100000;
 	long long sleeptime;
 
-	while(1)
+	procisrunning = 1;
+
+	while(procisrunning == 1)
 	{
 		tick = getTicks();
 		//Loop through all the queues.

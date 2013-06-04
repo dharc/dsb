@@ -105,6 +105,8 @@ int dsb_net_init()
 	messages[DSBNET_SENDEVENT].cb = dsb_net_cb_event;
 	messages[DSBNET_EVENTRESULT].cb = dsb_net_cb_result;
 	messages[DSBNET_ERROR].cb = dsb_net_cb_error;
+	messages[DSBNET_LOGIN].cb = dsb_net_cb_login;
+	messages[DSBNET_ROOT].cb = dsb_net_cb_root;
 
 	return 0;
 }

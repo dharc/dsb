@@ -40,6 +40,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/wrap.h"
 #include "dsb/net.h"
+#include "dsb/module.h"
 
 #ifdef __cplusplus
 extern "C"

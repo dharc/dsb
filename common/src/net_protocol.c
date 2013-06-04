@@ -35,6 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net.h"
 #include "dsb/net_protocol.h"
 #include "dsb/errors.h"
+#include <string.h>
 
 static Event_t *readlist[MAX_READLIST];
 
@@ -150,9 +151,42 @@ int dsb_net_cb_event(void *sock, void *data)
 	}
 }
 
+int dsb_net_send_login(void *sock, const char *user, const char *pass)
+{
+	char buf[60];
+	strcpy(buf,user);
+	strcpy(&buf[30],pass);
+	dsb_net_send(sock, DSBNET_LOGIN, buf, 60);
+	return SUCCESS;
+}
+
+int dsb_net_send_root(void *sock, const NID_t *root)
+{
+	char buf[100];
+	int count = 0;
+	count = dsb_nid_pack(root,buf,100);
+	dsb_net_send(sock, DSBNET_ROOT, buf, count);
+	return SUCCESS;
+}
+
 int dsb_net_send_error(void *sock, int err)
 {
 	dsb_net_send(sock, DSBNET_ERROR, &err, sizeof(int));
+	return SUCCESS;
+}
+
+int dsb_net_cb_login(void *sock, void *data)
+{
+	//TODO check username and password.
+	NID_t root;
+	dsb_nid_local(1,&root);
+	dsb_net_send_root(sock,&root);
+	return SUCCESS;
+}
+
+int dsb_net_cb_root(void *sock, void *data)
+{
+	//TODO
 	return SUCCESS;
 }
 
