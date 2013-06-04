@@ -35,6 +35,11 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef ARRAY_H_
 #define ARRAY_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct NID NID_t;
 
 /**
@@ -55,6 +60,8 @@ int dsb_array_write(const NID_t *src, int size, const NID_t *dest);
  */
 int dsb_array_read(const NID_t *src, NID_t *dest, int max);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ARRAY_H_ */

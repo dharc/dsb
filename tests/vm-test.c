@@ -128,7 +128,7 @@ void test_vm_jump()
 	//Actual code for forward jump
 	code[0].ll = VM_LOAD(0,5);
 	code[1].ll = VM_LOAD(1,6);
-	code[2].ll = VM_JUMP(2);		// Jump to IP 6.
+	code[2].ll = VM_JUMP(4);		// Jump to IP 6.
 	code[3].ll = VM_RET(0);			// Return reg 0.
 	code[4].ll = VM_RET(1);			// Return reg 1.
 	dsb_iton(77,&code[5]);			// reg 0 = 77
@@ -140,9 +140,9 @@ void test_vm_jump()
 	//Backward jump.
 	code[0].ll = VM_LOAD(0,6);
 	code[1].ll = VM_LOAD(1,7);
-	code[2].ll = VM_JUMP(2);		// Jump to IP 6.
+	code[2].ll = VM_JUMP(4);		// Jump to IP 6.
 	code[3].ll = VM_RET(0);			// Return reg 0.
-	code[4].ll = VM_JUMP(-1);
+	code[4].ll = VM_JUMP(3);
 	code[5].ll = VM_RET(1);			// Return reg 1.
 	dsb_iton(99,&code[6]);			// reg 0 = 99
 	dsb_iton(33,&code[7]);			// reg 1 = 33
@@ -171,7 +171,7 @@ void test_vm_jeq()
 	code[1].ll = VM_LOAD(1,8);
 	code[2].ll = VM_LOAD(2,9);
 	code[3].ll = VM_LOAD(3,10);
-	code[4].ll = VM_JEQ(2,3,2);		// Jump to IP 10 if reg2 == reg3
+	code[4].ll = VM_JEQ(2,3,6);		// Jump to IP 10 if reg2 == reg3
 	code[5].ll = VM_RET(0);			// Return reg 0.
 	code[6].ll = VM_RET(1);			// Return reg 1.
 	dsb_iton(2,&code[7]);			// reg 0 = 2
@@ -208,7 +208,7 @@ void test_vm_jneq()
 	code[1].ll = VM_LOAD(1,8);
 	code[2].ll = VM_LOAD(2,9);
 	code[3].ll = VM_LOAD(3,10);
-	code[4].ll = VM_JNEQ(2,3,2);		// Jump to IP 10 if reg2 == reg3
+	code[4].ll = VM_JNEQ(2,3,6);		// Jump to IP 10 if reg2 == reg3
 	code[5].ll = VM_RET(0);			// Return reg 0.
 	code[6].ll = VM_RET(1);			// Return reg 1.
 	dsb_iton(2,&code[7]);			// reg 0 = 2
@@ -311,6 +311,20 @@ void test_vm_asmcomments()
 	DONE;
 }
 
+void test_asm_label()
+{
+	NID_t code[10];
+
+	CHECK(dsb_assemble(":mylabel", code, 10) == 0);
+	CHECK(dsb_assemble("data 0\ndata 1\n:mylabel\njump :mylabel", code, 10) == 3);
+	CHECK((char)(code[2].ll & 0xFF) == 2);
+
+	CHECK(dsb_assemble("data 0\ndata 1\n    :mylabel\njump :mylabel", code, 10) == 3);
+	CHECK((char)(code[2].ll & 0xFF) == 2);
+
+	DONE;
+}
+
 int main(int argc, char *argv[])
 {
 	dsb_nid_init();
@@ -327,6 +341,8 @@ int main(int argc, char *argv[])
 	dsb_test(test_vm_asmjump);
 	dsb_test(test_vm_asmcomments);
 	dsb_test(test_vm_asmcopy);
+
+	dsb_test(test_asm_label);
 
 	dsb_event_final();
 	dsb_nid_final();

@@ -88,16 +88,16 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 							return -1;
 		case VMOP_COPY:		ctx->reg[VMREG_B(op)] = ctx->reg[VMREG_A(op)];
 							break;
-		case VMOP_JUMP:		ctx->ip += (char)(op & 0xFF) + 1;
+		case VMOP_JUMP:		ctx->ip = (char)(op & 0xFF);
 							continue;
 		case VMOP_JEQ:		if (dsb_nid_eq(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)]) == 1)
 							{
-								ctx->ip += (char)(op & 0xFF); continue;
+								ctx->ip = (char)(op & 0xFF); continue;
 							}
 							break;
 		case VMOP_JNEQ:		if (dsb_nid_eq(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)]) == 0)
 							{
-								ctx->ip += (char)(op & 0xFF); continue;
+								ctx->ip = (char)(op & 0xFF); continue;
 							}
 							break;
 		case VMOP_READ:		dsb_get(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)]);

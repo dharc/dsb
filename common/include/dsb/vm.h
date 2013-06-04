@@ -47,16 +47,43 @@ extern "C"
 typedef struct HARC HARC_t;
 
 //Op codes
-#define VMOP_READ		0x010000	///< Read a,b -> c. Sync GET event.
-#define VMOP_WRITE		0x020000	///< Write c,d -> a,b. DEFINE event where c is evaluator.
-#define VMOP_JUMP		0x030000	///< Jump a
-#define VMOP_COPY		0x040000	///< Copy a into b.
-#define VMOP_JEQ		0x050000	///< Jump a when b == c.
-#define VMOP_JNEQ		0x060000	///< Jump a when b != c.
-#define VMOP_DEP		0x070000	///< Add dependency on a,b. DEP event.
-#define VMOP_LOAD		0x080000	///< Put a constant NID into a.
-#define VMOP_RET		0x090000	///< Return a value as the result.
-#define VMOP_INC		0x0A0000	///< Increment a register containing an integer.
+//Hyperarc
+#define VMOP_READ		0x00010000	///< Read a,b -> c. Sync GET event.
+#define VMOP_WRITE		0x00020000	///< Write c,d -> a,b. DEFINE event where c is evaluator.
+#define VMOP_DEP		0x00030000	///< Add dependency on a,b. DEP event.
+#define VMOP_NEW		0x00040000
+#define VMOP_DELETE		0x00050000
+//Jumps
+#define VMOP_JUMP		0x00100000	///< Jump a
+#define VMOP_JEQ		0x00110000	///< Jump a when b == c.
+#define VMOP_JNEQ		0x00120000	///< Jump a when b != c.
+#define VMOP_JLEQ		0x00130000
+#define VMOP_JGEQ		0x00140000
+#define VMOP_JLT		0x00150000
+#define VMOP_JGT		0x00160000
+//Data manip
+#define VMOP_COPY		0x00200000	///< Copy a into b.
+#define VMOP_LOAD		0x00210000	///< Put a constant NID into a.
+#define VMOP_RET		0x00220000	///< Return a value as the result.
+#define VMOP_STORE		0x00230000
+#define VMOP_LOADR		0x00240000
+//Arithmetic
+#define VMOP_INC		0x00300000	///< Increment a register containing an integer.
+#define VMOP_DEC		0x00310000	///< Decrement a register containing an integer.
+#define VMOP_ADD		0x00320000
+#define VMOP_SUB		0x00330000
+#define VMOP_DIV		0x00340000
+#define VMOP_MUL		0x00350000
+#define VMOP_INT		0x00360000
+#define VMOP_FLOAT		0x00370000
+//Bit
+#define VMOP_AND		0x00400000
+#define VMOP_OR			0x00410000
+#define VMOP_XOR		0x00420000
+#define VMOP_NEG		0x00430000
+#define VMOP_SHIFTL		0x00440000
+#define VMOP_SHIFTR		0x00450000
+#define VMOP_CLEAR		0x00460000
 
 //Generate op codes with register info
 #define VMOP0(O)			(O)
@@ -68,14 +95,35 @@ typedef struct HARC HARC_t;
 //High-level op code generation
 #define VM_READ(A,B,C)		VMOP3(VMOP_READ,A,B,C)
 #define VM_WRITE(A,B,C,D)	VMOP4(VMOP_WRITE,A,B,C,D)
+#define VM_DEP(A,B)			VMOP2(VMOP_DEP,A,B)
+
 #define VM_JUMP(A)			(VMOP_JUMP | ((unsigned char)(A) & 0xFF))
-#define VM_COPY(A,B)		VMOP2(VMOP_COPY,A,B)
 #define VM_JEQ(A,B,C)		(VMOP2(VMOP_JEQ,A,B) | ((unsigned char)(C) & 0xFF))
 #define VM_JNEQ(A,B,C)		(VMOP2(VMOP_JNEQ,A,B) | ((unsigned char)(C) & 0xFF))
-#define VM_DEP(A,B)			VMOP2(VMOP_DEP,A,B)
+#define VM_JLEQ(A,B,C)		(VMOP2(VMOP_JLEQ,A,B) | ((unsigned char)(C) & 0xFF))
+#define VM_JGEQ(A,B,C)		(VMOP2(VMOP_JGEQ,A,B) | ((unsigned char)(C) & 0xFF))
+#define VM_JLT(A,B,C)		(VMOP2(VMOP_JLT,A,B) | ((unsigned char)(C) & 0xFF))
+#define VM_JGT(A,B,C)		(VMOP2(VMOP_JGT,A,B) | ((unsigned char)(C) & 0xFF))
+
+#define VM_COPY(A,B)		VMOP2(VMOP_COPY,A,B)
 #define VM_LOAD(A,B)		(VMOP1(VMOP_LOAD,A) | ((unsigned char)(B) & 0xFF))
+#define VM_LOADR(A,B,C)		(VMOP2(VMOP_LOADR,A,B) | ((unsigned char)(C) & 0xFF))
 #define VM_RET(A)			VMOP1(VMOP_RET,A)
+#define VM_STORE(A,B)		(VMOP1(VMOP_STORE,A) | ((unsigned char)(B) & 0xFF))
+
 #define VM_INC(A)			VMOP1(VMOP_INC,A)
+#define VM_DEC(A)			VMOP1(VMOP_DEC,A)
+#define VM_ADD(A,B,C)		VMOP3(VMOP_ADD,A,B,C)
+#define VM_SUB(A,B,C)		VMOP3(VMOP_SUB,A,B,C)
+#define VM_DIV(A,B,C)		VMOP3(VMOP_DIV,A,B,C)
+#define VM_MUL(A,B,C)		VMOP3(VMOP_MUL,A,B,C)
+
+#define VM_AND(A,B,C)		VMOP3(VMOP_AND,A,B,C)
+#define VM_OR(A,B,C)		VMOP3(VMOP_OR,A,B,C)
+#define VM_XOR(A,B,C)		VMOP3(VMOP_XOR,A,B,C)
+#define VM_NEG(A,B)			VMOP2(VMOP_NEG,A,B)
+#define VM_SHIFTL(A,B)		(VMOP1(VMOP_SHIFTL,A) | ((unsigned char)(B) & 0xFF))
+#define VM_SHIFTR(A,B)		(VMOP1(VMOP_SHIFTR,A) | ((unsigned char)(B) & 0xFF))
 
 //Extract register values
 #define VMREG_A(A)			(((A) >> 12) & 0xF)

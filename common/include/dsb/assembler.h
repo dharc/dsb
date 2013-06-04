@@ -62,6 +62,16 @@ int dsb_assemble(const char *source, NID_t *output, int max);
 
 int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip);
 
+/**
+ * Populate the labels array with all labels in the source and their corresponding
+ * location in the final compiled code. Should be use to initialise the labels array
+ * before attempting to actual assemble the code.
+ * @param labels
+ * @param source
+ * @return SUCCESS.
+ */
+int dsb_assemble_labels(struct VMLabel *labels, const char *source);
+
 #ifdef __cplusplus
 }
 #endif
