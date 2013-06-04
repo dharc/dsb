@@ -162,8 +162,49 @@ static int per_serialize_harc(FILE *fd, const HARC_t *harc)
 	return 0;
 }
 
+/*
+ * Convert a CSV line into a HARC. Format is tail1,tail2,definition,evaluator.
+ */
+static int per_deserialize_harc(FILE *fd, HARC_t *harc)
+{
+	char buf1[100];
+	char buf2[100];
+	char buf3[100];
+
+	if (fscanf(fd, "%s,%s,%s,%d\n",buf1,buf2,buf3,&harc->e) != 4)
+	{
+		//End of file or invalid input.
+		return -1;
+	}
+
+	dsb_nid_fromStr(buf1,&harc->t1);
+	dsb_nid_fromStr(buf2,&harc->t2);
+	dsb_nid_fromStr(buf3,&harc->def);
+
+	return 0;
+}
+
 static int per_load_file(const char *filename)
 {
+	HARC_t harc;
+	HARC_t *pharc;
+	FILE *fd;
+
+	//Open relevant file.
+	fd = fopen(filename,"r");
+	if (fd == 0)
+	{
+		return DSB_ERROR(ERR_PERFILELOAD,filename);
+	}
+
+	while (per_deserialize_harc(fd, &harc) == 0)
+	{
+		pharc = per_getharc(&harc.t1,&harc.t2,1);
+		pharc->def = harc.def;
+		pharc->e = harc.e;
+	}
+
+	fclose(fd);
 	return 0;
 }
 
@@ -205,6 +246,8 @@ int per_init(const NID_t *base)
 {
 	//A local volatile handler
 	dsb_route_map(ROUTE_PERSISTENT | ROUTE_LOCAL,0,per_handler);
+
+	per_load_file("store.dsb");
 
 	return SUCCESS;
 }
