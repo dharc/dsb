@@ -99,8 +99,13 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 	//Check for a comment line.
 	if (line[i] == '#') return 0;
 
+	//Do we have a label?
+	if (line[i] == ':')
+	{
+
+	}
 	//Now check which command is given.
-	if (strncmp(&line[i],"load",4) == 0)
+	else if (strncmp(&line[i],"load",4) == 0)
 	{
 		i+=5; //LOAD + space.
 
