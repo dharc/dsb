@@ -80,14 +80,29 @@ int dsb_new(const NID_t *base, NID_t *n)
 
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
-	struct Event *evt = dsb_event_allocate();
-	evt->d1 = *d1;
-	evt->d2 = *d2;
-	evt->def = *v;
-	evt->eval = 0;
-	evt->flags = EVTFLAG_FREE;
-	evt->type = EVENT_DEFINE;
-	return dsb_send(evt,1);
+	return dsb_define(d1,d2,v,0);
+}
+
+int dsb_setnzz(const NID_t *d1, const char *d2, const char *v)
+{
+	NID_t n1;
+	NID_t n2;
+
+	dsb_nid_fromStr(d2,&n1);
+	dsb_nid_fromStr(v,&n2);
+	return dsb_set(d1,&n1,&n2);
+}
+
+int dsb_setzzz(const char *d1, const char *d2, const char *v)
+{
+	NID_t n1;
+	NID_t n2;
+	NID_t n3;
+
+	dsb_nid_fromStr(d1,&n1);
+	dsb_nid_fromStr(d2,&n2);
+	dsb_nid_fromStr(v,&n3);
+	return dsb_set(&n1,&n2,&n3);
 }
 
 int dsb_define(

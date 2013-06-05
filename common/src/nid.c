@@ -1,6 +1,7 @@
 #include "dsb/nid.h"
 #include "dsb/errors.h"
 #include "dsb/specials.h"
+#include "dsb/names.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,6 +16,8 @@ NID_t PRoot;
 NID_t Null;
 NID_t True;
 NID_t False;
+NID_t Names;
+NID_t Size;
 
 int dsb_nid_init()
 {
@@ -57,12 +60,11 @@ int dsb_nid_init()
 	dsb_nid_local(0,&Root);
 	dsb_nid_local(1,&PRoot);
 	dsb_nid_null(&Null);
-	True.header = 0;
-	True.t = NID_SPECIAL;
-	True.ll = SPECIAL_TRUE;
-	False.header = 0;
-	False.t = NID_SPECIAL;
-	False.ll = SPECIAL_FALSE;
+
+	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&True);
+	dsb_nid(NID_SPECIAL,SPECIAL_FALSE,&False);
+	dsb_nid(NID_SPECIAL,SPECIAL_SIZE,&Size);
+	dsb_nid(NID_SPECIAL,SPECIAL_NAMES,&Names);
 
 	return SUCCESS;
 }
@@ -355,7 +357,8 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 		}
 	}
 
-	//TODO Name lookup.
+	//Otherwise, do a name lookup.
+	dsb_names_lookup(str,nid);
 
 	return ERR_NIDSTR;
 }
@@ -364,17 +367,7 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 {
 	if (nid->header == 0)
 	{
-		if (nid->t == NID_SPECIAL)
-		{
-			switch(nid->ll)
-			{
-			case SPECIAL_NULL:		strcpy(str, "null"); return SUCCESS;
-			case SPECIAL_TRUE:		strcpy(str, "true"); return SUCCESS;
-			case SPECIAL_FALSE:		strcpy(str, "false"); return SUCCESS;
-			default: break;
-			}
-		}
-		else if (nid->t == NID_INTEGER)
+		if (nid->t == NID_INTEGER)
 		{
 			sprintf(str, "%d", (unsigned int)nid->ll);
 			return SUCCESS;
@@ -393,6 +386,8 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 			return SUCCESS;
 		}
 	}
+
+	if (dsb_names_revlookup(nid,str,len) == 0) return SUCCESS;
 
 	if (nid->hasMac == 1)
 	{

@@ -181,6 +181,7 @@ struct VolHARCEntry *vol_createentry(const struct NID *a, const struct NID *b)
 	dsb_nid_null(&res->harc.h);
 	dsb_nid_null(&res->harc.def);
 	res->harc.e = 0;
+	res->harc.deps = 0;
 	res->flags = 0;
 
 	//TODO Make threadsafe

@@ -1,7 +1,7 @@
 /*
- * common.h
+ * name-test.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 5 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,27 +32,50 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
-
+#include "dsb/test.h"
 #include "dsb/nid.h"
-#include "dsb/event.h"
-#include "dsb/errors.h"
-#include "dsb/wrap.h"
-#include "dsb/net.h"
-#include "dsb/module.h"
 #include "dsb/names.h"
+#include "dsb/event.h"
 
-#ifdef __cplusplus
-extern "C"
+static int nidalloc = 0;
+
+int dsb_send(struct Event *evt)
 {
-#endif
-
-int dsb_common_init();
-int dsb_common_final();
-
-#ifdef __cplusplus
+	if (evt->type == EVENT_ALLOCATE)
+	{
+		dsb_nid_local(0,evt->res);
+		evt->res->n = nidalloc++;
+	}
+	evt->flags |= EVTFLAG_DONE;
+	return 0;
 }
-#endif
 
-#endif /* COMMON_H_ */
+void test_names_lookup()
+{
+	NID_t n1;
+	NID_t n2;
+
+	CHECK(dsb_names_lookup("test1",&n1) == 0);
+	CHECK(dsb_names_lookup("test1",&n2) == 0);
+	CHECK(dsb_nid_eq(&n1,&n2) == 1);
+	CHECK(dsb_names_lookup("test2",&n2) == 0);
+	CHECK(dsb_nid_eq(&n1,&n2) == 0);
+
+	DONE;
+}
+
+int main(int argc, char *argv[])
+{
+	dsb_nid_init();
+	dsb_event_init();
+	dsb_names_init();
+
+	dsb_test(test_names_lookup);
+
+	dsb_names_final();
+	dsb_event_final();
+	dsb_nid_final();
+
+	return 0;
+}
+

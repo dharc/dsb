@@ -1,7 +1,7 @@
 /*
- * common.h
+ * names.h
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 5 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,27 +32,43 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef NAMES_H_
+#define NAMES_H_
 
-#include "dsb/nid.h"
-#include "dsb/event.h"
-#include "dsb/errors.h"
-#include "dsb/wrap.h"
-#include "dsb/net.h"
-#include "dsb/module.h"
-#include "dsb/names.h"
+typedef struct NID NID_t;
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-int dsb_common_init();
-int dsb_common_final();
+int dsb_names_init();
+int dsb_names_final();
+
+/**
+ * Add a special hard coded label. This does not add to the persistent
+ * hypergraph, instead use dsb_names_lookup.
+ * @see dsb_names_lookup
+ * @param name
+ * @param nid
+ * @return SUCCESS
+ */
+int dsb_names_add(const char *name, const NID_t *nid);
+
+int dsb_names_update(const char *name, const NID_t *nid);
+
+/**
+ * Find the NID associated with a name or create a new NID for it.
+ * @param name Name to look for.
+ * @param nid Structure to be filled with the result.
+ * @return SUCCESS.
+ */
+int dsb_names_lookup(const char *name, NID_t *nid);
+
+int dsb_names_revlookup(const NID_t *nid, char *name, int max);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* COMMON_H_ */
+#endif /* NAMES_H_ */

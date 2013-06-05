@@ -98,6 +98,17 @@ int process_args(int argc, char *argv[])
 	return 0;
 }
 
+void make_bool()
+{
+	//AND
+	dsb_setzzz("true","and","trueand");
+	dsb_setzzz("trueand","true","true");
+	dsb_setzzz("trueand","false","false");
+	dsb_setzzz("false","and","falseand");
+	dsb_setzzz("falseand","true","false");
+	dsb_setzzz("falseand","false","false");
+}
+
 //Internally compiled modules.
 extern struct Module *dsb_math_module();
 extern struct Module *dsb_volatile_module();
@@ -129,6 +140,9 @@ int main(int argc, char *argv[])
 
 	//Set signal handler
 	signal(SIGINT, sigint);
+
+	//Build boolean structure.
+	make_bool();
 
 	//Need to call all module update code.
 	//Need to process queues until empty.

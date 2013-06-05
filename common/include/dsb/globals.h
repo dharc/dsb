@@ -50,6 +50,7 @@ extern NID_t Null;		///< Constant Null NID.
 extern NID_t True;		///< Constant True NID.
 extern NID_t False;		///< Constant False NID.
 extern NID_t Names;
+extern NID_t Size;
 
 #ifdef __cplusplus
 }

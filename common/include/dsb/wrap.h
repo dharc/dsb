@@ -76,6 +76,9 @@ int dsb_getA(const NID_t *d1, const NID_t *d2, NID_t *r);
  */
 int dsb_set(const NID_t *d1, const NID_t *d2, const NID_t *v);
 
+int dsb_setnzz(const NID_t *d1, const char *d2, const char *v);
+int dsb_setzzz(const char *d1, const char *d2, const char *v);
+
 
 int dsb_define(
 		const NID_t *d1,

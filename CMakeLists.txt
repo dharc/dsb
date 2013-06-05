@@ -16,7 +16,7 @@ set(CMAKE_C_FLAGS "-Wall")
 set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c common/src/net.c common/src/net_protocol.c common/src/string.c common/src/array.c common/src/vm.c common/src/assembler.c)
+set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c common/src/net.c common/src/net_protocol.c common/src/string.c common/src/array.c common/src/vm.c common/src/assembler.c common/src/names.c)
 set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/modules/net/netmod.c daemon/modules/net/handler.c daemon/modules/volatile/volatile.c daemon/modules/evaluators/evaluators.c daemon/modules/evaluators/basic.c daemon/modules/evaluators/vm.c daemon/src/evaluator.c daemon/src/harc_d.c daemon/modules/persistent/persistent.c)
 
 configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/dsb/config.h )
@@ -56,6 +56,9 @@ target_link_libraries(proc-test dsbcommon)
 
 add_executable(vm-test tests/vm-test.c)
 target_link_libraries(vm-test dsbcommon)
+
+add_executable(name-test tests/name-test.c)
+target_link_libraries(name-test dsbcommon)
 
 install(PROGRAMS "${PROJECT_BINARY_DIR}/libdsbcommon.so" DESTINATION lib)
 install(FILES "${PROJECT_BINARY_DIR}/dsb/config.h" DESTINATION include/dsb)

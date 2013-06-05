@@ -70,7 +70,7 @@ struct EventQueue
 #define DEPENDENCY_QUEUE	2
 
 static struct EventQueue queue[3];
-static unsigned int curq;	//Current queue being processed.
+static unsigned int curq = 1;	//Current queue being processed.
 static int procisrunning;
 
 int queue_insert(int q, Event_t *e)
