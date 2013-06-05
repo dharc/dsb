@@ -10,27 +10,59 @@
 NID_t local_base;
 static unsigned char macaddr[6];
 
+NID_t Root;
+NID_t PRoot;
+NID_t Null;
+NID_t True;
+NID_t False;
+
 int dsb_nid_init()
 {
 	int netf;
 	char buf[18];
+	char *serial;
+	int lmac[6];
 
-	netf = open("/sys/class/net/eth0/address", O_RDONLY);
-	if (netf != -1)
+	serial = getenv("DSB_SERIAL");
+
+	//If not serial number then use mac address
+	if (serial == 0)
 	{
-		int lmac[6];
-		read(netf, buf, 17);
-		buf[17] = 0;
-		sscanf(buf, "%x:%x:%x:%x:%x:%x", &(lmac[0]), &(lmac[1]), &(lmac[2]), &(lmac[3]), &(lmac[4]), &(lmac[5]));
-		close(netf);
-		macaddr[0] = (unsigned char)lmac[0];
-		macaddr[1] = (unsigned char)lmac[1];
-		macaddr[2] = (unsigned char)lmac[2];
-		macaddr[3] = (unsigned char)lmac[3];
-		macaddr[4] = (unsigned char)lmac[4];
-		macaddr[5] = (unsigned char)lmac[5];
-		printf("Mac Addr: %s\n",buf);
+		netf = open("/sys/class/net/eth0/address", O_RDONLY);
+		if (netf != -1)
+		{
+			read(netf, buf, 17);
+			buf[17] = 0;
+			serial = buf;
+			close(netf);
+		}
+		else
+		{
+			//Worst case, there is no way to get a serial number.
+			serial = "00:00:00:00:00:00";
+		}
 	}
+
+	//Decode serial number.
+	sscanf(serial, "%x:%x:%x:%x:%x:%x", &(lmac[0]), &(lmac[1]), &(lmac[2]), &(lmac[3]), &(lmac[4]), &(lmac[5]));
+	macaddr[0] = (unsigned char)lmac[0];
+	macaddr[1] = (unsigned char)lmac[1];
+	macaddr[2] = (unsigned char)lmac[2];
+	macaddr[3] = (unsigned char)lmac[3];
+	macaddr[4] = (unsigned char)lmac[4];
+	macaddr[5] = (unsigned char)lmac[5];
+	printf("Serial: %s\n",serial);
+
+	//Initialise global NIDs.
+	dsb_nid_local(0,&Root);
+	dsb_nid_local(1,&PRoot);
+	dsb_nid_null(&Null);
+	True.header = 0;
+	True.t = NID_SPECIAL;
+	True.ll = SPECIAL_TRUE;
+	False.header = 0;
+	False.t = NID_SPECIAL;
+	False.ll = SPECIAL_FALSE;
 
 	return SUCCESS;
 }
@@ -209,26 +241,16 @@ void dsb_nid_null(NID_t *n)
 	memset(n,0,sizeof(NID_t));
 }
 
+/*
+ * Take two hex digits and return their value.
+ */
 static int readHex(char a, char b)
 {
 	int res = 0;
-	if ((a >= '0') && (a <= '9'))
-	{
-		res = (a-'0') << 4;
-	}
-	else
-	{
-		res = ((a-'a')+10) << 4;
-	}
 
-	if ((b >= '0') && (b <= '9'))
-	{
-		res += (b-'0');
-	}
-	else
-	{
-		res += (b-'a')+10;
-	}
+	res = ((a >= '0') && (a <= '9')) ? (a-'0') << 4 : ((a-'a')+10) << 4;
+	res +=  ((b >= '0') && (b <= '9')) ? (b-'0') : (b-'a')+10;
+
 	return res;
 }
 
@@ -240,139 +262,102 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 	if ((str[0] == '['))
 	{
 		int i = 1;
-		int a;
+		int j;
+		long long a;
 
-		if (str[i] == 0) return ERR_NIDSTR;
-		if (str[i+1] == 0) return ERR_NIDSTR;
-		if (str[i+2] != ':') return ERR_NIDSTR;
+		if (str[i] == 0 || str[i+1] == 0 || str[i+2] != ':') return ERR_NIDSTR;
 		nid->header = readHex(str[i],str[i+1]);
 		i += 3;
 
 		if (nid->hasMac == 1)
 		{
-			if (str[i] == 0) return ERR_NIDSTR;
-			if (str[i+1] == 0) return ERR_NIDSTR;
-			if (str[i+2] != ':') return ERR_NIDSTR;
-			nid->mac[0] = readHex(str[i],str[i+1]);
-			i += 3;
-			if (str[i] == 0) return ERR_NIDSTR;
-			if (str[i+1] == 0) return ERR_NIDSTR;
-			if (str[i+2] != ':') return ERR_NIDSTR;
-			nid->mac[1] = readHex(str[i],str[i+1]);
-			i += 3;
-			if (str[i] == 0) return ERR_NIDSTR;
-			if (str[i+1] == 0) return ERR_NIDSTR;
-			if (str[i+2] != ':') return ERR_NIDSTR;
-			nid->mac[2] = readHex(str[i],str[i+1]);
-			i += 3;
-			if (str[i] == 0) return ERR_NIDSTR;
-			if (str[i+1] == 0) return ERR_NIDSTR;
-			if (str[i+2] != ':') return ERR_NIDSTR;
-			nid->mac[3] = readHex(str[i],str[i+1]);
-			i += 3;
-			if (str[i] == 0) return ERR_NIDSTR;
-			if (str[i+1] == 0) return ERR_NIDSTR;
-			if (str[i+2] != ':') return ERR_NIDSTR;
-			nid->mac[4] = readHex(str[i],str[i+1]);
-			i += 3;
-			if (str[i] == 0) return ERR_NIDSTR;
-			if (str[i+1] == 0) return ERR_NIDSTR;
-			if (str[i+2] != ':') return ERR_NIDSTR;
-			nid->mac[5] = readHex(str[i],str[i+1]);
-			i += 3;
-
-			//Read Integer
-			a = 0;
-			while (str[i] != 0 && str[i] != ']') {
-				a *= 10;
-				a += str[i] - '0';
-				i++;
+			//Parse 6 bytes of MAC address.
+			for (j=0; j<6; j++)
+			{
+				if (str[i] == 0 || str[i+1] == 0 || str[i+2] != ':') return ERR_NIDSTR;
+				nid->mac[j] = readHex(str[i],str[i+1]);
+				i += 3;
 			}
-			if (str[i] == 0) return ERR_NIDSTR;
+
+			//Parse 40bit number
+			a = 0;
+			for (j=0; j<5; j++)
+			{
+				if (str[i] == 0 || str[i+1] == 0) return ERR_NIDSTR;
+				a |= readHex(str[i],str[i+1]) << ((4-j) * 8);
+				i += 2;
+			}
 
 			nid->n = a;
-
-			//Read ]
-			//i++;
-
-			return SUCCESS;
+			if (str[i] != ']') return ERR_NIDSTR;
 		}
 		else
 		{
-			//Read Integer
+			int j;
+
+			//Read Type
 			a = 0;
-			while (str[i] != 0 && str[i] != ':') {
-				a *= 10;
-				a += str[i] - '0';
-				i++;
-			}
-			if (str[i] == 0) return ERR_NIDSTR;
+			if (str[i] == 0 || str[i+1] == 0) return ERR_NIDSTR;
+			a |= readHex(str[i],str[i+1]) << 8;
+			i += 2;
+			if (str[i] == 0 || str[i+1] == 0 || str[i+2] != ':') return ERR_NIDSTR;
+			a |= readHex(str[i],str[i+1]);
+			i += 3;
 
-			nid->t = a;
+			nid->t = (unsigned short)a;
 
-			//Read :
-			i++;
-
-			//Read Integer
+			//Read type value (long long)
 			a = 0;
-			while (str[i] != 0 && str[i] != ']') {
-				a *= 10;
-				a += str[i] - '0';
-				i++;
+			for (j=0; j<8; j++)
+			{
+				if (str[i] == 0 || str[i+1] == 0) return ERR_NIDSTR;
+				a |= readHex(str[i],str[i+1]) << ((7-j) * 8);
+				i += 2;
 			}
-			if (str[i] == 0) return ERR_NIDSTR;
 
 			nid->ll = a;
-
-			//Read ]
-			//i++;
+			if (str[i] != ']') return ERR_NIDSTR;
 		}
 		return SUCCESS;
 	}
 	else if ((str[0] == '-') || (str[0] >= '0' && str[0] <= '9'))
 	{
-			if (strchr(str, '.'))
-			{
-				nid->header = 0;
-				nid->dbl = atof(str);
-				nid->t = NID_REAL;
-				return SUCCESS;
-			}
-			else
-			{
-				int i=0;
-				int num=0;
-				int neg = 0;
-
-				if (str[0] == '-') {
-					i++;
-					neg = 1;
-				}
-
-				if (str[i] == 0) return ERR_NIDSTR;
-
-				while (str[i] >= '0' && str[i] <= '9') {
-					num *= 10;
-					num += str[i] - '0';
-					i++;
-				}
-				if (neg == 1) num = -num;
-				nid->header = 0;
-				nid->t = NID_INTEGER;
-				nid->ll = num;
-				return SUCCESS;
-			}
+		if (strchr(str, '.'))
+		{
+			nid->header = 0;
+			nid->dbl = atof(str);
+			nid->t = NID_REAL;
+			return SUCCESS;
 		}
-		//else if (v[0] == '\'') {
-		//	m_a = 0;
-		//	m_b = 3;
-		//	m_c = 0;
-		//	m_d = v[1];
-		//} else {
-		//	*this = names->lookup(v);
-		//}
+		else
+		{
+			int i=0;
+			int num=0;
+			int neg = 0;
 
-		return ERR_NIDSTR;
+			if (str[0] == '-') {
+				i++;
+				neg = 1;
+			}
+
+			if (str[i] == 0) return ERR_NIDSTR;
+
+			while (str[i] >= '0' && str[i] <= '9') {
+				num *= 10;
+				num += str[i] - '0';
+				i++;
+			}
+			if (neg == 1) num = -num;
+			nid->header = 0;
+			nid->t = NID_INTEGER;
+			nid->ll = num;
+			return SUCCESS;
+		}
+	}
+
+	//TODO Name lookup.
+
+	return ERR_NIDSTR;
 }
 
 int dsb_nid_toStr(const struct NID *nid, char *str, int len)
@@ -411,11 +396,11 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 
 	if (nid->hasMac == 1)
 	{
-		sprintf(str,"[%x:%x:%x:%x:%x:%x:%x:%d]",nid->header,nid->mac[0],nid->mac[1],nid->mac[2],nid->mac[3],nid->mac[4],nid->mac[5],(unsigned int)nid->n);
+		sprintf(str,"[%02x:%02x:%02x:%02x:%02x:%02x:%02x:%010x]",nid->header,nid->mac[0],nid->mac[1],nid->mac[2],nid->mac[3],nid->mac[4],nid->mac[5],(unsigned int)nid->n);
 	}
 	else
 	{
-		sprintf(str,"[%x:%d:%d]",nid->header,nid->t,(unsigned int)nid->ll);
+		sprintf(str,"[%02x:%04x:%016x]",nid->header,nid->t,(unsigned int)nid->ll);
 	}
 	return SUCCESS;
 }

@@ -105,8 +105,7 @@ int dsb_net_init()
 	messages[DSBNET_SENDEVENT].cb = dsb_net_cb_event;
 	messages[DSBNET_EVENTRESULT].cb = dsb_net_cb_result;
 	messages[DSBNET_ERROR].cb = dsb_net_cb_error;
-	messages[DSBNET_LOGIN].cb = dsb_net_cb_login;
-	messages[DSBNET_ROOT].cb = dsb_net_cb_root;
+	messages[DSBNET_BASE].cb = dsb_net_cb_base;
 
 	return 0;
 }
@@ -193,6 +192,9 @@ void *dsb_net_connect(const char *url)
 			connections[i] = malloc(sizeof(struct DSBNetConnection));
 			connections[i]->sockfd = sock;
 			connections[i]->six = 0;
+
+			dsb_net_send_base(connections[i]);
+
 			return connections[i];
 		}
 	}
@@ -395,6 +397,9 @@ void *dsb_net_add(int sock)
 			connections[i] = malloc(sizeof(struct DSBNetConnection));
 			connections[i]->sockfd = sock;
 			connections[i]->six = 0;
+
+			dsb_net_send_base(connections[i]);
+
 			return connections[i];
 		}
 	}

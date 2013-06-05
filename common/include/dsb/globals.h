@@ -35,12 +35,24 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
+/** @file globals.h */
+
 #include "dsb/nid.h"
 
-extern NID_t Root;
-extern NID_t Null;
-extern NID_t True;
-extern NID_t False;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+extern NID_t Root;		///< The local volatile root node.
+extern NID_t PRoot;		///< The local persistent root node.
+extern NID_t Null;		///< Constant Null NID.
+extern NID_t True;		///< Constant True NID.
+extern NID_t False;		///< Constant False NID.
 extern NID_t Names;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GLOBALS_H_ */

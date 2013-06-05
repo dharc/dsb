@@ -65,6 +65,19 @@ int dsb_getA(const struct NID *d1, const struct NID *d2, struct NID *r)
 	return res;
 }
 
+int dsb_new(const NID_t *base, NID_t *n)
+{
+	struct Event evt;
+	int res;
+	evt.d1 = *base;
+	evt.d2 = *base;
+	evt.flags = 0;
+	evt.type = EVENT_ALLOCATE;
+	evt.res = n;
+	res = dsb_send(&evt,0);
+	return res;
+}
+
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
 	struct Event *evt = dsb_event_allocate();

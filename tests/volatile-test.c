@@ -78,6 +78,33 @@ void test_vol_getset()
 	DONE;
 }
 
+void test_vol_allocate()
+{
+	struct Event evt;
+	NID_t res;
+	evt.res = &res;
+	dsb_nid_local(0,&evt.d1);
+	dsb_nid_local(0,&evt.d2);
+	evt.type = EVENT_ALLOCATE;
+
+	//Send ALLOCATE event.
+	CHECK(dsb_route(&evt) == 0);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(res.n == 1);
+
+	//Send ALLOCATE event.
+	CHECK(dsb_route(&evt) == 0);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(res.n == 2);
+
+	//Send ALLOCATE event.
+	CHECK(dsb_route(&evt) == 0);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(res.n == 3);
+
+	DONE;
+}
+
 void test_vol_region()
 {
 	struct Event evt;
@@ -140,7 +167,8 @@ int main(int argc, char *argv[])
 	dsb_module_load("volatile",0);
 
 	dsb_test(test_vol_getset);
-	dsb_test(test_vol_region);
+	dsb_test(test_vol_allocate);
+	//dsb_test(test_vol_region);
 
 	dsb_route_final();
 	dsb_event_final();

@@ -60,7 +60,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 	char buffer[100];
 	//msg.evt = *evt;
 
-	if (e->type == EVENT_GET)
+	if (e->type >> 8 == 0x1)
 	{
 		//Find a spare slot
 		for (ix=0; ix<(MAX_READLIST-1); ix++)
@@ -91,7 +91,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 
 	//Block if we need a response.
 	count = 0;
-	if ((async == 0) && (e->type == EVENT_GET))
+	if ((async == 0) && (e->type >> 8 == 0x1))
 	{
 		while (((e->flags & EVTFLAG_DONE) == 0) && count < 100)
 		{
@@ -118,7 +118,7 @@ int dsb_net_cb_event(void *sock, void *data)
 	evt->flags = 0;
 
 	//If GET we need to wait and send result.
-	if (evt->type == EVENT_GET)
+	if (evt->type >> 8 == 0x1)
 	{
 		NID_t res;
 		evt->res = &res;
@@ -151,21 +151,28 @@ int dsb_net_cb_event(void *sock, void *data)
 	}
 }
 
-int dsb_net_send_login(void *sock, const char *user, const char *pass)
+/*int dsb_net_send_login(void *sock, const char *user, const char *pass)
 {
 	char buf[60];
 	strcpy(buf,user);
 	strcpy(&buf[30],pass);
 	dsb_net_send(sock, DSBNET_LOGIN, buf, 60);
 	return SUCCESS;
-}
+}*/
 
-int dsb_net_send_root(void *sock, const NID_t *root)
+int dsb_net_send_base(void *sock)
 {
-	char buf[100];
+	char buf[200];
 	int count = 0;
-	count = dsb_nid_pack(root,buf,100);
-	dsb_net_send(sock, DSBNET_ROOT, buf, count);
+	NID_t root;
+	NID_t proot;
+
+	dsb_nid_local(0,&root);
+	dsb_nid_local(1,&proot);
+
+	count = dsb_nid_pack(&root,buf,100);
+	count += dsb_nid_pack(&proot,&buf[count],100);
+	dsb_net_send(sock, DSBNET_BASE, buf, count);
 	return SUCCESS;
 }
 
@@ -175,16 +182,16 @@ int dsb_net_send_error(void *sock, int err)
 	return SUCCESS;
 }
 
-int dsb_net_cb_login(void *sock, void *data)
+/*int dsb_net_cb_login(void *sock, void *data)
 {
 	//TODO check username and password.
 	NID_t root;
 	dsb_nid_local(1,&root);
 	dsb_net_send_root(sock,&root);
 	return SUCCESS;
-}
+}*/
 
-int dsb_net_cb_root(void *sock, void *data)
+int dsb_net_cb_base(void *sock, void *data)
 {
 	//TODO
 	return SUCCESS;

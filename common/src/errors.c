@@ -41,6 +41,7 @@ const char *dsb_log_str(int err)
 	switch(err)
 	{
 	case SUCCESS:				return "Success";
+	case ERR_NIDSTR:			return "Invalid NID string";
 	case ERR_NOINIT:			return "Not Initialised";
 	case ERR_REINIT:			return "Multiple Initialisation";
 	case ERR_ROUTE_SLOT:		return "No spare router slots";

@@ -65,8 +65,7 @@ enum
 	DSBNET_ERROR,
 	DSBNET_DEBUGEVENT,
 	DSBNET_DEBUGGER,
-	DSBNET_LOGIN,
-	DSBNET_ROOT,
+	DSBNET_BASE,
 	DSBNET_TYPE_END
 };
 
@@ -90,8 +89,8 @@ int dsb_net_send_event(void *sock, Event_t *evt, int async);
 
 int dsb_net_send_result(void *sock, int id, const NID_t *res);
 int dsb_net_send_error(void *sock, int error);
-int dsb_net_send_login(void *sock, const char *user, const char *pass);
-int dsb_net_send_root(void *sock, const NID_t *root);
+//int dsb_net_send_login(void *sock, const char *user, const char *pass);
+int dsb_net_send_base(void *sock);
 int dsb_net_send_dbgevent(void *sock, Event_t *evt);
 int dsb_net_send_debugger(void *sock, int flags);
 
@@ -99,7 +98,7 @@ int dsb_net_cb_event(void *sock, void *data);
 int dsb_net_cb_result(void *sock, void *data);
 int dsb_net_cb_error(void *sock, void *data);
 int dsb_net_cb_login(void *sock, void *data);
-int dsb_net_cb_root(void *sock, void *data);
+int dsb_net_cb_base(void *sock, void *data);
 
 int dsb_net_send_events(void *sock, int count, Event_t *es);
 int dsb_net_send_info(void *sock);

@@ -61,6 +61,7 @@ typedef int socklen_t;
 #include "dsb/nid.h"
 #include "dsb/net.h"
 #include "dsb/net_protocol.h"
+#include "dsb/router.h"
 #include <stdio.h>
 
 struct Module netmod;
@@ -69,6 +70,8 @@ static fd_set fdread;
 static fd_set fderror;
 
 int net_msg_event(int sock, void *data);
+int net_cb_base(void *sock, void *data);
+int net_handler(Event_t *evt);
 
 
 static int net_accept()
@@ -144,7 +147,9 @@ int net_init(const NID_t *base)
 	//Init common net code
 	dsb_net_init();
 
-	//dsb_net_callback(DSBNET_SENDEVENT,net_msg_event);
+	dsb_route_map(ROUTE_VOLATILE | ROUTE_REMOTE,0,net_handler);
+	dsb_route_map(ROUTE_PERSISTENT | ROUTE_REMOTE,0,net_handler);
+	dsb_net_callback(DSBNET_BASE,net_cb_base);
 
 	//Set up listener socket.
 	net_listen(5555);

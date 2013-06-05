@@ -63,6 +63,8 @@ struct PerHARCEntry
 //Entry and region storage
 static struct PerHARCEntry *pertable[PER_HASH_SIZE];
 
+static int lastallocated = 1;
+
 /*
  * HASH two NIDs together.
  */
@@ -133,6 +135,15 @@ HARC_t *per_getharc(const NID_t *a, const NID_t *b, int create)
  */
 int per_handler(Event_t *evt)
 {
+	if (evt->type == EVENT_ALLOCATE)
+	{
+		dsb_nid_local(1,evt->res);
+		//TODO Put a mutex on this
+		evt->res->n = lastallocated++;
+		evt->flags |= EVTFLAG_DONE;
+		return SUCCESS;
+	}
+
 	if ((evt->flags & EVTFLAG_MULT) == 0)
 	{
 		HARC_t *harc = per_getharc(&(evt->d1),&(evt->d2),evt->type != EVENT_GET);
@@ -171,15 +182,15 @@ static int per_deserialize_harc(FILE *fd, HARC_t *harc)
 	char buf2[100];
 	char buf3[100];
 
-	if (fscanf(fd, "%s,%s,%s,%d\n",buf1,buf2,buf3,&harc->e) != 4)
+	if (fscanf(fd, "%[^,],%[^,],%[^,],%d\n",buf1,buf2,buf3,&harc->e) != 4)
 	{
 		//End of file or invalid input.
 		return -1;
 	}
 
-	dsb_nid_fromStr(buf1,&harc->t1);
-	dsb_nid_fromStr(buf2,&harc->t2);
-	dsb_nid_fromStr(buf3,&harc->def);
+	DSB_ERROR(dsb_nid_fromStr(buf1,&harc->t1),0);
+	DSB_ERROR(dsb_nid_fromStr(buf2,&harc->t2),0);
+	DSB_ERROR(dsb_nid_fromStr(buf3,&harc->def),0);
 
 	return 0;
 }
@@ -197,11 +208,19 @@ static int per_load_file(const char *filename)
 		return DSB_ERROR(ERR_PERFILELOAD,filename);
 	}
 
+	//Read the last allocated NID.
+	if (fscanf(fd, "%x\n", &lastallocated) != 1)
+	{
+		fclose(fd);
+		return DSB_ERROR(ERR_PERFILELOAD,filename);
+	}
+
 	while (per_deserialize_harc(fd, &harc) == 0)
 	{
 		pharc = per_getharc(&harc.t1,&harc.t2,1);
 		pharc->def = harc.def;
 		pharc->e = harc.e;
+		pharc->flags = HARC_OUTOFDATE;
 	}
 
 	fclose(fd);
@@ -223,6 +242,9 @@ static int per_save_file(const char *filename)
 	{
 		return DSB_ERROR(ERR_PERFILESAVE,filename);
 	}
+
+	//Write the lastallocated NID
+	fprintf(fd, "%x\n", lastallocated);
 
 	//For every hash location
 	for (h=0; h<PER_HASH_SIZE; h++)

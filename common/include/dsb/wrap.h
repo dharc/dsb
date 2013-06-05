@@ -108,8 +108,7 @@ int dsb_dependency(
 		const NID_t *dep2
 		);
 
-int dsb_new(NID_t *n);
-int dsb_delete(NID_t *n);
+int dsb_new(const NID_t *base, NID_t *n);
 
 int dsb_getmeta(const NID_t *d1, const NID_t *d2, NID_t *meta);
 int dsb_setmeta(const NID_t *d1, const NID_t *d2, const NID_t *meta);

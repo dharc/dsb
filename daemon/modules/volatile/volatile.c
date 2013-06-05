@@ -79,6 +79,8 @@ struct VolRegionEntry
 struct VolHARCEntry *voltable[VOL_HASH_SIZE] = {0};
 struct VolRegionEntry *volregions[VOL_MAX_REGIONS] = {0};
 
+static int lastallocated = 1;
+
 /*
  * HASH two NIDs together.
  */
@@ -303,6 +305,15 @@ HARC_t *vol_getharc(const NID_t *a, const NID_t *b, int create)
  */
 int vol_handler(Event_t *evt)
 {
+	if (evt->type == EVENT_ALLOCATE)
+	{
+		dsb_nid_local(0,evt->res);
+		//TODO Put a mutex on this
+		evt->res->n = lastallocated++;
+		evt->flags |= EVTFLAG_DONE;
+		return SUCCESS;
+	}
+
 	if ((evt->flags & EVTFLAG_MULT) == 0)
 	{
 		HARC_t *harc = vol_getharc(&(evt->d1),&(evt->d2),evt->type != EVENT_GET);

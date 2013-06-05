@@ -38,6 +38,77 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 
 #include <stdio.h>
+#include <malloc.h>
+#include <string.h>
 
+#define MAX_NET_TABLE	1000
 
+struct NetRouteEntry
+{
+	NID_t base;
+	void *sock;
+	struct NetRouteEntry *next;
+};
+
+static struct NetRouteEntry *routetable[MAX_NET_TABLE];
+
+/*
+ * Hash the 6 byte serial number into an int between 0 and MAX_NET_TABLE.
+ */
+static int hashserial(const char *serial)
+{
+	int res = *((int*)&serial[2]);
+	return res % MAX_NET_TABLE;
+}
+
+/*
+ * Register the socket with a particular serial number for routing.
+ */
+int net_cb_base(void *sock, void *data)
+{
+	struct NetRouteEntry *ent;
+	int count = 0;
+	int hash;
+
+	ent = malloc(sizeof(struct NetRouteEntry));
+	ent->sock = sock;
+
+	count += dsb_nid_unpack(data, &ent->base);
+	//Currently ignore difference between volatile and persistent.
+	//count += dsb_nid_unpack(data+count,&pent->base);
+
+	hash = hashserial((const char*)ent->base.mac);
+	ent->next = routetable[hash];
+	routetable[hash] = ent;
+
+	printf("Route: %x:%x:%x:%x:%x:%x\n",ent->base.mac[0], ent->base.mac[1], ent->base.mac[2], ent->base.mac[3], ent->base.mac[4], ent->base.mac[5]);
+
+	return SUCCESS;
+}
+
+/*
+ * Route the event to the correct machine.
+ */
+int net_handler(Event_t *evt)
+{
+	struct NetRouteEntry *ent;
+	int hash;
+
+	printf("Remote event routing to: %x:%x:%x:%x:%x:%x\n",evt->d1.mac[0], evt->d1.mac[1], evt->d1.mac[2], evt->d1.mac[3], evt->d1.mac[4], evt->d1.mac[5]);
+
+	hash = hashserial((const char*)evt->d1.mac);
+	ent = routetable[hash];
+	while (ent != 0)
+	{
+		if (memcmp(evt->d1.mac,ent->base.mac,6) == 0)
+		{
+			dsb_net_send_event(ent->sock,evt,1);
+			return 0;
+		}
+
+		ent = ent->next;
+	}
+
+	return DSB_ERROR(ERR_NOROUTE,0);
+}
 
