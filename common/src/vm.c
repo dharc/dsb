@@ -102,6 +102,10 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 							break;
 		case VMOP_READ:		dsb_get(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)]);
 							break;
+		case VMOP_WRITE:	dsb_define(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],ctx->reg[VMREG_D(op)].ll);
+							break;
+		case VMOP_DEP:		dsb_dependency(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],&ctx->reg[VMREG_D(op)]);
+							break;
 		case VMOP_INC:		ctx->reg[VMREG_A(op)].ll++;
 							break;
 

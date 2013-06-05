@@ -164,9 +164,9 @@ static int per_serialize_harc(FILE *fd, const HARC_t *harc)
 	char buf2[100];
 	char buf3[100];
 
-	dsb_nid_toStr(&harc->t1, buf1, 100);
-	dsb_nid_toStr(&harc->t2, buf2, 100);
-	dsb_nid_toStr(&harc->def, buf3, 100);
+	dsb_nid_toRawStr(&harc->t1, buf1, 100);
+	dsb_nid_toRawStr(&harc->t2, buf2, 100);
+	dsb_nid_toRawStr(&harc->def, buf3, 100);
 
 	fprintf(fd, "%s,%s,%s,%d\n",buf1,buf2,buf3,harc->e);
 

@@ -193,6 +193,7 @@ void *dsb_net_connect(const char *url)
 			connections[i]->sockfd = sock;
 			connections[i]->six = 0;
 
+			//Register my serial number with the remote machine
 			dsb_net_send_base(connections[i]);
 
 			return connections[i];
@@ -398,6 +399,7 @@ void *dsb_net_add(int sock)
 			connections[i]->sockfd = sock;
 			connections[i]->six = 0;
 
+			//Register my serial number with the remote machine
 			dsb_net_send_base(connections[i]);
 
 			return connections[i];

@@ -405,3 +405,16 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 	return SUCCESS;
 }
 
+int dsb_nid_toRawStr(const struct NID *nid, char *str, int len)
+{
+	if (nid->hasMac == 1)
+	{
+		sprintf(str,"[%02x:%02x:%02x:%02x:%02x:%02x:%02x:%010x]",nid->header,nid->mac[0],nid->mac[1],nid->mac[2],nid->mac[3],nid->mac[4],nid->mac[5],(unsigned int)nid->n);
+	}
+	else
+	{
+		sprintf(str,"[%02x:%04x:%016x]",nid->header,nid->t,(unsigned int)nid->ll);
+	}
+	return SUCCESS;
+}
+

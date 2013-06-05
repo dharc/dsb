@@ -398,7 +398,44 @@ static int asm_write(struct VMLabel *labels, const char *line, NID_t *output, in
 
 static int asm_dep(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
+	int i=0;
+	int tmp;
+	int regA;
+	int regB;
+	int regC;
+	int regD;
 
+	//Get a register
+	tmp = vm_assemble_reg(&line[i],&regA);
+	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
+	i += tmp;
+
+	++i; //White Space.
+
+	//Get a register
+	tmp = vm_assemble_reg(&line[i],&regB);
+	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
+	i += tmp;
+
+	++i; //White Space.
+
+	//Get a register
+	tmp = vm_assemble_reg(&line[i],&regC);
+	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
+	i += tmp;
+
+	++i;
+
+	//Get a register
+	tmp = vm_assemble_reg(&line[i],&regD);
+	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
+	i += tmp;
+
+	//Insert OP into output
+	dsb_nid_op(VM_DEP(regA,regB,regC,regD),&output[*ip]);
+	*ip = *ip + 1;
+
+	return i;
 }
 
 static int asm_new(struct VMLabel *labels, const char *line, NID_t *output, int *ip)

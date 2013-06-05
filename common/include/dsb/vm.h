@@ -95,7 +95,7 @@ typedef struct HARC HARC_t;
 //High-level op code generation
 #define VM_READ(A,B,C)		VMOP3(VMOP_READ,A,B,C)
 #define VM_WRITE(A,B,C,D)	VMOP4(VMOP_WRITE,A,B,C,D)
-#define VM_DEP(A,B)			VMOP2(VMOP_DEP,A,B)
+#define VM_DEP(A,B,C,D)		VMOP4(VMOP_DEP,A,B,C,D)
 
 #define VM_JUMP(A)			(VMOP_JUMP | ((unsigned char)(A) & 0xFF))
 #define VM_JEQ(A,B,C)		(VMOP2(VMOP_JEQ,A,B) | ((unsigned char)(C) & 0xFF))
