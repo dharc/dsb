@@ -36,8 +36,10 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/processor.h"
 #include "dsb/router.h"
+#include "dsb/names.h"
 #include "dsb/common.h"
 #include "dsb/evaluator.h"
+#include "dsb/globals.h"
 #include "config.h"
 #include <stdio.h>
 #include <signal.h>
@@ -76,7 +78,7 @@ int process_args(int argc, char *argv[])
 			switch (argv[i][1])
 			{
 			case 'l':
-				dsb_module_load(argv[++i],0);
+				dsb_module_load(argv[++i],&PRoot);
 				break;
 
 			case 'h':
@@ -130,9 +132,15 @@ int main(int argc, char *argv[])
 	//Register the internal modules
 	dsb_module_register("volatile",dsb_volatile_module());
 	dsb_module_register("persistent",dsb_persistent_module());
-	//dsb_module_register("math",dsb_math_module());
 	dsb_module_register("evaluators",dsb_evaluators_module());
 	dsb_module_register("net",dsb_network_module());
+
+	//These must exist or all else fails completely.
+	dsb_module_load("volatile",&Root);
+	dsb_module_load("persistent",&PRoot);
+
+	//Make sure names map is up to date.
+	dsb_names_rebuild();
 
 	//Ready to process command line args.
 	ret = process_args(argc,argv);

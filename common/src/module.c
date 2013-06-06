@@ -36,10 +36,12 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "string.h"
 #include <stdio.h>
+#include <malloc.h>
 #include "dsb/config.h"
 
 #ifdef UNIX
 #include <dlfcn.h>
+#include <sys/time.h>
 #endif
 
 #define MAX_MODULE_NAME			50
@@ -54,6 +56,7 @@ struct ModInternal
 	char name[MAX_MODULE_NAME];
 	struct Module mod;
 	void *handle;
+	long long nextupdate;
 };
 
 static struct ModInternal imods[MAX_INTERNAL_MODULES];
@@ -125,8 +128,7 @@ int dsb_module_load(const char *name, const struct NID *base)
 	int i,j;
 	void *handle;
 	char fname[200];
-	void (*init)(struct Module*);
-	struct Module info;
+	struct Module *(*init)(void);
 
 	//First scan internal registered modules.
 	for (i=0; i<modix; i++)
@@ -134,11 +136,12 @@ int dsb_module_load(const char *name, const struct NID *base)
 		//Do we have a name match
 		if (strcmp(name,imods[i].name) == 0)
 		{
-			for (j=0; i<MAX_LOADED_MODULES; j++)
+			for (j=0; j<MAX_LOADED_MODULES; j++)
 			{
 				if (lmods[j] == 0) break;
 			}
 			lmods[j] = &(imods[i]);
+			lmods[j]->nextupdate = 0;
 			if (imods[i].mod.init != 0)
 			{
 				//Initialise the module!
@@ -174,10 +177,27 @@ int dsb_module_load(const char *name, const struct NID *base)
 		return DSB_ERROR(ERR_INVALIDMOD,name);
 	}
 
-	init(&info);
+	for (j=0; j<MAX_LOADED_MODULES; j++)
+	{
+		if (lmods[j] == 0) break;
+	}
 
+	lmods[j] = malloc(sizeof(struct ModInternal));
+	lmods[j]->handle = handle;
+	lmods[j]->nextupdate = 0;
+	strcpy(lmods[j]->name,name);
+	lmods[j]->mod = *(init());
+	if (lmods[j]->mod.init != 0)
+	{
+		//Initialise the module!
+		return lmods[j]->mod.init(base);
+	}
+	else
+	{
+		return DSB_ERROR(ERR_INVALIDMOD,name);
+	}
 
-	return DSB_ERROR(ERR_NOMOD,name);
+	return DSB_ERROR(ERR_NOMOD,name);;
 }
 
 int dsb_module_unload(const char *name)
@@ -207,16 +227,44 @@ int dsb_module_unload(const char *name)
 		return DSB_ERROR(ERR_NOMOD,name);
 }
 
+static long long getTicks()
+{
+	#ifdef UNIX
+	unsigned long long ticks;
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	ticks = ((unsigned long long)now.tv_sec) * (unsigned long long)1000000 + ((unsigned long long)now.tv_usec);
+	return ticks;
+	#endif
+
+	#ifdef WIN32
+	LARGE_INTEGER tks;
+	QueryPerformanceCounter(&tks);
+	return (((unsigned long long)tks.HighPart << 32) + (unsigned long long)tks.LowPart);
+	#endif
+}
+
 int dsb_module_updateall()
 {
 	int i;
+	long long ticks = getTicks();
 	for (i=0; i<MAX_LOADED_MODULES; i++)
 	{
 		if (lmods[i] != 0)
 		{
 			if (lmods[i]->mod.update != 0)
 			{
-				lmods[i]->mod.update();
+				if (lmods[i]->nextupdate <= ticks)
+				{
+					if (lmods[i]->mod.ups > 0)
+					{
+						lmods[i]->nextupdate = ticks + (1000000 / lmods[i]->mod.ups);
+					}
+					else{
+						lmods[i]->nextupdate = ticks;
+					}
+					lmods[i]->mod.update();
+				}
 			}
 		}
 		else

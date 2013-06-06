@@ -54,6 +54,7 @@ struct Module
 	int (*init)(const struct NID *);
 	int (*update)();
 	int (*final)();
+	int ups;	///< Updates per second.
 };
 
 /**

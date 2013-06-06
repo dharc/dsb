@@ -68,7 +68,7 @@ static int lastallocated = 1;
 /*
  * HASH two NIDs together.
  */
-int per_hashnid(const struct NID *a, const struct NID *b)
+static int per_hashnid(const struct NID *a, const struct NID *b)
 {
 	//TODO Make sure a and b are in correct order.
 	//TODO Improve hash function
@@ -78,7 +78,7 @@ int per_hashnid(const struct NID *a, const struct NID *b)
 /*
  * Construct a new HARC entry in the hash table.
  */
-struct PerHARCEntry *per_createentry(const struct NID *a, const struct NID *b)
+static struct PerHARCEntry *per_createentry(const struct NID *a, const struct NID *b)
 {
 	int hash = per_hashnid(a,b);
 	struct PerHARCEntry *res;
@@ -101,7 +101,7 @@ struct PerHARCEntry *per_createentry(const struct NID *a, const struct NID *b)
 /*
  * Find or create a HARC entry in the hash table.
  */
-HARC_t *per_getharc(const NID_t *a, const NID_t *b, int create)
+static HARC_t *per_getharc(const NID_t *a, const NID_t *b, int create)
 {
 	int hash = per_hashnid(a,b);
 	//TODO Make threadsafe.
@@ -134,7 +134,7 @@ HARC_t *per_getharc(const NID_t *a, const NID_t *b, int create)
 /*
  * Main event handler for volatile storage.
  */
-int per_handler(Event_t *evt)
+static int per_handler(Event_t *evt)
 {
 	if (evt->type == EVENT_ALLOCATE)
 	{

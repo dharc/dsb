@@ -60,6 +60,19 @@ int dsb_array_write(const NID_t *src, int size, const NID_t *dest);
  */
 int dsb_array_read(const NID_t *src, NID_t *dest, int max);
 
+/**
+ * Allocates the required amount of memory for a C array to contain the entire
+ * DSB array and then reads the DSB array into it. The size of the array
+ * is returned, with 0 meaning no memory was allocated. It is up to the user
+ * to free the memory.
+ * @param src NID corresponding to an array structure.
+ * @param dest Pointer to storage for an array pointer.
+ * @return Size of array.
+ */
+int dsb_array_readalloc(const NID_t *src, NID_t **dest);
+
+//int dsb_array_initialise(const NID_t *array, int size);
+
 #ifdef __cplusplus
 }
 #endif

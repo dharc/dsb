@@ -64,6 +64,11 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
+	case EVENT_ALLOCATE:
+		*((int*)buf) = e->resid;
+		buf += sizeof(int);
+		break;
+	//---------------------------------------------------------------------
 	case EVENT_DEFINE:
 		*((int*)buf) = e->eval;
 		buf += sizeof(int);
@@ -98,6 +103,11 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 	{
 	//---------------------------------------------------------------------
 	case EVENT_GET:
+		e->resid = *((int*)buf);
+		buf += sizeof(int);
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_ALLOCATE:
 		e->resid = *((int*)buf);
 		buf += sizeof(int);
 		break;

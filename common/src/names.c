@@ -36,6 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/globals.h"
 #include "dsb/specials.h"
 #include "dsb/string.h"
+#include "dsb/array.h"
 #include "dsb/names.h"
 #include "dsb/errors.h"
 #include "dsb/wrap.h"
@@ -54,9 +55,12 @@ struct NameEntry
 };
 
 static struct NameEntry *nametable[NAME_HASH_SIZE];
+static NID_t namesobj;
+static int countnames;
 
 int dsb_names_init()
 {
+	//Builtins
 	dsb_names_add("root",&Root);
 	dsb_names_add("proot",&PRoot);
 	dsb_names_add("null",&Null);
@@ -105,7 +109,33 @@ int dsb_names_rebuild()
 	dsb_names_update("root",&Root);
 	dsb_names_update("proot",&PRoot);
 
-	//Need to check for names object and rebuild index...
+	//Get the new persistent names object.
+	dsb_get(&PRoot,&Names,&namesobj);
+
+	//If there is a names object then
+	if (dsb_nid_eq(&namesobj,&Null) == 0)
+	{
+		NID_t *array;
+		countnames = dsb_array_readalloc(&namesobj,&array);
+		int i;
+		char buf[MAX_NAME_SIZE];
+
+		//For each name in the array add to local map.
+		for (i=0; i<countnames; i++)
+		{
+			dsb_string_ntoc(buf,MAX_NAME_SIZE,&array[i]);
+			printf("Added name: %s\n",buf);
+			dsb_names_add(buf,&array[i]);
+		}
+	}
+	//There is no names object, so make it
+	else
+	{
+		dsb_new(&PRoot,&namesobj);
+		dsb_set(&PRoot,&Names,&namesobj);
+		dsb_setnni(&namesobj,&Size,0);
+		//dsb_array_initialise(&namesobj,0);
+	}
 
 	return 0;
 }
@@ -130,10 +160,11 @@ int dsb_names_update(const char *name, const NID_t *nid)
 	return dsb_names_add(name,nid);
 }
 
-int dsb_names_lookup(const char *name, NID_t *nid)
+const NID_t *dsb_names_plookup(const char *name)
 {
 	struct NameEntry *entry;
 	int hash = namehash(name);
+	NID_t tmp;
 
 	entry = nametable[hash];
 
@@ -141,16 +172,30 @@ int dsb_names_lookup(const char *name, NID_t *nid)
 	{
 		if (strcmp(entry->name,name) == 0)
 		{
-			*nid = entry->nid;
-			return SUCCESS;
+			return &entry->nid;
 		}
 		entry = entry->next;
 	}
 
+	printf("Lookup nf: %s (%d)\n",name,countnames);
+
 	//Opps, so make it.
-	dsb_new(&PRoot,nid);
-	dsb_string_cton(nid,name);
-	return dsb_names_add(name,nid);
+	dsb_new(&PRoot,&tmp);
+	//Add to names array structure.
+	dsb_setnin(&namesobj,countnames++,&tmp);
+	dsb_setnni(&namesobj,&Size,countnames);
+	//Put string into it.
+	dsb_string_cton(&tmp,name);
+	dsb_names_add(name,&tmp);
+
+	//Call self again to find result that is now there.
+	return dsb_names_plookup(name);
+}
+
+int dsb_names_lookup(const char *name, NID_t *nid)
+{
+	*nid = *(dsb_names_plookup(name));
+	return SUCCESS;
 }
 
 int dsb_names_revlookup(const NID_t *nid, char *name, int max)

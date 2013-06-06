@@ -45,6 +45,14 @@ extern "C"
 int dsb_names_init();
 int dsb_names_final();
 
+int dsb_names_rebuild();
+
+#define DSB_NAME(A) static const NID_t *A
+/// Define a NID variable to cache a name lookup.
+#define DSB_INIT(A,B) A = dsb_names_plookup(#B)
+
+const NID_t *dsb_names_plookup(const char *name);
+
 /**
  * Add a special hard coded label. This does not add to the persistent
  * hypergraph, instead use dsb_names_lookup.

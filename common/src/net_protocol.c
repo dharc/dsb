@@ -60,7 +60,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 	char buffer[100];
 	//msg.evt = *evt;
 
-	if (e->type >> 8 == 0x1)
+	if ((e->type >> 8) == 0x1)
 	{
 		//Find a spare slot
 		for (ix=0; ix<(MAX_READLIST-1); ix++)
@@ -118,7 +118,7 @@ int dsb_net_cb_event(void *sock, void *data)
 	evt->flags = 0;
 
 	//If GET we need to wait and send result.
-	if (evt->type >> 8 == 0x1)
+	if ((evt->type >> 8) == 0x1)
 	{
 		NID_t res;
 		evt->res = &res;

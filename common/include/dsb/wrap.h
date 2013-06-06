@@ -64,6 +64,11 @@ typedef struct NID NID_t;
  */
 int dsb_get(const NID_t *d1, const NID_t *d2, NID_t *r);
 
+int dsb_getzzi(const char *d1, const char *d2, int *r);
+int dsb_getzii(const char *d1, int d2, int *r);
+int dsb_getnii(const NID_t *d1, int d2, int *r);
+int dsb_getnni(const NID_t *d1, const NID_t *d2, int *r);
+
 int dsb_getA(const NID_t *d1, const NID_t *d2, NID_t *r);
 
 /**
@@ -78,6 +83,8 @@ int dsb_set(const NID_t *d1, const NID_t *d2, const NID_t *v);
 
 int dsb_setnzz(const NID_t *d1, const char *d2, const char *v);
 int dsb_setzzz(const char *d1, const char *d2, const char *v);
+int dsb_setnni(const NID_t *d1, const NID_t *d2, int v);
+int dsb_setnin(const NID_t *d1, int d2, const NID_t *v);
 
 
 int dsb_define(

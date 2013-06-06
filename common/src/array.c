@@ -36,6 +36,8 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/nid.h"
 #include "dsb/specials.h"
 #include "dsb/wrap.h"
+#include "dsb/globals.h"
+#include <malloc.h>
 
 int dsb_array_write(const NID_t *src, int size, const NID_t *dest)
 {
@@ -87,5 +89,37 @@ int dsb_array_read(const NID_t *src, NID_t *dest, int max)
 	}
 
 	return len2;
+}
+
+int dsb_array_readalloc(const NID_t *src, NID_t **dest)
+{
+	NID_t attr;
+	NID_t val;
+	int i;
+	int len;
+
+	dsb_get(src,&Size,&val);
+	len = dsb_ntoi(&val);
+
+	if (len <= 0) return 0;
+
+	*dest = malloc(sizeof(NID_t)*len);
+
+	for (i=0; i<len; i++)
+	{
+		dsb_iton(i,&attr);
+
+		//If we are not the last then use async read
+		if (i < len-1)
+		{
+			dsb_getA(src,&attr,&((*dest)[i]));
+		}
+		else
+		{
+			dsb_get(src,&attr,&((*dest)[i]));
+		}
+	}
+
+	return len;
 }
 

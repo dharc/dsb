@@ -1,7 +1,7 @@
 /*
- * string.h
+ * display.c
  *
- *  Created on: 28 May 2013
+ *  Created on: 6 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,37 +32,99 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef STRING_H_
-#define STRING_H_
+#include "dsb/module.h"
+#include "dsb/errors.h"
+#include "dsb/nid.h"
+#include "dsb/wrap.h"
+#include "dsb/globals.h"
+#include "dsb/names.h"
 
-#ifdef __cplusplus
-extern "C"
+#include <SDL/SDL.h>
+#include <SDL/SDL_gfxPrimitives.h>
+#include <stdio.h>
+
+static struct Module dispmod;
+static NID_t base;
+
+SDL_Surface *screen;
+
+DSB_NAME(X1);
+DSB_NAME(Y1);
+DSB_NAME(X2);
+DSB_NAME(Y2);
+DSB_NAME(Type);
+
+int disp_init(const NID_t *b)
 {
-#endif
+	DSB_INIT(X1,x1);
+	DSB_INIT(Y1,y1);
+	DSB_INIT(X2,x2);
+	DSB_INIT(Y2,y2);
+	DSB_INIT(Type,type);
 
-typedef struct NID NID_t;
+	printf("Init display\n");
+	SDL_Init(SDL_INIT_VIDEO);
+	screen = SDL_SetVideoMode(800,480,16,SDL_HWSURFACE);
 
-/**
- * Convert a C string to a DSB string. Puts the resulting DSB string into the dest object.
- * @param dest Destination node.
- * @param str Source C string.
- * @return SUCCESS.
- */
-int dsb_string_cton(const NID_t *dest, const char *str);
+	if (screen == 0)
+	{
+		printf("Could not create display\n");
+		return -1;
+	}
 
-/**
- * Convert a DSB string to a C string.
- * @param dest C string buffer.
- * @param len Length of C string buffer.
- * @param str Source string node.
- * @return SUCCESS.
- */
-int dsb_string_ntoc(char *dest, int len, const NID_t *str);
+	SDL_WM_SetCaption("DSB Display","DSB");
 
-int dsb_string_len(const NID_t *str);
+	base = *b;
 
-#ifdef __cplusplus
+
+
+	return SUCCESS;
 }
-#endif
 
-#endif /* STRING_H_ */
+int disp_final()
+{
+	SDL_Quit();
+	return SUCCESS;
+}
+
+static int disp_drawline(const NID_t *line)
+{
+	int x1,x2,y1,y2 = 0;
+	int ret;
+	ret =  dsb_getnni(line,X1,&x1);
+	ret += dsb_getnni(line,Y1,&y1);
+	ret += dsb_getnni(line,X2,&x2);
+	ret += dsb_getnni(line,Y2,&y2);
+
+	if (ret > 0) return 0;
+
+	aalineRGBA(screen,x1,y1,x2,y2,255,0,0,255);
+
+	return 0;
+}
+
+int disp_update()
+{
+	//Test Line Draw
+	SDL_LockSurface(screen);
+
+	disp_drawline(&PRoot);
+
+	SDL_UnlockSurface(screen);
+	SDL_UpdateRect(screen,0,0,100,100);
+
+	return 0;
+}
+
+/*
+ * Module registration structure.
+ */
+struct Module *dsb_module_info()
+{
+	dispmod.init = disp_init;
+	dispmod.update = disp_update;
+	dispmod.final = disp_final;
+	dispmod.ups = 40;
+	return &dispmod;
+}
+

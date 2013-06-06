@@ -80,6 +80,7 @@ int queue_insert(int q, Event_t *e)
 	#endif
 
 	queue[q].q[queue[q].wix++] = e;
+	if (queue[q].wix >= QUEUE_SIZE) queue[q].wix = 0;
 
 	#if defined(UNIX) && !defined(NO_THREADS)
 	pthread_mutex_unlock(&(queue[q].mtx));
@@ -97,9 +98,13 @@ Event_t *queue_pop(int q)
 	#endif
 
 	//Are there any events left to read.
-	if (queue[q].rix < queue[q].wix)
+	res = queue[q].q[queue[q].rix];
+
+	if (res != 0)
 	{
-		res = queue[q].q[queue[q].rix++];
+
+		queue[q].q[queue[q].rix++] = 0;
+		if (queue[q].rix >= QUEUE_SIZE) queue[q].rix = 0;
 	}
 
 	#if defined(UNIX) && !defined(NO_THREADS)

@@ -35,6 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/wrap.h"
 #include "dsb/nid.h"
 #include "dsb/event.h"
+#include "dsb/errors.h"
 
 //Needs to be implemented elsewhere.
 extern int dsb_send(struct Event *,int);
@@ -50,6 +51,58 @@ int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r)
 	evt.res = r;
 	res = dsb_send(&evt,0);
 	return res;
+}
+
+int dsb_getzzi(const char *d1, const char *d2, int *r)
+{
+	NID_t n1;
+	NID_t n2;
+	NID_t r1;
+	int ret;
+
+	dsb_nid_fromStr(d1,&n1);
+	dsb_nid_fromStr(d2,&n2);
+	ret = dsb_get(&n1,&n2,&r1);
+	*r = dsb_ntoi(&r1);
+	return ret;
+}
+
+int dsb_getzii(const char *d1, int d2, int *r)
+{
+	NID_t n1;
+	NID_t n2;
+	NID_t r1;
+	int ret;
+
+	dsb_nid_fromStr(d1,&n1);
+	dsb_iton(d2,&n2);
+	ret = dsb_get(&n1,&n2,&r1);
+	*r = dsb_ntoi(&r1);
+	return ret;
+}
+
+int dsb_getnii(const NID_t *d1, int d2, int *r)
+{
+	NID_t n2;
+	NID_t r1;
+	int ret;
+
+	dsb_iton(d2,&n2);
+	ret = dsb_get(d1,&n2,&r1);
+	if (r1.header != 0 || r1.t != NID_INTEGER) return ERR_NOTINTEGER;
+	*r = dsb_ntoi(&r1);
+	return ret;
+}
+
+int dsb_getnni(const NID_t *d1, const NID_t *d2, int *r)
+{
+	NID_t r1;
+	int ret;
+
+	ret = dsb_get(d1,d2,&r1);
+	if (r1.header != 0 || r1.t != NID_INTEGER) return ERR_NOTINTEGER;
+	*r = dsb_ntoi(&r1);
+	return ret;
 }
 
 int dsb_getA(const struct NID *d1, const struct NID *d2, struct NID *r)
@@ -103,6 +156,20 @@ int dsb_setzzz(const char *d1, const char *d2, const char *v)
 	dsb_nid_fromStr(d2,&n2);
 	dsb_nid_fromStr(v,&n3);
 	return dsb_set(&n1,&n2,&n3);
+}
+
+int dsb_setnni(const NID_t *d1, const NID_t *d2, int v)
+{
+	NID_t r1;
+	dsb_iton(v,&r1);
+	return dsb_set(d1,d2,&r1);
+}
+
+int dsb_setnin(const NID_t *d1, int d2, const NID_t *v)
+{
+	NID_t n2;
+	dsb_iton(d2,&n2);
+	return dsb_set(d1,&n2,v);
 }
 
 int dsb_define(

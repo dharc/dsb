@@ -35,6 +35,8 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/evaluator.h"
 #include "dsb/module.h"
 #include "dsb/errors.h"
+#include "dsb/globals.h"
+#include "dsb/wrap.h"
 
 struct Module evalmod;
 struct HARC;
@@ -56,13 +58,24 @@ int eval_final()
 	return SUCCESS;
 }
 
+int eval_update()
+{
+	int x1,x2,y1,y2 = 0;
+		int ret;
+		ret =  dsb_getnii(&PRoot,0,&x1);
+		ret += dsb_getnii(&PRoot,1,&x2);
+		ret += dsb_getnii(&PRoot,2,&y1);
+		ret += dsb_getnii(&PRoot,3,&y2);
+		return 0;
+}
+
 /*
  * Module registration structure.
  */
 struct Module *dsb_evaluators_module()
 {
 	evalmod.init = eval_init;
-	evalmod.update = 0;
+	evalmod.update = eval_update;
 	evalmod.final = eval_final;
 	return &evalmod;
 }

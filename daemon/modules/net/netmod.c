@@ -205,6 +205,7 @@ struct Module *dsb_network_module()
 	netmod.init = net_init;
 	netmod.update = net_update;
 	netmod.final = net_final;
+	netmod.ups = 0;
 	return &netmod;
 }
 
