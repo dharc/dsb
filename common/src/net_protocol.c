@@ -35,6 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net.h"
 #include "dsb/net_protocol.h"
 #include "dsb/errors.h"
+#include "dsb/globals.h"
 #include <string.h>
 
 static Event_t *readlist[MAX_READLIST];
@@ -101,6 +102,9 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 
 		if ((e->flags & EVTFLAG_DONE) == 0)
 		{
+			readlist[e->resid] = 0;
+			*(e->res) = Null;
+			e->flags |= EVTFLAG_DONE;
 			return DSB_ERROR(ERR_NETTIMEOUT,0);
 		}
 	}
@@ -250,6 +254,11 @@ int dsb_net_cb_result(void *sock, void *data)
 	//Actually update value and mark event as complete.
 	*(evt->res) = res;
 	evt->flags |= EVTFLAG_DONE;
+
+	if (evt->flags & EVTFLAG_FREE)
+	{
+		dsb_event_free(evt);
+	}
 
 	return count;
 }

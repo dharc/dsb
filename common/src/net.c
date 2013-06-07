@@ -67,6 +67,10 @@ typedef int socklen_t;
 
 #define MAX_CONNECTIONS		100
 
+#if defined(UNIX) && !defined(NO_THREADS)
+static pthread_mutex_t net_poll_mtx = PTHREAD_MUTEX_INITIALIZER;
+#endif //LINUX THREADED
+
 /*
  * Represents a socket connection. Contains the receive buffer and index.
  */
@@ -336,13 +340,24 @@ static int read_messages(void *s)
 
 int dsb_net_poll(unsigned int ms)
 {
-	int n = set_descriptors();
+	int n;
 	struct timeval block;
 	int selres;
 	int i;
 
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_lock(&net_poll_mtx);
+	#endif
+
+	n = set_descriptors();
 	//There are no connections to check.
-	if (n == 0) return SUCCESS;
+	if (n == 0)
+	{
+		#if defined(UNIX) && !defined(NO_THREADS)
+		pthread_mutex_unlock(&net_poll_mtx);
+		#endif
+		return SUCCESS;
+	}
 
 	//Timeout immediately.
 	block.tv_sec = 0;
@@ -351,6 +366,9 @@ int dsb_net_poll(unsigned int ms)
 
 	//Some kind of error occurred, it is usually possible to recover from this.
 	if (selres <= 0) {
+		#if defined(UNIX) && !defined(NO_THREADS)
+		pthread_mutex_unlock(&net_poll_mtx);
+		#endif
 		return SUCCESS;
 	}
 
@@ -374,6 +392,11 @@ int dsb_net_poll(unsigned int ms)
 			}
 		}
 	}
+
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_unlock(&net_poll_mtx);
+	#endif
+
 	return 0;
 }
 
