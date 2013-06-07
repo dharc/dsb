@@ -44,7 +44,7 @@ extern int dsb_send(struct Event *,int);
 
 int dsb_net_send_dbgevent(void *sock, Event_t *evt)
 {
-	char buffer[100];
+	char *buffer = dsb_net_buffer(200);
 	int count;
 	//Pack the event.
 	count = dsb_event_pack(evt, buffer, 100);
@@ -57,7 +57,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 {
 	int ix = 0;
 	int count = 0;
-	char buffer[100];
+	char *buffer = dsb_net_buffer(200);
 	//msg.evt = *evt;
 
 	if ((e->type >> 8) == 0x1)
@@ -91,7 +91,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 
 	//Block if we need a response.
 	count = 0;
-	if ((async == 0) && (e->type >> 8 == 0x1))
+	if ((async == 0) && ((e->type >> 8) == 0x1))
 	{
 		while (((e->flags & EVTFLAG_DONE) == 0) && count < 100)
 		{
@@ -117,7 +117,7 @@ int dsb_net_cb_event(void *sock, void *data)
 	count = dsb_event_unpack(data, evt);
 	evt->flags = 0;
 
-	//If GET we need to wait and send result.
+	//If READ we need to wait and send result.
 	if ((evt->type >> 8) == 0x1)
 	{
 		NID_t res;
@@ -162,7 +162,7 @@ int dsb_net_cb_event(void *sock, void *data)
 
 int dsb_net_send_base(void *sock)
 {
-	char buf[200];
+	char *buf = dsb_net_buffer(200);
 	int count = 0;
 	NID_t root;
 	NID_t proot;
@@ -178,7 +178,17 @@ int dsb_net_send_base(void *sock)
 
 int dsb_net_send_error(void *sock, int err)
 {
-	dsb_net_send(sock, DSBNET_ERROR, &err, sizeof(int));
+	char *buffer = dsb_net_buffer(8);
+	*((int*)buffer) = err;
+	dsb_net_send(sock, DSBNET_ERROR, buffer, sizeof(int));
+	return SUCCESS;
+}
+
+int dsb_net_send_debugger(void *sock, int flags)
+{
+	char *buffer = dsb_net_buffer(8);
+	*((int*)buffer) = flags;
+	dsb_net_send(sock, DSBNET_DEBUGGER, buffer, sizeof(int));
 	return SUCCESS;
 }
 
@@ -205,7 +215,7 @@ int dsb_net_cb_error(void *sock, void *data)
 
 int dsb_net_send_result(void *sock, int id, const NID_t *res)
 {
-	char buf[100];
+	char *buf = dsb_net_buffer(200);
 	int count = sizeof(int);
 
 	(*(int*)buf) = id;

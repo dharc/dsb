@@ -59,6 +59,13 @@ int dsb_net_init();
 int dsb_net_final();
 
 /**
+ * Allocate a send buffer.
+ * @param size Maximum size of the buffer.
+ * @return Pointer to the buffer.
+ */
+char *dsb_net_buffer(int size);
+
+/**
  * Connect to a dsbd server. If successful the connection is added to
  * available connections and set as default.
  * @param url address[:port], may be ip or host name.

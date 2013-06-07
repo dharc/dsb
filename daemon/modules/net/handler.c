@@ -36,6 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net.h"
 #include "dsb/net_protocol.h"
 #include "dsb/errors.h"
+#include "dsb/processor.h"
 
 #include <stdio.h>
 #include <malloc.h>
@@ -84,6 +85,18 @@ int net_cb_base(void *sock, void *data)
 	printf("Route: %x:%x:%x:%x:%x:%x\n",ent->base.mac[0], ent->base.mac[1], ent->base.mac[2], ent->base.mac[3], ent->base.mac[4], ent->base.mac[5]);
 
 	return SUCCESS;
+}
+
+int net_debug_request(void *sock, void *data)
+{
+	int flags = *((int*)data);
+
+	if (flags & NET_DEBUG_QUEUES)
+	{
+		dsb_proc_debug(sock);
+	}
+
+	return 0;
 }
 
 /*

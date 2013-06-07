@@ -242,11 +242,16 @@ static int read_messages(void *s)
 	int rc;
 	struct DSBNetHeader *header;
 	int ix = 0;
+	int repeat = 0;
 
 	if (sock == 0) return SUCCESS;
 
 	//Read into remaining buffer space.
 	rc = recv(sock->sockfd, sock->buffer + sock->six, 1000 - sock->six, 0);
+	if (rc == (1000-sock->six))
+	{
+		repeat = 1;
+	}
 
 	//No data to process.
 	if (rc <= 0)
@@ -268,8 +273,14 @@ static int read_messages(void *s)
 		ix += sizeof(struct DSBNetHeader);
 
 		//Make sure it is a valid message.
-		if (header->chck != DSB_NET_CHECK) return DSB_ERROR(ERR_NETMSGCHK,0);
-		if (header->type >= DSBNET_TYPE_END) return DSB_ERROR(ERR_NETMSGTYPE,0);
+		if (header->chck != DSB_NET_CHECK)
+		{
+			return DSB_ERROR(ERR_NETMSGCHK,0);
+		}
+		if (header->type >= DSBNET_TYPE_END)
+		{
+			return DSB_ERROR(ERR_NETMSGTYPE,0);
+		}
 
 		//Do we have the entire message contents?
 		if (rc-sizeof(struct DSBNetHeader) >= header->size)
@@ -304,13 +315,23 @@ static int read_messages(void *s)
 		memcpy(sock->buffer, sock->buffer+sock->six, rc);
 		//Set start index to next free buffer location.
 		sock->six = rc;
+		printf("Incomplete message: %d\n",rc);
 	}
 	else
 	{
 		sock->six = 0;
 	}
 
-	return 0;
+	//Filled buffer on read so do another read?
+	if (repeat == 1)
+	{
+		printf("Repeat read...\n");
+		return read_messages(s);
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 int dsb_net_poll(unsigned int ms)
@@ -369,7 +390,9 @@ int dsb_net_callback(int msgtype, int (*cb)(void*,void *))
 
 int dsb_net_send(void *s, int msgtype, void *msg, int size)
 {
-	struct DSBNetHeader header;
+	//Space for header should exist before msg buffer.
+	//MAKE SURE TO HAVE USED dsb_net_buffer!!
+	struct DSBNetHeader *header = msg-sizeof(struct DSBNetHeader);
 	struct DSBNetConnection *sock = s;
 
 	if (s == 0) return SUCCESS;
@@ -378,12 +401,12 @@ int dsb_net_send(void *s, int msgtype, void *msg, int size)
 		return DSB_ERROR(ERR_NETMSGTYPE,0);
 	}
 
-	header.type = msgtype;
-	header.chck = DSB_NET_CHECK;
-	header.size = size;
+	header->type = msgtype;
+	header->chck = DSB_NET_CHECK;
+	header->size = size;
 	//TODO check for errors.
-	send(sock->sockfd, &header, sizeof(header),0);
-	send(sock->sockfd, msg, size,0);
+	send(sock->sockfd, header, size+sizeof(struct DSBNetHeader),0);
+	free(header); //Release original buffer (see dsb_net_buffer).
 	return SUCCESS;
 }
 
@@ -423,5 +446,10 @@ int dsb_net_disconnect(void *sock)
 		}
 	}
 	return SUCCESS;
+}
+
+char *dsb_net_buffer(int size)
+{
+	return malloc(size+sizeof(struct DSBNetHeader)) + sizeof(struct DSBNetHeader);
 }
 

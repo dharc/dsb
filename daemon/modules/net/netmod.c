@@ -71,6 +71,7 @@ static fd_set fderror;
 
 int net_msg_event(int sock, void *data);
 int net_cb_base(void *sock, void *data);
+int net_debug_request(void *sock, void *data);
 int net_handler(Event_t *evt);
 
 
@@ -150,6 +151,7 @@ int net_init(const NID_t *base)
 	dsb_route_map(ROUTE_VOLATILE | ROUTE_REMOTE,0,net_handler);
 	dsb_route_map(ROUTE_PERSISTENT | ROUTE_REMOTE,0,net_handler);
 	dsb_net_callback(DSBNET_BASE,net_cb_base);
+	dsb_net_callback(DSBNET_DEBUGGER,net_debug_request);
 
 	//Set up listener socket.
 	net_listen(5555);
@@ -205,7 +207,7 @@ struct Module *dsb_network_module()
 	netmod.init = net_init;
 	netmod.update = net_update;
 	netmod.final = net_final;
-	netmod.ups = 0;
+	netmod.ups = 1000;
 	return &netmod;
 }
 

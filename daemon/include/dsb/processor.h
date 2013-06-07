@@ -45,6 +45,8 @@ struct Event;
 int dsb_proc_init();
 int dsb_proc_final();
 
+int dsb_proc_debug(void *sock);
+
 /**
  * Send an Event to be queued and processed.
  * @param evt Event to send.

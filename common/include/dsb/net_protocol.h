@@ -69,6 +69,9 @@ enum
 	DSBNET_TYPE_END
 };
 
+#define NET_DEBUG_QUEUES	1	///< Send all events over network when they are processed.
+#define NET_DEBUG_LOG		2	///< Send all error/log and debug messages over network.
+
 struct DSBNetHeader
 {
 	unsigned short chck;	///< Check valid message.

@@ -72,6 +72,7 @@ struct EventQueue
 static struct EventQueue queue[3];
 static unsigned int curq = 1;	//Current queue being processed.
 static int procisrunning;
+static void *debugsock;
 
 int queue_insert(int q, Event_t *e)
 {
@@ -140,6 +141,12 @@ int dsb_proc_final()
 	return SUCCESS;
 }
 
+int dsb_proc_debug(void *sock)
+{
+	debugsock = sock;
+	return SUCCESS;
+}
+
 //Map this to local processor send implementation.
 int dsb_send(struct Event *evt, int async)
 {
@@ -203,6 +210,14 @@ int dsb_proc_single()
 	}
 	else
 	{
+		//If we have a debugger connected.
+		#ifdef _DEBUG
+		if (debugsock != 0)
+		{
+			dsb_net_send_dbgevent(debugsock,e);
+		}
+		#endif
+
 		//If an event was found then route it.
 		ret = dsb_route(e);
 		if (ret != SUCCESS)
