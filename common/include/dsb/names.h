@@ -54,6 +54,13 @@ int dsb_names_rebuild();
 const NID_t *dsb_names_plookup(const char *name);
 
 /**
+ * Lookup a name but do not create a database entry if it doesn't exist.
+ * @param name
+ * @return Pointer to NID corresponding to the name.
+ */
+const NID_t *dsb_names_llookup(const char *name);
+
+/**
  * Add a special hard coded label. This does not add to the persistent
  * hypergraph, instead use dsb_names_lookup.
  * @see dsb_names_lookup

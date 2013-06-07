@@ -36,6 +36,8 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/test.h"
 #include "dsb/errors.h"
 
+struct Event;
+
 int mod_hasloaded = 0;
 int mod_hasunloaded = 0;
 

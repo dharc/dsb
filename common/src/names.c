@@ -58,6 +58,14 @@ static struct NameEntry *nametable[NAME_HASH_SIZE];
 static NID_t namesobj;
 static int countnames;
 
+/*
+ * RWLOCK for threadsafe access to nametable.
+ */
+#if defined(UNIX) && !defined(NO_THREADS)
+#include <pthread.h>
+static pthread_rwlock_t nametable_mtx = PTHREAD_RWLOCK_INITIALIZER;
+#endif //LINUX THREADED
+
 int dsb_names_init()
 {
 	//Builtins
@@ -74,6 +82,22 @@ int dsb_names_init()
 
 int dsb_names_final()
 {
+	//Cleanup memory.
+	struct NameEntry *entry;
+	struct NameEntry *tmp;
+	int i;
+
+	for (i=0; i<NAME_HASH_SIZE; i++)
+	{
+		entry = nametable[i];
+		while (entry != 0)
+		{
+			tmp = entry->next;
+			free(entry);
+			entry = tmp;
+		}
+	}
+
 	return 0;
 }
 
@@ -97,13 +121,25 @@ int dsb_names_add(const char *name, const NID_t *nid)
 	strcpy(entry->name,name);
 	entry->nid = *nid;
 
-	//TODO make thread safe.
+	//WRITE LOCK
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_wrlock(&nametable_mtx);
+#endif
+
 	entry->next = nametable[hash];
 	nametable[hash] = entry;
 
-	return SUCCESS;
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_unlock(&nametable_mtx);
+#endif
+
+	return 0;
 }
 
+/*
+ * Note that rebuild is not threadsafe and is assumed to only be called
+ * once or very rarely by a single thread.
+ */
 int dsb_names_rebuild()
 {
 	dsb_names_update("root",&Root);
@@ -145,6 +181,10 @@ int dsb_names_update(const char *name, const NID_t *nid)
 	struct NameEntry *entry;
 	int hash = namehash(name);
 
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_wrlock(&nametable_mtx);
+#endif
+
 	entry = nametable[hash];
 
 	while (entry != 0)
@@ -152,50 +192,83 @@ int dsb_names_update(const char *name, const NID_t *nid)
 		if (strcmp(entry->name,name) == 0)
 		{
 			entry->nid = *nid;
-			return SUCCESS;
+
+#if defined(UNIX) && !defined(NO_THREADS)
+			pthread_rwlock_unlock(&nametable_mtx);
+#endif
+			return 0;
 		}
 		entry = entry->next;
 	}
 
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_unlock(&nametable_mtx);
+#endif
+
 	return dsb_names_add(name,nid);
 }
 
-const NID_t *dsb_names_plookup(const char *name)
+const NID_t *dsb_names_llookup(const char *name)
 {
 	struct NameEntry *entry;
 	int hash = namehash(name);
-	NID_t tmp;
 
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_rdlock(&nametable_mtx);
+#endif
 	entry = nametable[hash];
 
 	while (entry != 0)
 	{
 		if (strcmp(entry->name,name) == 0)
 		{
+#if defined(UNIX) && !defined(NO_THREADS)
+			pthread_rwlock_unlock(&nametable_mtx);
+#endif
 			return &entry->nid;
 		}
 		entry = entry->next;
 	}
 
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_unlock(&nametable_mtx);
+#endif
+
+	return 0;
+}
+
+const NID_t *dsb_names_plookup(const char *name)
+{
+	const NID_t *res = dsb_names_llookup(name);
+
 	printf("Lookup nf: %s (%d)\n",name,countnames);
 
-	//Opps, so make it.
-	dsb_new(&PRoot,&tmp);
-	//Add to names array structure.
-	dsb_setnin(&namesobj,countnames++,&tmp);
-	dsb_setnni(&namesobj,&Size,countnames);
-	//Put string into it.
-	dsb_string_cton(&tmp,name);
-	dsb_names_add(name,&tmp);
+	if (res == 0)
+	{
+		NID_t tmp;
 
-	//Call self again to find result that is now there.
-	return dsb_names_plookup(name);
+		//Opps, so make it.
+		dsb_new(&PRoot,&tmp);
+		//Add to names array structure.
+		dsb_setnin(&namesobj,countnames++,&tmp);
+		dsb_setnni(&namesobj,&Size,countnames);
+		//Put string into it.
+		dsb_string_cton(&tmp,name);
+		dsb_names_add(name,&tmp);
+
+		//Call self again to find result that is now there.
+		return dsb_names_llookup(name);
+	}
+	else
+	{
+		return res;
+	}
 }
 
 int dsb_names_lookup(const char *name, NID_t *nid)
 {
 	*nid = *(dsb_names_plookup(name));
-	return SUCCESS;
+	return 0;
 }
 
 int dsb_names_revlookup(const NID_t *nid, char *name, int max)
@@ -203,6 +276,9 @@ int dsb_names_revlookup(const NID_t *nid, char *name, int max)
 	struct NameEntry *entry;
 	int hash = namehash(name);
 
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_rdlock(&nametable_mtx);
+#endif
 	entry = nametable[hash];
 
 	while (entry != 0)
@@ -210,10 +286,17 @@ int dsb_names_revlookup(const NID_t *nid, char *name, int max)
 		if (dsb_nid_eq(&entry->nid,nid) == 1)
 		{
 			strcpy(name,entry->name);
-			return SUCCESS;
+
+#if defined(UNIX) && !defined(NO_THREADS)
+			pthread_rwlock_unlock(&nametable_mtx);
+#endif
+			return 0;
 		}
 		entry = entry->next;
 	}
 
+#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_rwlock_unlock(&nametable_mtx);
+#endif
 	return ERR_NONAME;
 }

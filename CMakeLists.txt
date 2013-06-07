@@ -23,7 +23,7 @@ set(DISPLAYSOURCE modules/display/display.c)
 configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/dsb/config.h )
 
 add_library(dsbcommon SHARED ${COMMONSOURCE})
-target_link_libraries(dsbcommon dl)
+target_link_libraries(dsbcommon dl pthread)
 
 add_library(dsbdisplay SHARED ${DISPLAYSOURCE})
 target_link_libraries(dsbdisplay dsbcommon dl SDL SDL_gfx)

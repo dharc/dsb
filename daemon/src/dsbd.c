@@ -113,7 +113,6 @@ void make_bool()
 }
 
 //Internally compiled modules.
-extern struct Module *dsb_math_module();
 extern struct Module *dsb_volatile_module();
 extern struct Module *dsb_persistent_module();
 extern struct Module *dsb_evaluators_module();

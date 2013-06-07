@@ -202,7 +202,7 @@ static int asm_load(struct VMLabel *labels, const char *line, NID_t *output, int
 
 static int asm_store(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_jump(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
@@ -302,22 +302,22 @@ static int asm_jneq(struct VMLabel *labels, const char *line, NID_t *output, int
 
 static int asm_jlt(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_jgt(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_jleq(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_jgeq(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_read(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
@@ -440,12 +440,12 @@ static int asm_dep(struct VMLabel *labels, const char *line, NID_t *output, int 
 
 static int asm_new(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_delete(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_copy(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
@@ -856,17 +856,17 @@ static int asm_shiftr(struct VMLabel *labels, const char *line, NID_t *output, i
 
 static int asm_clear(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_int(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 static int asm_float(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
-
+	return 0;
 }
 
 /*

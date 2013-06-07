@@ -53,14 +53,29 @@ int dsb_send(struct Event *evt)
 void test_names_lookup()
 {
 	NID_t n1;
-	NID_t n2;
+	const NID_t *n2;
 
-	CHECK(dsb_names_lookup("test1",&n1) == 0);
-	CHECK(dsb_names_lookup("test1",&n2) == 0);
-	CHECK(dsb_nid_eq(&n1,&n2) == 1);
-	CHECK(dsb_names_lookup("test2",&n2) == 0);
-	CHECK(dsb_nid_eq(&n1,&n2) == 0);
+	dsb_iton(33,&n1);
 
+	CHECK(dsb_names_llookup("test1") == 0);
+	CHECK(dsb_names_add("test1",&n1) == 0);
+	n2 = dsb_names_llookup("test1");
+	CHECK(n2 != 0);
+	if (n2 != 0)
+	{
+		CHECK(dsb_ntoi(n2) == 33);
+	}
+
+	DONE;
+}
+
+void test_names_revlookup()
+{
+	DONE;
+}
+
+void test_names_update()
+{
 	DONE;
 }
 

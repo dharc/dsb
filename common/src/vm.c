@@ -57,7 +57,7 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
 	return SUCCESS;
 }
 
-int dsb_vm_interpret(const NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res)
+int dsb_vm_interpret(NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res)
 {
 	struct VMContext ctx;
 	ctx.ip = 0;

@@ -186,10 +186,13 @@ int net_update()
 		block.tv_usec = 0;
 		selres = select(ssock+1, &fdread, 0, &fderror, &block);
 
-		//Do we have a connection request?
-		if (FD_ISSET(ssock, &fdread))
+		if (selres == 1)
 		{
-			net_accept();
+			//Do we have a connection request?
+			if (FD_ISSET(ssock, &fdread))
+			{
+				net_accept();
+			}
 		}
 	}
 
