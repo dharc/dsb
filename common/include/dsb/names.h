@@ -45,12 +45,24 @@ extern "C"
 int dsb_names_init();
 int dsb_names_final();
 
+/**
+ * Check for names object and update internal name map to include any
+ * new names found in the graph. Also updates "root" and "proot" if they
+ * have been changed. Should be called when connecting to a new machine.
+ * @return
+ */
 int dsb_names_rebuild();
 
 #define DSB_NAME(A) static const NID_t *A
 /// Define a NID variable to cache a name lookup.
 #define DSB_INIT(A,B) A = dsb_names_plookup(#B)
 
+/**
+ * Get a static const pointer to a NID corresponding to the name. This
+ * will create the name entry if it does not already exist.
+ * @param name
+ * @return Pointer to a NID corresponding to that name.
+ */
 const NID_t *dsb_names_plookup(const char *name);
 
 /**
@@ -70,6 +82,12 @@ const NID_t *dsb_names_llookup(const char *name);
  */
 int dsb_names_add(const char *name, const NID_t *nid);
 
+/**
+ * Update the mapping of name to NID.
+ * @param name Name to update.
+ * @param nid New NID for the name.
+ * @return SUCCESS
+ */
 int dsb_names_update(const char *name, const NID_t *nid);
 
 /**
@@ -80,6 +98,16 @@ int dsb_names_update(const char *name, const NID_t *nid);
  */
 int dsb_names_lookup(const char *name, NID_t *nid);
 
+/**
+ * Reverse lookup from a NID to a name. Fill a buffer with the resulting name.
+ * Note that this function does not create a name entry if it does not exist
+ * and so may return an error and not fill the buffer.
+ * @see dsb_names_prevlookup.
+ * @param nid NID to search for.
+ * @param name Output buffer for the name.
+ * @param max Size of output buffer.
+ * @return SUCCESS.
+ */
 int dsb_names_revlookup(const NID_t *nid, char *name, int max);
 
 #ifdef __cplusplus

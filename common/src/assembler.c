@@ -43,6 +43,14 @@ either expressed or implied, of the FreeBSD Project.
 #include <malloc.h>
 #include <string.h>
 
+struct AsmToken
+{
+	char *name;
+	int (*opfunc)(struct VMLabel *labels, const char *line, NID_t *output, int *ip);
+};
+
+#define ASMOP(A)	{#A, asm_##A}
+
 /*
  * Append a new label to the labels structure. Read the label name from line
  * and uses the value of *ip as the labels location.
@@ -136,7 +144,7 @@ static int vm_assemble_off(struct VMLabel *labels,const char *line, int *off)
 /*
  * Parse a register number.
  */
-static int vm_assemble_reg(const char *line, int *reg)
+static int vm_assemble_reg(const char *line, int *reg, int *i)
 {
 	if (line[0] == '%')
 	{
@@ -144,8 +152,12 @@ static int vm_assemble_reg(const char *line, int *reg)
 		if (line[1] >= '0' && line[1] <= '9') *reg = line[1]-'0';
 		else if (line[1] >= 'a' && line[1] <= 'f') *reg = line[1]-'a';
 		else return 0;
-		return 2;
+
+		*i += 2;
+		return 1;
 	}
+
+	DSB_ERROR(ERR_ASMNOTREG,line);
 	return 0;
 }
 
@@ -158,9 +170,7 @@ static int asm_load(struct VMLabel *labels, const char *line, NID_t *output, int
 	int i = 0;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White space
 
@@ -168,9 +178,7 @@ static int asm_load(struct VMLabel *labels, const char *line, NID_t *output, int
 	if (line[i] == '%')
 	{
 		//Get a register
-		tmp = vm_assemble_reg(&line[i],&regB);
-		if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-		i += tmp;
+		if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 		//With an offset as well
 		if (line[i] == '+' || line[i] == '-')
@@ -235,16 +243,12 @@ static int asm_jeq(struct VMLabel *labels, const char *line, NID_t *output, int 
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
@@ -272,16 +276,12 @@ static int asm_jneq(struct VMLabel *labels, const char *line, NID_t *output, int
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
@@ -323,29 +323,22 @@ static int asm_jgeq(struct VMLabel *labels, const char *line, NID_t *output, int
 static int asm_read(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_READ(regA,regB,regC),&output[*ip]);
@@ -364,23 +357,17 @@ static int asm_write(struct VMLabel *labels, const char *line, NID_t *output, in
 	int regD;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	++i;
 
@@ -399,37 +386,28 @@ static int asm_write(struct VMLabel *labels, const char *line, NID_t *output, in
 static int asm_dep(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 	int regD;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	++i;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regD);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regD, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_DEP(regA,regB,regC,regD),&output[*ip]);
@@ -451,20 +429,15 @@ static int asm_delete(struct VMLabel *labels, const char *line, NID_t *output, i
 static int asm_copy(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i = 0;
-	int tmp;
 	int regA, regB;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_COPY(regA,regB),&output[*ip]);
@@ -476,13 +449,10 @@ static int asm_copy(struct VMLabel *labels, const char *line, NID_t *output, int
 static int asm_ret(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_RET(regA),&output[*ip]);
@@ -505,13 +475,10 @@ static int asm_data(struct VMLabel *labels, const char *line, NID_t *output, int
 static int asm_inc(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_INC(regA),&output[*ip]);
@@ -523,13 +490,10 @@ static int asm_inc(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_dec(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_DEC(regA),&output[*ip]);
@@ -541,29 +505,22 @@ static int asm_dec(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_add(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_ADD(regA,regB,regC),&output[*ip]);
@@ -575,29 +532,22 @@ static int asm_add(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_sub(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_SUB(regA,regB,regC),&output[*ip]);
@@ -609,29 +559,22 @@ static int asm_sub(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_mul(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_MUL(regA,regB,regC),&output[*ip]);
@@ -643,29 +586,22 @@ static int asm_mul(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_div(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_DIV(regA,regB,regC),&output[*ip]);
@@ -677,29 +613,22 @@ static int asm_div(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_and(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_AND(regA,regB,regC),&output[*ip]);
@@ -711,29 +640,22 @@ static int asm_and(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_or(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_OR(regA,regB,regC),&output[*ip]);
@@ -745,29 +667,22 @@ static int asm_or(struct VMLabel *labels, const char *line, NID_t *output, int *
 static int asm_xor(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 	int regC;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_XOR(regA,regB,regC),&output[*ip]);
@@ -779,21 +694,16 @@ static int asm_xor(struct VMLabel *labels, const char *line, NID_t *output, int 
 static int asm_neg(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
 	int regA;
 	int regB;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White Space.
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
 	dsb_nid_op(VM_NEG(regA,regB),&output[*ip]);
@@ -810,9 +720,7 @@ static int asm_shiftl(struct VMLabel *labels, const char *line, NID_t *output, i
 	int i = 0;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White space
 
@@ -836,9 +744,7 @@ static int asm_shiftr(struct VMLabel *labels, const char *line, NID_t *output, i
 	int i = 0;
 
 	//Get a register
-	tmp = vm_assemble_reg(&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTREG,&line[i]);
-	i += tmp;
+	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
 
 	++i; //White space
 
@@ -869,6 +775,42 @@ static int asm_float(struct VMLabel *labels, const char *line, NID_t *output, in
 	return 0;
 }
 
+static struct AsmToken asmops[] = {
+		ASMOP(load),
+		ASMOP(store),
+		ASMOP(jump),
+		ASMOP(jeq),
+		ASMOP(jneq),
+		ASMOP(jlt),
+		ASMOP(jgt),
+		ASMOP(jleq),
+		ASMOP(jgeq),
+		ASMOP(read),
+		ASMOP(write),
+		ASMOP(dep),
+		ASMOP(new),
+		ASMOP(delete),
+		ASMOP(copy),
+		ASMOP(ret),
+		ASMOP(data),
+		ASMOP(inc),
+		ASMOP(dec),
+		ASMOP(add),
+		ASMOP(sub),
+		ASMOP(mul),
+		ASMOP(div),
+		ASMOP(and),
+		ASMOP(or),
+		ASMOP(xor),
+		ASMOP(neg),
+		ASMOP(shiftl),
+		ASMOP(shiftr),
+		ASMOP(clear),
+		ASMOP(int),
+		ASMOP(float),
+		{"null",0}
+};
+
 /*
  * Assemble a single line, fill output and return number of elements
  * written to the output.
@@ -876,6 +818,9 @@ static int asm_float(struct VMLabel *labels, const char *line, NID_t *output, in
 int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i = 0;
+	char opbuf[20];
+	char *tmp;
+
 	//Remove leading white space.
 	while (line[i] == ' ' || line[i] == '\t') ++i;
 
@@ -893,155 +838,23 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		while (line[i] == ' ' || line[i] == '\t') ++i;
 	}
 
-	//Now check which command is given.
-	if (strncmp(&line[i],"load",4) == 0)
+	//Parse operation into buffer (space ends op)
+	tmp = strchr(&line[i],' ');
+	if (tmp == 0) return 0;
+	strncpy(opbuf,&line[i],tmp-(&line[i]));
+	opbuf[tmp-(&line[i])] = 0;
+
+	//Search for operation parser function
+	i = 0;
+	while (asmops[i].opfunc != 0)
 	{
-		i += 5;
-		i += asm_load(labels, &line[i], output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"copy",4) == 0)
-	{
-		i+=5; //COPY + space.
-		i += asm_copy(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"jump",4) == 0)
-	{
-		i +=5; //JUMP + space.
-		i += asm_jump(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"jeq",3) == 0)
-	{
-		i+=4; //JEQ + space.
-		i += asm_jeq(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"jneq",4) == 0)
-	{
-		i+=5; //JNEQ + space.
-		i += asm_jneq(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"ret",3) == 0)
-	{
-		i+=4; //RET + space.
-		i += asm_ret(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"inc",3) == 0)
-	{
-		i+=4; //INC + space.
-		i += asm_inc(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"dec",3) == 0)
-	{
-		i+=4; //DEC + space.
-		i += asm_dec(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"data",4) == 0)
-	{
-		i+=5; //DATA + space.
-		i += asm_data(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"read",4) == 0)
-	{
-		i+=5; //READ + space.
-		i += asm_read(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"write",5) == 0)
-	{
-		i+=6; //WRITE + space.
-		i += asm_write(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"dep",3) == 0)
-	{
-		i+=4; //DEP + space.
-		i += asm_dep(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"new",3) == 0)
-	{
-		i+=4; //NEW + space.
-		i += asm_new(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"delete",6) == 0)
-	{
-		i+=7; //DELETE + space.
-		i += asm_delete(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"add",3) == 0)
-	{
-		i+=4; //ADD + space.
-		i += asm_add(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"sub",3) == 0)
-	{
-		i+=4; //SUB + space.
-		i += asm_sub(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"div",3) == 0)
-	{
-		i+=4; //DIV + space.
-		i += asm_div(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"mul",3) == 0)
-	{
-		i+=4; //MUL + space.
-		i += asm_mul(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"and",3) == 0)
-	{
-		i+=4; //AND + space.
-		i += asm_and(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"or",2) == 0)
-	{
-		i+=3; //OR + space.
-		i += asm_or(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"xor",3) == 0)
-	{
-		i+=4; //XOR + space.
-		i += asm_xor(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"neg",3) == 0)
-	{
-		i+=4; //NEG + space.
-		i += asm_neg(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"shiftl",6) == 0)
-	{
-		i+=7; //SHIFTL + space.
-		i += asm_shiftl(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"shiftr",6) == 0)
-	{
-		i+=7; //SHIFTR + space.
-		i += asm_shiftr(labels,&line[i],output,ip);
-	}
-	//-------------------------------------------------------------------------
-	else if (strncmp(&line[i],"clear",5) == 0)
-	{
-		i+=6; //CLEAR + space.
-		i += asm_clear(labels,&line[i],output,ip);
+		if (strcmp(opbuf,asmops[i].name) == 0)
+		{
+			//Parse operands and generate opcode.
+			asmops[i].opfunc(labels,tmp+1,output,ip);
+			break;
+		}
+		i++;
 	}
 
 	return 1;

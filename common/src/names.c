@@ -82,11 +82,11 @@ int dsb_names_init()
 
 int dsb_names_final()
 {
-	//Cleanup memory.
 	struct NameEntry *entry;
 	struct NameEntry *tmp;
 	int i;
 
+	//Cleanup memory for name entries.
 	for (i=0; i<NAME_HASH_SIZE; i++)
 	{
 		entry = nametable[i];
@@ -151,17 +151,18 @@ int dsb_names_rebuild()
 	//If there is a names object then
 	if (dsb_nid_eq(&namesobj,&Null) == 0)
 	{
-		NID_t *array;
-		countnames = dsb_array_readalloc(&namesobj,&array);
 		int i;
 		char buf[MAX_NAME_SIZE];
+		NID_t *array;
+
+		countnames = dsb_array_readalloc(&namesobj,&array);
 
 		//For each name in the array add to local map.
 		for (i=0; i<countnames; i++)
 		{
 			dsb_string_ntoc(buf,MAX_NAME_SIZE,&array[i]);
 			printf("Added name: %s\n",buf);
-			dsb_names_add(buf,&array[i]);
+			dsb_names_update(buf,&array[i]);
 		}
 	}
 	//There is no names object, so make it
@@ -170,7 +171,6 @@ int dsb_names_rebuild()
 		dsb_new(&PRoot,&namesobj);
 		dsb_set(&PRoot,&Names,&namesobj);
 		dsb_setnni(&namesobj,&Size,0);
-		//dsb_array_initialise(&namesobj,0);
 	}
 
 	return 0;
@@ -205,6 +205,7 @@ int dsb_names_update(const char *name, const NID_t *nid)
 	pthread_rwlock_unlock(&nametable_mtx);
 #endif
 
+	//Not found so add
 	return dsb_names_add(name,nid);
 }
 
@@ -250,13 +251,14 @@ const NID_t *dsb_names_plookup(const char *name)
 		//Opps, so make it.
 		dsb_new(&PRoot,&tmp);
 		//Add to names array structure.
+		//TODO: this is not safe across a network!!
 		dsb_setnin(&namesobj,countnames++,&tmp);
 		dsb_setnni(&namesobj,&Size,countnames);
 		//Put string into it.
 		dsb_string_cton(&tmp,name);
 		dsb_names_add(name,&tmp);
 
-		//Call self again to find result that is now there.
+		//Name is now there so find it.
 		return dsb_names_llookup(name);
 	}
 	else
