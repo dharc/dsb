@@ -242,8 +242,6 @@ const NID_t *dsb_names_plookup(const char *name)
 {
 	const NID_t *res = dsb_names_llookup(name);
 
-	printf("Lookup nf: %s (%d)\n",name,countnames);
-
 	if (res == 0)
 	{
 		NID_t tmp;

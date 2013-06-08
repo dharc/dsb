@@ -105,6 +105,14 @@ int dsb_getnni(const NID_t *d1, const NID_t *d2, int *r)
 	return ret;
 }
 
+int dsb_getnzn(const NID_t *d1, const char *d2, NID_t *r)
+{
+	NID_t n2;
+
+	dsb_nid_fromStr(d2,&n2);
+	return dsb_get(d1,&n2,r);
+}
+
 int dsb_getA(const struct NID *d1, const struct NID *d2, struct NID *r)
 {
 	struct Event *evt = dsb_event_allocate();
@@ -144,6 +152,14 @@ int dsb_setnzz(const NID_t *d1, const char *d2, const char *v)
 	dsb_nid_fromStr(d2,&n1);
 	dsb_nid_fromStr(v,&n2);
 	return dsb_set(d1,&n1,&n2);
+}
+
+int dsb_setnzn(const NID_t *d1, const char *d2, const NID_t *v)
+{
+	NID_t n1;
+
+	dsb_nid_fromStr(d2,&n1);
+	return dsb_set(d1,&n1,v);
 }
 
 int dsb_setzzz(const char *d1, const char *d2, const char *v)

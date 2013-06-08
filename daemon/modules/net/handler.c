@@ -56,9 +56,9 @@ static struct NetRouteEntry *routetable[MAX_NET_TABLE];
 /*
  * Hash the 6 byte serial number into an int between 0 and MAX_NET_TABLE.
  */
-static int hashserial(const char *serial)
+static unsigned int hashserial(const char *serial)
 {
-	int res = *((int*)&serial[2]);
+	unsigned int res = *((unsigned int*)(&serial[2]));
 	return res % MAX_NET_TABLE;
 }
 
@@ -69,7 +69,7 @@ int net_cb_base(void *sock, void *data)
 {
 	struct NetRouteEntry *ent;
 	int count = 0;
-	int hash;
+	unsigned int hash;
 
 	ent = malloc(sizeof(struct NetRouteEntry));
 	ent->sock = sock;

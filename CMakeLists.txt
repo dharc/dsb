@@ -66,6 +66,7 @@ add_executable(name-test tests/name-test.c)
 target_link_libraries(name-test dsbcommon)
 
 install(PROGRAMS "${PROJECT_BINARY_DIR}/libdsbcommon.so" DESTINATION lib)
+install(PROGRAMS "${PROJECT_BINARY_DIR}/dsbd" DESTINATION bin)
 install(FILES "${PROJECT_BINARY_DIR}/dsb/config.h" DESTINATION include/dsb)
 install(DIRECTORY common/include/dsb DESTINATION include)
 
