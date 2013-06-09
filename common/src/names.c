@@ -40,6 +40,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/names.h"
 #include "dsb/errors.h"
 #include "dsb/wrap.h"
+#include "dsb/thread.h"
 
 #include <string.h>
 #include <malloc.h>
@@ -61,10 +62,7 @@ static int countnames;
 /*
  * RWLOCK for threadsafe access to nametable.
  */
-#if defined(UNIX) && !defined(NO_THREADS)
-#include <pthread.h>
-static pthread_rwlock_t nametable_mtx = PTHREAD_RWLOCK_INITIALIZER;
-#endif //LINUX THREADED
+RWLOCK(nametable_mtx);
 
 int dsb_names_init()
 {
@@ -117,21 +115,19 @@ int dsb_names_add(const char *name, const NID_t *nid)
 	struct NameEntry *entry;
 	int hash = namehash(name);
 
+	if (strlen(name) >= MAX_NAME_SIZE-1)
+	{
+		return DSB_ERROR(ERR_NAMELEN,name);
+	}
+
 	entry = malloc(sizeof(struct NameEntry));
 	strcpy(entry->name,name);
 	entry->nid = *nid;
 
-	//WRITE LOCK
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_wrlock(&nametable_mtx);
-#endif
-
+	W_LOCK(nametable_mtx);
 	entry->next = nametable[hash];
 	nametable[hash] = entry;
-
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_unlock(&nametable_mtx);
-#endif
+	W_UNLOCK(nametable_mtx);
 
 	return 0;
 }
@@ -181,9 +177,7 @@ int dsb_names_update(const char *name, const NID_t *nid)
 	struct NameEntry *entry;
 	int hash = namehash(name);
 
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_wrlock(&nametable_mtx);
-#endif
+	W_LOCK(nametable_mtx);
 
 	entry = nametable[hash];
 
@@ -192,18 +186,13 @@ int dsb_names_update(const char *name, const NID_t *nid)
 		if (strcmp(entry->name,name) == 0)
 		{
 			entry->nid = *nid;
-
-#if defined(UNIX) && !defined(NO_THREADS)
-			pthread_rwlock_unlock(&nametable_mtx);
-#endif
+			W_UNLOCK(nametable_mtx);
 			return 0;
 		}
 		entry = entry->next;
 	}
 
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_unlock(&nametable_mtx);
-#endif
+	W_UNLOCK(nametable_mtx);
 
 	//Not found so add
 	return dsb_names_add(name,nid);
@@ -214,27 +203,20 @@ const NID_t *dsb_names_llookup(const char *name)
 	struct NameEntry *entry;
 	int hash = namehash(name);
 
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_rdlock(&nametable_mtx);
-#endif
+	R_LOCK(nametable_mtx);
 	entry = nametable[hash];
 
 	while (entry != 0)
 	{
 		if (strcmp(entry->name,name) == 0)
 		{
-#if defined(UNIX) && !defined(NO_THREADS)
-			pthread_rwlock_unlock(&nametable_mtx);
-#endif
+			R_UNLOCK(nametable_mtx);
 			return &entry->nid;
 		}
 		entry = entry->next;
 	}
 
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_unlock(&nametable_mtx);
-#endif
-
+	R_UNLOCK(nametable_mtx);
 	return 0;
 }
 
@@ -276,9 +258,7 @@ int dsb_names_revlookup(const NID_t *nid, char *name, int max)
 	struct NameEntry *entry;
 	int hash = namehash(name);
 
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_rdlock(&nametable_mtx);
-#endif
+	R_LOCK(nametable_mtx);
 	entry = nametable[hash];
 
 	while (entry != 0)
@@ -287,16 +267,12 @@ int dsb_names_revlookup(const NID_t *nid, char *name, int max)
 		{
 			strcpy(name,entry->name);
 
-#if defined(UNIX) && !defined(NO_THREADS)
-			pthread_rwlock_unlock(&nametable_mtx);
-#endif
+			R_UNLOCK(nametable_mtx);
 			return 0;
 		}
 		entry = entry->next;
 	}
 
-#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_rwlock_unlock(&nametable_mtx);
-#endif
+	R_UNLOCK(nametable_mtx);
 	return ERR_NONAME;
 }
