@@ -1,6 +1,7 @@
 #include "dsb/event.h"
 #include "dsb/errors.h"
 #include <malloc.h>
+#include <string.h>
 
 #if defined(UNIX) && !defined(NO_THREADS)
 #include <pthread.h>
@@ -50,7 +51,8 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 {
 	char *oldbuf = buf;
 	//Pack the type and destination NIDs.
-	*((int*)buf) = e->type;
+	//*((int*)buf) = e->type;
+	memcpy(buf,&e->type,sizeof(int));
 	buf += sizeof(int);
 	buf += dsb_nid_pack(&(e->d1),buf,max);
 	buf += dsb_nid_pack(&(e->d2),buf,max);
@@ -61,16 +63,19 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 	//---------------------------------------------------------------------
 	case EVENT_GET:
 		*((int*)buf) = e->resid;
+		memcpy(buf,&e->resid,sizeof(int));
 		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_ALLOCATE:
-		*((int*)buf) = e->resid;
+		//*((int*)buf) = e->resid;
+		memcpy(buf,&e->resid,sizeof(int));
 		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEFINE:
-		*((int*)buf) = e->eval;
+		//*((int*)buf) = e->eval;
+		memcpy(buf,&e->eval,sizeof(int));
 		buf += sizeof(int);
 		buf += dsb_nid_pack(&(e->def),buf,max);
 		break;
@@ -93,7 +98,8 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 {
 	const char *oldbuf = buf;
 	//Unpack the type and destination NIDs.
-	e->type = *((int*)buf);
+	//e->type = *((int*)buf);
+	memcpy(&e->type,buf,sizeof(int));
 	buf += sizeof(int);
 	buf += dsb_nid_unpack(buf,&(e->d1));
 	buf += dsb_nid_unpack(buf,&(e->d2));
@@ -103,17 +109,20 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 	{
 	//---------------------------------------------------------------------
 	case EVENT_GET:
-		e->resid = *((int*)buf);
+		//e->resid = *((int*)buf);
+		memcpy(&e->resid,buf,sizeof(int));
 		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_ALLOCATE:
-		e->resid = *((int*)buf);
+		//e->resid = *((int*)buf);
+		memcpy(&e->resid,buf,sizeof(int));
 		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEFINE:
-		e->eval = *((int*)buf);
+		//e->eval = *((int*)buf);
+		memcpy(&e->eval,buf,sizeof(int));
 		buf += sizeof(int);
 		buf += dsb_nid_unpack(buf,&(e->def));
 		break;

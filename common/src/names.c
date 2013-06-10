@@ -138,11 +138,16 @@ int dsb_names_add(const char *name, const NID_t *nid)
  */
 int dsb_names_rebuild()
 {
+	char buf[100];
+
 	dsb_names_update("root",&Root);
 	dsb_names_update("proot",&PRoot);
 
 	//Get the new persistent names object.
 	dsb_get(&PRoot,&Names,&namesobj);
+
+	dsb_nid_toStr(&namesobj,buf,100);
+	printf("PROOT = %s\n",buf);
 
 	//If there is a names object then
 	if (dsb_nid_eq(&namesobj,&Null) == 0)
@@ -164,7 +169,12 @@ int dsb_names_rebuild()
 	//There is no names object, so make it
 	else
 	{
+		DSB_DEBUG(DEBUG_RESETNAMES,0);
 		dsb_new(&PRoot,&namesobj);
+
+		dsb_nid_toStr(&namesobj,buf,100);
+			printf("PROOT = %s\n",buf);
+
 		dsb_set(&PRoot,&Names,&namesobj);
 		dsb_setnni(&namesobj,&Size,0);
 	}

@@ -427,6 +427,7 @@ int dsb_net_send(void *s, int msgtype, void *msg, int size)
 	header->type = msgtype;
 	header->chck = DSB_NET_CHECK;
 	header->size = size;
+
 	//TODO check for errors.
 	send(sock->sockfd, header, size+sizeof(struct DSBNetHeader),0);
 	free(header); //Release original buffer (see dsb_net_buffer).

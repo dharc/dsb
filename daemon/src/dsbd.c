@@ -41,7 +41,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/evaluator.h"
 #include "dsb/globals.h"
 #include "dsb/net_protocol.h"
-#include "config.h"
+#include "dsb/config.h"
 #include <stdio.h>
 #include <signal.h>
 

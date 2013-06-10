@@ -74,6 +74,8 @@ const char *dsb_log_str(int err)
 	case INFO_NETDISCONNECT:	return "Client disconnected";
 
 	case DEBUG_NETMSG:			return "Net Message";
+	case DEBUG_NETEVENT:		return "Net Event";
+	case DEBUG_RESETNAMES:		return "Reset Names";
 	default:					return "Unknown Error";
 	}
 }

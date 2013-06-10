@@ -110,8 +110,9 @@ struct NID
 		//Has MAC = 1
 		struct
 		{
-			unsigned char mac[6];		///< MAC Address
-			unsigned long long n : 40;	///< Node number
+			unsigned char mac[8];		///< Serial number
+			//unsigned long long n : 40;	///< Node number
+			unsigned int n;
 		};
 		//Has MAC = 0
 		struct

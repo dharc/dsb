@@ -83,9 +83,11 @@ int dsb_nid_pack(const NID_t *n, char *buf, int max)
 	{
 		*buf = n->r2;
 		buf++;
-		*((short*)buf) = n->t;
+		//*((short*)buf) = n->t;
+		memcpy(buf,&n->t,sizeof(short));
 		buf += sizeof(short);
-		*((long long*)buf) = n->ll;
+		//*((long long*)buf) = n->ll;
+		memcpy(buf,&n->ll,sizeof(long long));
 		return 2+sizeof(short)+sizeof(long long);
 	}
 	else
@@ -102,7 +104,8 @@ int dsb_nid_pack(const NID_t *n, char *buf, int max)
 		buf++;
 		*buf = n->mac[5];
 		buf++;
-		*((long long*)buf) = n->n;
+		//*((long long*)buf) = n->n;
+		memcpy(buf,&n->n,sizeof(int));
 		return 7+sizeof(long long);
 	}
 }
@@ -116,9 +119,11 @@ int dsb_nid_unpack(const char *buf, NID_t *n)
 	{
 		n->r2 = *buf;
 		buf++;
-		n->t = *((short*)buf);
+		//n->t = *((short*)buf);
+		memcpy(&n->t,buf,sizeof(short));
 		buf += sizeof(short);
-		n->ll = *((long long*)buf);
+		//n->ll = *((long long*)buf);
+		memcpy(&n->ll,buf,sizeof(long long));
 		return 2+sizeof(short)+sizeof(long long);
 	}
 	else
@@ -135,7 +140,8 @@ int dsb_nid_unpack(const char *buf, NID_t *n)
 		buf++;
 		n->mac[5] = *buf;
 		buf++;
-		n->n = *((long long*)buf);
+		//n->n = *((long long*)buf);
+		memcpy(&n->n,buf,sizeof(int));
 		return 7+sizeof(long long);
 	}
 }
@@ -162,7 +168,14 @@ int dsb_nid_free(const struct NID *nid)
 
 int dsb_nid_eq(const NID_t *n1, const NID_t *n2)
 {
-	return ((n1->header == n2->header) && (n1->t == n2->t) && (n1->ll == n2->ll));
+	if (n1->hasMac == 1)
+	{
+		return ((n1->header == n2->header) && (n1->n == n2->n) && (memcmp(n1->mac,n2->mac,6) == 0));
+	}
+	else
+	{
+		return ((n1->header == n2->header) && (n1->t == n2->t) && (n1->ll == n2->ll));
+	}
 }
 
 int dsb_nid_leq(const NID_t *n1, const NID_t *n2)
@@ -196,6 +209,7 @@ int dsb_nid_local(int persistent, NID_t *n)
 	n->hasMac = 1;
 	n->r1 = 0;
 	memcpy(n->mac,macaddr,6);
+	n->mac[6] = 0;
 	n->n = 0;
 	return SUCCESS;
 }
@@ -273,13 +287,27 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 
 		if (nid->hasMac == 1)
 		{
-			//Parse 6 bytes of MAC address.
-			for (j=0; j<6; j++)
+			//Replace a * with local mac
+			if (str[i] == '*')
 			{
-				if (str[i] == 0 || str[i+1] == 0 || str[i+2] != ':') return ERR_NIDSTR;
-				nid->mac[j] = readHex(str[i],str[i+1]);
-				i += 3;
+				i += 2;
+				for (j=0; j<6; j++)
+				{
+					nid->mac[j] = macaddr[j];
+				}
 			}
+			else
+			{
+				//Parse 6 bytes of MAC address.
+				for (j=0; j<6; j++)
+				{
+					if (str[i] == 0 || str[i+1] == 0 || str[i+2] != ':') return ERR_NIDSTR;
+					nid->mac[j] = readHex(str[i],str[i+1]);
+					i += 3;
+				}
+			}
+
+			nid->mac[6] = 0;
 
 			//Parse 40bit number
 			a = 0;
@@ -391,7 +419,14 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 
 	if (nid->hasMac == 1)
 	{
-		sprintf(str,"[%02x:%02x:%02x:%02x:%02x:%02x:%02x:%010x]",nid->header,nid->mac[0],nid->mac[1],nid->mac[2],nid->mac[3],nid->mac[4],nid->mac[5],(unsigned int)nid->n);
+		if (dsb_nid_isLocal(nid) == 1)
+		{
+			sprintf(str,"[%02x:*:%010x]",nid->header,(unsigned int)nid->n);
+		}
+		else
+		{
+			sprintf(str,"[%02x:%02x:%02x:%02x:%02x:%02x:%02x:%010x]",nid->header,nid->mac[0],nid->mac[1],nid->mac[2],nid->mac[3],nid->mac[4],nid->mac[5],(unsigned int)nid->n);
+		}
 	}
 	else
 	{
@@ -404,7 +439,14 @@ int dsb_nid_toRawStr(const struct NID *nid, char *str, int len)
 {
 	if (nid->hasMac == 1)
 	{
-		sprintf(str,"[%02x:%02x:%02x:%02x:%02x:%02x:%02x:%010x]",nid->header,nid->mac[0],nid->mac[1],nid->mac[2],nid->mac[3],nid->mac[4],nid->mac[5],(unsigned int)nid->n);
+		if (dsb_nid_isLocal(nid) == 1)
+		{
+			sprintf(str,"[%02x:*:%010x]",nid->header,(unsigned int)nid->n);
+		}
+		else
+		{
+			sprintf(str,"[%02x:%02x:%02x:%02x:%02x:%02x:%02x:%010x]",nid->header,nid->mac[0],nid->mac[1],nid->mac[2],nid->mac[3],nid->mac[4],nid->mac[5],(unsigned int)nid->n);
+		}
 	}
 	else
 	{

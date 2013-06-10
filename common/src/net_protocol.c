@@ -37,6 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/globals.h"
 #include <string.h>
+#include <stdio.h>
 
 static Event_t *readlist[MAX_READLIST];
 
@@ -222,7 +223,8 @@ int dsb_net_send_result(void *sock, int id, const NID_t *res)
 	char *buf = dsb_net_buffer(200);
 	int count = sizeof(int);
 
-	(*(int*)buf) = id;
+	//(*(int*)buf) = id;
+	memcpy(buf,&id,sizeof(int));
 	count += dsb_nid_pack(res, buf+sizeof(int),100);
 	dsb_net_send(sock, DSBNET_EVENTRESULT, buf, count);
 	return SUCCESS;
@@ -230,10 +232,12 @@ int dsb_net_send_result(void *sock, int id, const NID_t *res)
 
 int dsb_net_cb_result(void *sock, void *data)
 {
-	int resid = *((int*)data);
+	int resid; //= *((int*)data);
 	NID_t res;
 	Event_t *evt;
 	int count = sizeof(int);
+
+	memcpy(&resid,data,sizeof(int));
 
 	count += dsb_nid_unpack(data+sizeof(int), &res);
 

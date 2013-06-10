@@ -98,6 +98,8 @@ int dsb_array_readalloc(const NID_t *src, NID_t **dest)
 	int i;
 	int len;
 
+	*dest = 0;
+
 	dsb_get(src,&Size,&val);
 	len = dsb_ntoi(&val);
 

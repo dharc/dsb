@@ -72,7 +72,7 @@ static int per_hashnid(const struct NID *a, const struct NID *b)
 {
 	//TODO Make sure a and b are in correct order.
 	//TODO Improve hash function
-	return (a->ll + (b->ll*100)) % PER_HASH_SIZE;
+	return (a->n + (b->n*100)) % PER_HASH_SIZE;
 }
 
 /*
@@ -215,6 +215,8 @@ static int per_load_file(const char *filename)
 		fclose(fd);
 		return DSB_ERROR(ERR_PERFILELOAD,filename);
 	}
+
+	printf("Loading %s\n",filename);
 
 	while (per_deserialize_harc(fd, &harc) == 0)
 	{

@@ -53,7 +53,7 @@ int dsb_names_final();
  */
 int dsb_names_rebuild();
 
-#define DSB_NAME(A) static const NID_t *A
+#define DSB_NAME(A) const NID_t *A
 /// Define a NID variable to cache a name lookup.
 #define DSB_INIT(A,B) A = dsb_names_plookup(#B)
 

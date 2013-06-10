@@ -38,7 +38,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/router.h"
 #include "dsb/module.h"
 #include "dsb/net_protocol.h"
-#include "config.h"
+#include "dsb/config.h"
 #include <malloc.h>
 #include <unistd.h>
 #include <sys/time.h>

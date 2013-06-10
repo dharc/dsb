@@ -66,8 +66,8 @@ void test_nid_eq()
 	NID_t a;
 	NID_t b;
 
-	a.header = 5;
-	b.header = 5;
+	a.header = 8;
+	b.header = 8;
 	a.t = 89;
 	b.t = 89;
 	a.ll = 4545;
@@ -81,6 +81,17 @@ void test_nid_eq()
 	CHECK(dsb_nid_eq(&a,&b) == 0);
 	b.header = 6;
 	b.t = 89;
+	CHECK(dsb_nid_eq(&a,&b) == 0);
+
+	dsb_nid_local(0,&a);
+	dsb_nid_local(0,&b);
+	a.n = 5;
+	b.n = 5;
+	CHECK(dsb_nid_eq(&a,&b) == 1);
+	b.n = 3;
+	CHECK(dsb_nid_eq(&a,&b) == 0);
+	b.n = 5;
+	b.mac[5] = 45;
 	CHECK(dsb_nid_eq(&a,&b) == 0);
 
 	DONE;
