@@ -34,15 +34,23 @@ int dsb_nid_init()
 		netf = open("/sys/class/net/eth0/address", O_RDONLY);
 		if (netf != -1)
 		{
-			read(netf, buf, 17);
-			buf[17] = 0;
-			serial = buf;
-			close(netf);
+			netf = read(netf, buf, 17);
+
+			if (netf != 17)
+			{
+				serial = "00:00:00:00:00:01";
+			}
+			else
+			{
+				buf[17] = 0;
+				serial = buf;
+				close(netf);
+			}
 		}
 		else
 		{
 			//Worst case, there is no way to get a serial number.
-			serial = "00:00:00:00:00:00";
+			serial = "00:00:00:00:00:01";
 		}
 	}
 
