@@ -13,7 +13,7 @@ set(dsb_VERSION_PATCH "1")
 option(WITH_NO_THREADS "Disable multi-threading" OFF)
 
 set(CMAKE_C_FLAGS "-Wall -Werror")
-set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g")
+set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g -Wall -Werror")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 set(COMMONSOURCE common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c common/src/net.c common/src/net_protocol.c common/src/string.c common/src/array.c common/src/vm.c common/src/assembler.c common/src/names.c)

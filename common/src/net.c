@@ -260,7 +260,9 @@ static int read_messages(void *s)
 	//No data to process.
 	if (rc <= 0)
 	{
+#pragma GCC diagnostic ignored "-Wunused-value"
 		DSB_INFO(INFO_NETDISCONNECT,0);
+#pragma GCC diagnostic pop
 		dsb_net_disconnect(sock);
 		return SUCCESS;
 	}
@@ -388,7 +390,9 @@ int dsb_net_poll(unsigned int ms)
 				//s_conns[i]->error();
 				free(connections[i]);
 				connections[i] = 0;
+#pragma GCC diagnostic ignored "-Wunused-value"
 				DSB_INFO(INFO_NETDISCONNECT,0);
+#pragma GCC diagnostic pop
 			}
 		}
 	}
