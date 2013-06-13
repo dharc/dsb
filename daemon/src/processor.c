@@ -70,47 +70,46 @@ struct EventQueue
 #define READ_QUEUE			1
 #define DEPENDENCY_QUEUE	2
 
-static struct EventQueue queue[3];
-static unsigned int curq = 1;	//Current queue being processed.
+static struct EventQueue queue;
 static int procisrunning;
 static void *debugsock;
 
-int queue_insert(int q, Event_t *e)
+int queue_insert(Event_t *e)
 {
 	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_lock(&(queue[q].mtx));
+	pthread_mutex_lock(&(queue.mtx));
 	#endif
 
-	queue[q].q[queue[q].wix++] = e;
-	if (queue[q].wix >= QUEUE_SIZE) queue[q].wix = 0;
+	queue.q[queue.wix++] = e;
+	if (queue.wix >= QUEUE_SIZE) queue.wix = 0;
 
 	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_unlock(&(queue[q].mtx));
+	pthread_mutex_unlock(&(queue.mtx));
 	#endif
 
 	return SUCCESS;
 }
 
-Event_t *queue_pop(int q)
+Event_t *queue_pop()
 {
 	Event_t *res = 0;
 
 	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_lock(&(queue[q].mtx));
+	pthread_mutex_lock(&(queue.mtx));
 	#endif
 
 	//Are there any events left to read.
-	res = queue[q].q[queue[q].rix];
+	res = queue.q[queue.rix];
 
 	if (res != 0)
 	{
 
-		queue[q].q[queue[q].rix++] = 0;
-		if (queue[q].rix >= QUEUE_SIZE) queue[q].rix = 0;
+		queue.q[queue.rix++] = 0;
+		if (queue.rix >= QUEUE_SIZE) queue.rix = 0;
 	}
 
 	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_unlock(&(queue[q].mtx));
+	pthread_mutex_unlock(&(queue.mtx));
 	#endif
 
 	return res;
@@ -118,27 +117,19 @@ Event_t *queue_pop(int q)
 
 int dsb_proc_init()
 {
-	int i;
-	for (i=0; i<3; i++)
-	{
-		queue[i].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
-		memset(queue[i].q,0,sizeof(Event_t*)*QUEUE_SIZE);
-		queue[i].rix = 0;
-		queue[i].wix = 0;
-		#if defined(UNIX) && !defined(NO_THREADS)
-		pthread_mutex_init(&(queue[i].mtx),0);
-		#endif
-	}
+	queue.q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
+	memset(queue.q,0,sizeof(Event_t*)*QUEUE_SIZE);
+	queue.rix = 0;
+	queue.wix = 0;
+	#if defined(UNIX) && !defined(NO_THREADS)
+	pthread_mutex_init(&(queue.mtx),0);
+	#endif
 	return SUCCESS;
 }
 
 int dsb_proc_final()
 {
-	int i;
-	for (i=0; i<3; i++)
-	{
-		free(queue[i].q);
-	}
+	free(queue.q);
 	return SUCCESS;
 }
 
@@ -157,9 +148,9 @@ int dsb_send(struct Event *evt, int async)
 int dsb_proc_send(struct Event *evt, int async)
 {
 	int ret;
-	int q = evt->type >> 8;
+
 	evt->flags |= EVTFLAG_SENT;
-	ret = queue_insert(q,evt);
+	ret = queue_insert(evt);
 
 	//Need to block until done.
 	if (async == SYNC)
@@ -200,11 +191,10 @@ int dsb_proc_stop()
 
 int dsb_proc_single()
 {
-	int q = curq;
 	int ret;
 	Event_t *e;
 	//Choose an event
-	e = queue_pop(q);
+	e = queue_pop();
 	if (e == 0)
 	{
 		return 0;
@@ -262,18 +252,12 @@ int dsb_proc_run(unsigned int maxfreq)
 	while(procisrunning == 1)
 	{
 		tick = getTicks();
-		//Loop through all the queues.
-		curq = WRITE_QUEUE;
+
 		while (dsb_proc_single() == 1);
-		curq = READ_QUEUE;
 
 		//Now run module updates...
 		//Put here so that sync gets can be processed immediately.
 		dsb_module_updateall();
-
-		while (dsb_proc_single() == 1);
-		curq = DEPENDENCY_QUEUE;
-		while (dsb_proc_single() == 1);
 
 		//Work out how much spare time we have.
 		sleeptime = (maxticks - (getTicks() - tick)) / 10000;

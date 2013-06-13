@@ -139,6 +139,10 @@ int main(int argc, char *argv[])
 	dsb_module_load("volatile",&Root);
 	dsb_module_load("persistent",&PRoot);
 
+	//Effectively required so will load
+	dsb_module_load("evaluators",&Root);
+	dsb_module_load("net",&Root);
+
 	//Make sure names map is up to date.
 	dsb_names_rebuild();
 

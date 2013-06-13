@@ -12,7 +12,7 @@ set(dsb_VERSION_PATCH "1")
 
 option(WITH_NO_THREADS "Disable multi-threading" OFF)
 
-set(CMAKE_C_FLAGS "-Wall")
+set(CMAKE_C_FLAGS "-Wall -Werror")
 set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
