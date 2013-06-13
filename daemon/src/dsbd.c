@@ -112,6 +112,30 @@ void make_bool()
 	dsb_setzzz("falseand","false","false");
 }
 
+void make_system()
+{
+	NID_t sys;
+	dsb_new(&Root,&sys);
+	dsb_setnzn(&Root,"system",&sys);
+	dsb_dictnz(&Root,"system");
+
+	//Rebuild root graph
+	dsb_setnzn(&Root,"persistent",&PRoot);
+	dsb_dictnz(&Root,"persistent");
+
+#ifdef UNIX
+	dsb_setnzz(&sys,"os","linux");
+#endif
+	dsb_dictnz(&sys,"os");
+
+#ifdef _DEBUG
+	dsb_setnzn(&sys,"debug",&True);
+#else
+	dsb_setnzn(&sys,"debug",&False);
+#endif
+	dsb_dictnz(&sys,"debug");
+}
+
 //Internally compiled modules.
 extern struct Module *dsb_volatile_module();
 extern struct Module *dsb_persistent_module();
@@ -146,11 +170,10 @@ int main(int argc, char *argv[])
 	//Make sure names map is up to date.
 	dsb_names_rebuild();
 
-	//Rebuild root graph
-	dsb_setnzn(&Root,"persistent",&PRoot);
-	dsb_dictnz(&Root,"persistent");
-	dsb_setnzz(&Root,"os","linux");
-	dsb_dictnz(&Root,"os");
+	//Build volatile system graph
+	make_system();
+	//Build boolean structure.
+	make_bool();
 
 	//Ready to process command line args.
 	ret = process_args(argc,argv);
@@ -158,9 +181,6 @@ int main(int argc, char *argv[])
 
 	//Set signal handler
 	signal(SIGINT, sigint);
-
-	//Build boolean structure.
-	make_bool();
 
 	//Need to call all module update code.
 	//Need to process queues until empty.
