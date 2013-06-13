@@ -93,7 +93,9 @@ static int net_accept()
 	fcntl(csock, F_SETFL, O_NONBLOCK);
 	#endif
 
+#pragma GCC diagnostic ignored "-Wunused-value"
 	DSB_INFO(INFO_NETACCEPT, 0);
+#pragma GCC diagnostic pop
 	dsb_net_add(csock);
 	return SUCCESS;
 }
@@ -139,7 +141,9 @@ static int net_listen(int port)
 		return DSB_ERROR(ERR_NETLISTEN,0);
 	}
 
+#pragma GCC diagnostic ignored "-Wunused-value"
 	DSB_INFO(INFO_NETLISTEN,0);
+#pragma GCC diagnostic pop
 	return SUCCESS;
 }
 
