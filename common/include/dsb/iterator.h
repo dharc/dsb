@@ -1,7 +1,7 @@
 /*
- * array.h
+ * iterator.h
  *
- *  Created on: 28 May 2013
+ *  Created on: 10 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,55 +32,34 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ARRAY_H_
-#define ARRAY_H_
+#ifndef ITERATOR_H_
+#define ITERATOR_H_
+
+#include "dsb/nid.h"
+
+/** @file iterator.h */
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-typedef struct NID NID_t;
+struct DSBIterator
+{
+	NID_t object;
+	int count;
+	int current;
+	NID_t *buffer;
+};
 
-/**
- * Write a local C NID array into the DSB graph.
- * @param src A C array of NIDs.
- * @param size The size of the source array.
- * @param dest Destination node in the graph on which to build the array.
- * @return Number of elements added.
- */
-int dsb_array_write(const NID_t *src, int size, const NID_t *dest);
+int dsb_iterator_begin(struct DSBIterator *it, const NID_t *n);
 
-/**
- * Read an array from the graph to a local C NID array.
- * @param src Graph node containing an array structure.
- * @param dest Local C array to fill.
- * @param max Maximum size of local C array.
- * @return Actual size of read array.
- */
-int dsb_array_read(const NID_t *src, NID_t *dest, int max);
+const NID_t *dsb_iterator_next(struct DSBIterator *it);
 
-/**
- * Allocates the required amount of memory for a C array to contain the entire
- * DSB array and then reads the DSB array into it. The size of the array
- * is returned, with 0 meaning no memory was allocated. It is up to the user
- * to free the memory.
- * @param src NID corresponding to an array structure.
- * @param dest Pointer to storage for an array pointer.
- * @return Size of array.
- */
-int dsb_array_readalloc(const NID_t *src, NID_t **dest);
-
-int dsb_array_clear(const NID_t *a);
-
-int dsb_array_push(const NID_t *a, const NID_t *v);
-
-int dsb_array_pop(const NID_t *a, NID_t *v);
-
-//int dsb_array_initialise(const NID_t *array, int size);
+int dsb_iterator_end(struct DSBIterator *it);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARRAY_H_ */
+#endif /* ITERATOR_H_ */

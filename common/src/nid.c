@@ -18,6 +18,7 @@ NID_t True;
 NID_t False;
 NID_t Names;
 NID_t Size;
+NID_t Keys;
 
 int dsb_nid_init()
 {
@@ -73,6 +74,7 @@ int dsb_nid_init()
 	dsb_nid(NID_SPECIAL,SPECIAL_FALSE,&False);
 	dsb_nid(NID_SPECIAL,SPECIAL_SIZE,&Size);
 	dsb_nid(NID_SPECIAL,SPECIAL_NAMES,&Names);
+	dsb_nid(NID_SPECIAL,SPECIAL_KEYS,&Keys);
 
 	return SUCCESS;
 }

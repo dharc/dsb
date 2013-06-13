@@ -1,7 +1,7 @@
 /*
- * array.h
+ * iterator.c
  *
- *  Created on: 28 May 2013
+ *  Created on: 10 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,55 +32,35 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ARRAY_H_
-#define ARRAY_H_
+#include "dsb/iterator.h"
+#include "dsb/nid.h"
+#include "dsb/wrap.h"
+#include "dsb/globals.h"
+#include "dsb/array.h"
 
-#ifdef __cplusplus
-extern "C"
+#include <malloc.h>
+
+int dsb_iterator_begin(struct DSBIterator *it, const NID_t *n)
 {
-#endif
+	NID_t keys;
 
-typedef struct NID NID_t;
+	//Get the dictionary object
+	dsb_get(n,&Keys,&keys);
 
-/**
- * Write a local C NID array into the DSB graph.
- * @param src A C array of NIDs.
- * @param size The size of the source array.
- * @param dest Destination node in the graph on which to build the array.
- * @return Number of elements added.
- */
-int dsb_array_write(const NID_t *src, int size, const NID_t *dest);
-
-/**
- * Read an array from the graph to a local C NID array.
- * @param src Graph node containing an array structure.
- * @param dest Local C array to fill.
- * @param max Maximum size of local C array.
- * @return Actual size of read array.
- */
-int dsb_array_read(const NID_t *src, NID_t *dest, int max);
-
-/**
- * Allocates the required amount of memory for a C array to contain the entire
- * DSB array and then reads the DSB array into it. The size of the array
- * is returned, with 0 meaning no memory was allocated. It is up to the user
- * to free the memory.
- * @param src NID corresponding to an array structure.
- * @param dest Pointer to storage for an array pointer.
- * @return Size of array.
- */
-int dsb_array_readalloc(const NID_t *src, NID_t **dest);
-
-int dsb_array_clear(const NID_t *a);
-
-int dsb_array_push(const NID_t *a, const NID_t *v);
-
-int dsb_array_pop(const NID_t *a, NID_t *v);
-
-//int dsb_array_initialise(const NID_t *array, int size);
-
-#ifdef __cplusplus
+	it->object = *n;
+	it->count = dsb_array_readalloc(&keys,&it->buffer);
+	it->current = 0;
+	return 0;
 }
-#endif
 
-#endif /* ARRAY_H_ */
+const NID_t *dsb_iterator_next(struct DSBIterator *it)
+{
+	if (it->count == it->current) return 0;
+	return &it->buffer[it->current++];
+}
+
+int dsb_iterator_end(struct DSBIterator *it)
+{
+	if (it->buffer != 0) free(it->buffer);
+	return 0;
+}

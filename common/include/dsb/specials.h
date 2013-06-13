@@ -56,6 +56,7 @@ enum
 	SPECIAL_BITNOT,
 	//---- Definitions and Strings
 	SPECIAL_SIZE,
+	SPECIAL_KEYS,
 
 	SPECIAL_END
 };

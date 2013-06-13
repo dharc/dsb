@@ -125,3 +125,26 @@ int dsb_array_readalloc(const NID_t *src, NID_t **dest)
 	return len;
 }
 
+int dsb_array_clear(const NID_t *a)
+{
+	//TODO should be transactional.
+	dsb_setnin(a,0,&Null);
+	dsb_setnni(a,&Size,0);
+	return 0;
+}
+
+int dsb_array_push(const NID_t *a, const NID_t *v)
+{
+	int len;
+	dsb_getnni(a,&Size,&len);
+	len++;
+	dsb_setnni(a,&Size,len);
+	dsb_setnin(a,len-1,v);
+	return 0;
+}
+
+int dsb_array_pop(const NID_t *a, NID_t *v)
+{
+	return 0;
+}
+

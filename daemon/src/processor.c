@@ -39,15 +39,12 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/module.h"
 #include "dsb/net_protocol.h"
 #include "dsb/config.h"
+#include "dsb/thread.h"
 #include <malloc.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
-
-#if defined(UNIX) && !defined(NO_THREADS)
-#include <pthread.h>
-#endif
 
 #define QUEUE_SIZE		10000
 
@@ -61,10 +58,9 @@ struct EventQueue
 	Event_t **q;
 	unsigned int rix;
 	unsigned int wix;
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_t mtx;
-	#endif
 };
+
+MUTEX(qmtx);
 
 #define WRITE_QUEUE			0
 #define READ_QUEUE			1
@@ -76,16 +72,12 @@ static void *debugsock;
 
 int queue_insert(Event_t *e)
 {
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_lock(&(queue.mtx));
-	#endif
+	LOCK(qmtx);
 
 	queue.q[queue.wix++] = e;
 	if (queue.wix >= QUEUE_SIZE) queue.wix = 0;
 
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_unlock(&(queue.mtx));
-	#endif
+	UNLOCK(qmtx);
 
 	return SUCCESS;
 }
@@ -94,23 +86,18 @@ Event_t *queue_pop()
 {
 	Event_t *res = 0;
 
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_lock(&(queue.mtx));
-	#endif
+	LOCK(qmtx);
 
 	//Are there any events left to read.
 	res = queue.q[queue.rix];
 
 	if (res != 0)
 	{
-
 		queue.q[queue.rix++] = 0;
 		if (queue.rix >= QUEUE_SIZE) queue.rix = 0;
 	}
 
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_unlock(&(queue.mtx));
-	#endif
+	UNLOCK(qmtx);
 
 	return res;
 }
@@ -121,9 +108,6 @@ int dsb_proc_init()
 	memset(queue.q,0,sizeof(Event_t*)*QUEUE_SIZE);
 	queue.rix = 0;
 	queue.wix = 0;
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_init(&(queue.mtx),0);
-	#endif
 	return SUCCESS;
 }
 
@@ -156,10 +140,6 @@ int dsb_proc_send(struct Event *evt, int async)
 	if (async == SYNC)
 	{
 		ret = dsb_proc_wait(evt);
-		if (evt->flags & EVTFLAG_FREE)
-		{
-			dsb_event_free(evt);
-		}
 	}
 
 	return ret;
@@ -255,8 +235,9 @@ int dsb_proc_run(unsigned int maxfreq)
 
 		while (dsb_proc_single() == 1);
 
+		//TODO make sure all threads have finished, not just assume when queue is empty.
+
 		//Now run module updates...
-		//Put here so that sync gets can be processed immediately.
 		dsb_module_updateall();
 
 		//Work out how much spare time we have.

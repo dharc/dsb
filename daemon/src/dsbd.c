@@ -146,6 +146,12 @@ int main(int argc, char *argv[])
 	//Make sure names map is up to date.
 	dsb_names_rebuild();
 
+	//Rebuild root graph
+	dsb_setnzn(&Root,"persistent",&PRoot);
+	dsb_dictnz(&Root,"persistent");
+	dsb_setnzz(&Root,"os","linux");
+	dsb_dictnz(&Root,"os");
+
 	//Ready to process command line args.
 	ret = process_args(argc,argv);
 	if (ret != 0) return ret;

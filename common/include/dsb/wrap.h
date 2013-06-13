@@ -72,9 +72,13 @@ int dsb_getnzn(const NID_t *d1, const char *d2, NID_t *r);
 
 int dsb_getA(const NID_t *d1, const NID_t *d2, NID_t *r);
 
+int dsb_dict(const NID_t *d, const NID_t *n);
+int dsb_dictnz(const NID_t *d, const char *n);
+
 /**
- * Set the node a hyperarc points to. This function returns immediately
- * and does not guarantee that the change has been performed.
+ * Set the node a hyperarc points to. This function is synchronous and
+ * does guarentee that, on the relevant machine, the set completes before
+ * any reads occur. This function does not modify an "objects" dictionary.
  * @param d1 First tail node.
  * @param d2 Second tail node.
  * @param v Node to change the head to.

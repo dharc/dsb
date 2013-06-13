@@ -51,6 +51,7 @@ extern NID_t True;		///< Constant True NID.
 extern NID_t False;		///< Constant False NID.
 extern NID_t Names;
 extern NID_t Size;
+extern NID_t Keys;		///< Dictionary index.
 
 #ifdef __cplusplus
 }

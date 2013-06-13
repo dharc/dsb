@@ -53,9 +53,11 @@ struct NameEntry
 	char name[MAX_NAME_SIZE];
 	NID_t nid;
 	struct NameEntry *next;
+	struct NameEntry *rnext;
 };
 
 static struct NameEntry *nametable[NAME_HASH_SIZE];
+static struct NameEntry *revnametable[NAME_HASH_SIZE];
 static NID_t namesobj;
 static int countnames;
 
@@ -114,6 +116,7 @@ int dsb_names_add(const char *name, const NID_t *nid)
 {
 	struct NameEntry *entry;
 	int hash = namehash(name);
+	int rhash = nid->n % NAME_HASH_SIZE;
 
 	if (strlen(name) >= MAX_NAME_SIZE-1)
 	{
@@ -126,7 +129,9 @@ int dsb_names_add(const char *name, const NID_t *nid)
 
 	W_LOCK(nametable_mtx);
 	entry->next = nametable[hash];
+	entry->rnext = revnametable[rhash];
 	nametable[hash] = entry;
+	revnametable[rhash] = entry;
 	W_UNLOCK(nametable_mtx);
 
 	return 0;
@@ -162,7 +167,7 @@ int dsb_names_rebuild()
 		for (i=0; i<countnames; i++)
 		{
 			dsb_string_ntoc(buf,MAX_NAME_SIZE,&array[i]);
-			printf("Added name: %s\n",buf);
+			printf("Added name: %s (%d)\n",buf,(unsigned int)array[i].ll);
 			dsb_names_update(buf,&array[i]);
 		}
 	}
@@ -268,10 +273,10 @@ int dsb_names_lookup(const char *name, NID_t *nid)
 int dsb_names_revlookup(const NID_t *nid, char *name, int max)
 {
 	struct NameEntry *entry;
-	int hash = namehash(name);
+	int hash = nid->n % NAME_HASH_SIZE;
 
 	R_LOCK(nametable_mtx);
-	entry = nametable[hash];
+	entry = revnametable[hash];
 
 	while (entry != 0)
 	{
@@ -282,7 +287,7 @@ int dsb_names_revlookup(const NID_t *nid, char *name, int max)
 			R_UNLOCK(nametable_mtx);
 			return 0;
 		}
-		entry = entry->next;
+		entry = entry->rnext;
 	}
 
 	R_UNLOCK(nametable_mtx);

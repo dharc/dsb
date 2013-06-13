@@ -1,7 +1,7 @@
 /*
- * array.h
+ * iter-test.c
  *
- *  Created on: 28 May 2013
+ *  Created on: 13 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,55 +32,85 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ARRAY_H_
-#define ARRAY_H_
+#include "dsb/test.h"
+#include "dsb/iterator.h"
+#include "dsb/wrap.h"
+#include "dsb/event.h"
+#include "dsb/specials.h"
 
-#ifdef __cplusplus
-extern "C"
+int dsb_send(struct Event *evt)
 {
-#endif
-
-typedef struct NID NID_t;
-
-/**
- * Write a local C NID array into the DSB graph.
- * @param src A C array of NIDs.
- * @param size The size of the source array.
- * @param dest Destination node in the graph on which to build the array.
- * @return Number of elements added.
- */
-int dsb_array_write(const NID_t *src, int size, const NID_t *dest);
-
-/**
- * Read an array from the graph to a local C NID array.
- * @param src Graph node containing an array structure.
- * @param dest Local C array to fill.
- * @param max Maximum size of local C array.
- * @return Actual size of read array.
- */
-int dsb_array_read(const NID_t *src, NID_t *dest, int max);
-
-/**
- * Allocates the required amount of memory for a C array to contain the entire
- * DSB array and then reads the DSB array into it. The size of the array
- * is returned, with 0 meaning no memory was allocated. It is up to the user
- * to free the memory.
- * @param src NID corresponding to an array structure.
- * @param dest Pointer to storage for an array pointer.
- * @return Size of array.
- */
-int dsb_array_readalloc(const NID_t *src, NID_t **dest);
-
-int dsb_array_clear(const NID_t *a);
-
-int dsb_array_push(const NID_t *a, const NID_t *v);
-
-int dsb_array_pop(const NID_t *a, NID_t *v);
-
-//int dsb_array_initialise(const NID_t *array, int size);
-
-#ifdef __cplusplus
+	if (evt->type == EVENT_GET)
+	{
+		//The object with a dictionary.
+		if (evt->d1.ll == 0)
+		{
+			if (evt->d2.ll == SPECIAL_KEYS)
+			{
+				dsb_iton(44,evt->res);
+				evt->flags |= EVTFLAG_DONE;
+			}
+		}
+		//The dictionary itself.
+		else if (evt->d1.ll == 44)
+		{
+			if (evt->d2.t == NID_SPECIAL)
+			{
+				if (evt->d2.ll == SPECIAL_SIZE)
+				{
+					dsb_iton(3,evt->res);
+					evt->flags |= EVTFLAG_DONE;
+				}
+			}
+			else
+			{
+				switch(evt->d2.ll)
+				{
+				case 0:		dsb_iton(55,evt->res); break;
+				case 1:		dsb_iton(66,evt->res); break;
+				case 2:		dsb_iton(77,evt->res); break;
+				default:	dsb_nid_null(evt->res); break;
+				}
+				evt->flags |= EVTFLAG_DONE;
+			}
+		}
+	}
+	return 0;
 }
-#endif
 
-#endif /* ARRAY_H_ */
+void test_iterator_iterator()
+{
+	struct DSBIterator it;
+	NID_t obj;
+	const NID_t *p;
+	int i = 0;
+
+	dsb_iton(0,&obj);
+
+	CHECK(dsb_iterator_begin(&it,&obj) == 0);
+	p = dsb_iterator_next(&it);
+	CHECK(it.count == 3);
+	CHECK(p != 0);
+	while (p != 0)
+	{
+		if (i == 0) { CHECK(p->ll == 55); }
+		else if (i == 1) { CHECK(p->ll == 66); }
+		else if (i == 2) { CHECK(p->ll == 77); }
+		i++;
+		p = dsb_iterator_next(&it);
+	}
+	CHECK(i == 3);
+	CHECK(dsb_iterator_end(&it) == 0);
+	DONE;
+}
+
+int main(int argc, char *argv[])
+{
+	dsb_nid_init();
+	dsb_event_init();
+	dsb_test(test_iterator_iterator);
+
+	dsb_event_final();
+	dsb_nid_final();
+	return 0;
+}

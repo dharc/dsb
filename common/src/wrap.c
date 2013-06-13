@@ -36,6 +36,8 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/nid.h"
 #include "dsb/event.h"
 #include "dsb/errors.h"
+#include "dsb/array.h"
+#include "dsb/globals.h"
 
 //Needs to be implemented elsewhere.
 extern int dsb_send(struct Event *,int);
@@ -139,6 +141,30 @@ int dsb_new(const NID_t *base, NID_t *n)
 	return res;
 }
 
+int dsb_dict(const NID_t *d, const NID_t *n)
+{
+	NID_t dict;
+	dsb_get(d,&Keys,&dict);
+
+	//Make dictionary if it doesnt exist.
+	if (dsb_nid_eq(&dict,&Null) == 1)
+	{
+		dsb_new(d,&dict);
+		dsb_array_clear(&dict);
+		dsb_set(d,&Keys,&dict);
+	}
+
+	dsb_array_push(&dict,n);
+	return SUCCESS;
+}
+
+int dsb_dictnz(const NID_t *d, const char *n)
+{
+	NID_t nn;
+	dsb_nid_fromStr(n,&nn);
+	return dsb_dict(d,&nn);
+}
+
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
 	return dsb_define(d1,d2,v,0);
@@ -202,7 +228,7 @@ int dsb_define(
 	evt->eval = eval;
 	evt->flags = EVTFLAG_FREE;
 	evt->type = EVENT_DEFINE;
-	return dsb_send(evt,1);
+	return dsb_send(evt,0);
 }
 
 int dsb_notify(const struct NID *d1, const struct NID *d2)

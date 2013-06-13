@@ -38,6 +38,8 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/event.h"
 #include "dsb/errors.h"
 
+#include <string.h>
+
 static int nidalloc = 0;
 
 int dsb_send(struct Event *evt)
@@ -88,6 +90,15 @@ void test_names_lookup()
 
 void test_names_revlookup()
 {
+	NID_t n;
+	char buf[100];
+
+	dsb_iton(66,&n);
+
+	CHECK(dsb_names_add("hello",&n) == 0);
+	CHECK(dsb_names_revlookup(&n,buf,100) == 0);
+	CHECK(strcmp(buf,"hello") == 0);
+
 	DONE;
 }
 
@@ -103,6 +114,7 @@ int main(int argc, char *argv[])
 	dsb_names_init();
 
 	dsb_test(test_names_lookup);
+	dsb_test(test_names_revlookup);
 
 	dsb_names_final();
 	dsb_event_final();
