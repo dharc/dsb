@@ -169,7 +169,9 @@ int dsb_names_rebuild()
 	//There is no names object, so make it
 	else
 	{
+#pragma GCC diagnostic ignored "-Wunused-value"
 		DSB_DEBUG(DEBUG_RESETNAMES,0);
+#pragma GCC diagnostic pop
 		dsb_new(&PRoot,&namesobj);
 
 		dsb_nid_toStr(&namesobj,buf,100);
