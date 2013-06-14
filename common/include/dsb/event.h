@@ -178,6 +178,8 @@ void dsb_event_free(struct Event *evt);
  */
 int dsb_event_params(const struct Event *evt);
 
+int dsb_event_pretty(const Event_t *evt, char *buf, int len);
+
 /** @} */
 
 #ifdef __cplusplus

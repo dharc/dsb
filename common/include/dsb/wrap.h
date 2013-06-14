@@ -74,6 +74,7 @@ int dsb_getA(const NID_t *d1, const NID_t *d2, NID_t *r);
 
 int dsb_dict(const NID_t *d, const NID_t *n);
 int dsb_dictnz(const NID_t *d, const char *n);
+int dsb_dictzz(const char *d, const char *n);
 
 /**
  * Set the node a hyperarc points to. This function is synchronous and

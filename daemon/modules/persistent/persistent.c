@@ -40,7 +40,6 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/harc_d.h"
 #include <stdio.h>
 #include <malloc.h>
-#include <stdio.h>
 
 struct Module permod;
 
@@ -156,46 +155,6 @@ static int per_handler(Event_t *evt)
 	}
 }
 
-/*
- * Convert a HARC structure into a single CSV line.
- */
-static int per_serialize_harc(FILE *fd, const HARC_t *harc)
-{
-	char buf1[100];
-	char buf2[100];
-	char buf3[100];
-
-	dsb_nid_toRawStr(&harc->t1, buf1, 100);
-	dsb_nid_toRawStr(&harc->t2, buf2, 100);
-	dsb_nid_toRawStr(&harc->def, buf3, 100);
-
-	fprintf(fd, "%s,%s,%s,%d\n",buf1,buf2,buf3,harc->e);
-
-	return 0;
-}
-
-/*
- * Convert a CSV line into a HARC. Format is tail1,tail2,definition,evaluator.
- */
-static int per_deserialize_harc(FILE *fd, HARC_t *harc)
-{
-	char buf1[100];
-	char buf2[100];
-	char buf3[100];
-
-	if (fscanf(fd, "%[^,],%[^,],%[^,],%d\n",buf1,buf2,buf3,&harc->e) != 4)
-	{
-		//End of file or invalid input.
-		return -1;
-	}
-
-	DSB_ERROR(dsb_nid_fromStr(buf1,&harc->t1),0);
-	DSB_ERROR(dsb_nid_fromStr(buf2,&harc->t2),0);
-	DSB_ERROR(dsb_nid_fromStr(buf3,&harc->def),0);
-
-	return 0;
-}
-
 static int per_load_file(const char *filename)
 {
 	HARC_t harc;
@@ -218,7 +177,7 @@ static int per_load_file(const char *filename)
 
 	printf("Loading %s\n",filename);
 
-	while (per_deserialize_harc(fd, &harc) == 0)
+	while (dsb_harc_deserialize(fd, &harc) == 0)
 	{
 		pharc = per_getharc(&harc.t1,&harc.t2,1);
 		pharc->def = harc.def;
@@ -257,7 +216,7 @@ static int per_save_file(const char *filename)
 		while (cur != 0)
 		{
 			//Save it!!
-			per_serialize_harc(fd, &cur->harc);
+			dsb_harc_serialize(fd, &cur->harc);
 			cur = cur->next;
 		}
 	}

@@ -90,6 +90,10 @@ int process_args(int argc, char *argv[])
 				print_version();
 				break;
 
+			case 'd':
+				dsb_debug(DBG_EVENTS | DBG_VOLATILE);
+				break;
+
 			default:
 				printf("Invalid Option\n");
 				print_help();
@@ -105,11 +109,17 @@ void make_bool()
 {
 	//AND
 	dsb_setzzz("true","and","trueand");
+	dsb_dictzz("true","and");
 	dsb_setzzz("trueand","true","true");
+	dsb_dictzz("trueand","true");
 	dsb_setzzz("trueand","false","false");
+	dsb_dictzz("trueand","false");
 	dsb_setzzz("false","and","falseand");
+	dsb_dictzz("false","and");
 	dsb_setzzz("falseand","true","false");
+	dsb_dictzz("falseand","true");
 	dsb_setzzz("falseand","false","false");
+	dsb_dictzz("falseand","false");
 }
 
 void make_system()
@@ -170,14 +180,14 @@ int main(int argc, char *argv[])
 	//Make sure names map is up to date.
 	dsb_names_rebuild();
 
+	//Ready to process command line args.
+	ret = process_args(argc,argv);
+	if (ret != 0) return ret;
+
 	//Build volatile system graph
 	make_system();
 	//Build boolean structure.
 	make_bool();
-
-	//Ready to process command line args.
-	ret = process_args(argc,argv);
-	if (ret != 0) return ret;
 
 	//Set signal handler
 	signal(SIGINT, sigint);

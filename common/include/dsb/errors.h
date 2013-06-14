@@ -103,38 +103,12 @@ enum
 	DEBUG_NETMSG,
 	DEBUG_NETEVENT,
 	DEBUG_RESETNAMES,
+	DEBUG_EVENTS,
 
 	ERR_END   			//!< ERR_END
 };
 
-/**
- * Convert DSB error number to a string.
- * @param err Error number.
- * @return String for the error.
- */
-const char *dsb_log_str(int err);
-
-/**
- * Log and print error messages, depending upon log and debug settings.
- * @param errno
- * @param data Optional node containing additional error details.
- * @return errno, as passed in the parameter.
- */
-int dsb_log(int msg, const char *str);
-
-#define DSB_ERROR(A,B) dsb_log(A,B)
-
-#ifdef _DEBUG
-#define DSB_INFO(A,B) dsb_log(A,B)
-#else
-#define DSB_INFO(A,B) A
-#endif
-
-#ifdef _DEBUG
-#define DSB_DEBUG(A,B) dsb_log(A,B)
-#else
-#define DSB_DEBUG(A,B) A
-#endif
+#include "dsb/log.h"
 
 #ifdef __cplusplus
 }

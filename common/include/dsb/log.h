@@ -1,7 +1,7 @@
 /*
- * evaluators.c
+ * log.h
  *
- *  Created on: 9 May 2013
+ *  Created on: 14 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,44 +32,53 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/evaluator.h"
-#include "dsb/module.h"
-#include "dsb/errors.h"
-#include "dsb/globals.h"
-#include "dsb/wrap.h"
+#ifndef LOG_H_
+#define LOG_H_
 
-struct Module evalmod;
-struct HARC;
+#define DBG_DEFINES			1
+#define DBG_NOTIFIES		2
+#define DBG_GETS			4
+#define DBG_DEPENDENCY		8
+#define DBG_EVENTS			(8+4+2+1)
+#define DBG_NET				16
+#define DBG_VOLATILE		32
 
-int eval_basic(HARC_t *harc);
-int eval_vm(HARC_t *harc);
-
-int eval_init()
-{
-	dsb_eval_register(EVAL_BASIC,eval_basic);
-	dsb_eval_register(EVAL_DSBVM,eval_vm);
-	return SUCCESS;
-}
-
-int eval_final()
-{
-	dsb_eval_register(EVAL_BASIC,0);
-	dsb_eval_register(EVAL_DSBVM,0);
-	return SUCCESS;
-}
-
-int eval_update()
-{
-	return 0;
-}
-
-/*
- * Module registration structure.
+/**
+ * Set debug flags. Only works in a debug build.
+ * @param flags
+ * @return
  */
-struct Module *dsb_evaluators_module()
-{
-	evalmod.init = eval_init;
-	evalmod.update = eval_update;
-	evalmod.final = eval_final;
-	return &evalmod;
-}
+int dsb_debug(unsigned int flags);
+
+/**
+ * Convert DSB error number to a string.
+ * @param err Error number.
+ * @return String for the error.
+ */
+const char *dsb_log_str(int err);
+
+/**
+ * Log and print error messages, depending upon log and debug settings.
+ * @param errno
+ * @param data Optional node containing additional error details.
+ * @return errno, as passed in the parameter.
+ */
+int dsb_log(int msg, const char *str);
+
+#define DSB_ERROR(A,B) dsb_log(A,B)
+
+#ifdef _DEBUG
+#define DSB_INFO(A,B) dsb_log(A,B)
+#else
+#define DSB_INFO(A,B) A
+#endif
+
+#ifdef _DEBUG
+#define DSB_DEBUG(A,B) dsb_log(A,B)
+#else
+#define DSB_DEBUG(A,B) A
+#endif
+
+
+
+#endif /* LOG_H_ */

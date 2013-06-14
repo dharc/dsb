@@ -169,6 +169,8 @@ int dsb_proc_stop()
 	return SUCCESS;
 }
 
+extern unsigned int dbgflags;
+
 int dsb_proc_single()
 {
 	int ret;
@@ -181,14 +183,6 @@ int dsb_proc_single()
 	}
 	else
 	{
-		//If we have a debugger connected.
-		#ifdef _DEBUG
-		if (debugsock != 0)
-		{
-			dsb_net_send_dbgevent(debugsock,e);
-		}
-		#endif
-
 		//If an event was found then route it.
 		ret = dsb_route(e);
 		if (ret != SUCCESS)
@@ -196,6 +190,21 @@ int dsb_proc_single()
 			e->err = ret;
 			e->flags |= EVTFLAG_ERRO;
 		}
+
+		//If we have a debugger connected.
+			#ifdef _DEBUG
+			if (dbgflags & DBG_EVENTS)
+			{
+				char buf[200];
+				dsb_event_pretty(e,buf,200);
+				dsb_log(DEBUG_EVENTS,buf);
+			}
+			if (debugsock != 0)
+			{
+				dsb_net_send_dbgevent(debugsock,e);
+			}
+			#endif
+
 		if (e->flags & EVTFLAG_FREE)
 		{
 			dsb_event_free(e);

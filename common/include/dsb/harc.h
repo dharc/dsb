@@ -35,6 +35,8 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/nid.h"
 #include "dsb/config.h"
 
+#include <stdio.h>
+
 typedef struct Event Event_t;
 typedef struct Dependency Dependency_t;
 
@@ -75,6 +77,9 @@ struct HARC
 typedef struct HARC HARC_t;
 
 HARC_t *dsb_harc(const NID_t *t1, const NID_t *t2, HARC_t *harc);
+
+int dsb_harc_deserialize(FILE *fd, HARC_t *harc);
+int dsb_harc_serialize(FILE *fd, const HARC_t *harc);
 
 /** @} */
 

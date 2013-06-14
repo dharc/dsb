@@ -36,6 +36,8 @@ either expressed or implied, of the FreeBSD Project.
 #include <stdio.h>
 #include "dsb/config.h"
 
+unsigned int dbgflags = 0;
+
 const char *dsb_log_str(int err)
 {
 	switch(err)
@@ -76,8 +78,15 @@ const char *dsb_log_str(int err)
 	case DEBUG_NETMSG:			return "Net Message";
 	case DEBUG_NETEVENT:		return "Net Event";
 	case DEBUG_RESETNAMES:		return "Reset Names";
+	case DEBUG_EVENTS:			return "Event";
 	default:					return "Unknown Error";
 	}
+}
+
+int dsb_debug(unsigned int flags)
+{
+	dbgflags = flags;
+	return 0;
 }
 
 int dsb_log(int msg, const char *str)

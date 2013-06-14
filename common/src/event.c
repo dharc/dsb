@@ -189,3 +189,35 @@ int dsb_event_params(const struct Event *evt)
 	return SUCCESS;
 }
 
+int dsb_event_pretty(const Event_t *evt, char *buf, int len)
+{
+	char d1[100];
+	char d2[100];
+	char def[100];
+	char dep1[100];
+	char dep2[100];
+
+	dsb_nid_toStr(&evt->d1,d1,100);
+	dsb_nid_toStr(&evt->d2,d2,100);
+
+	switch(evt->type)
+	{
+	case EVENT_GET:			//dsb_nid_toStr(evt->res,dep1,100);
+							sprintf(buf,"GET - %s,%s",d1,d2);
+							break;
+	case EVENT_DEFINE:		dsb_nid_toStr(&evt->def,def,100);
+							sprintf(buf,"DEFINE - %s,%s = %s (%d)",d1,d2,def,evt->eval);
+							break;
+	case EVENT_DEP:			dsb_nid_toStr(&evt->dep1,dep1,100);
+							dsb_nid_toStr(&evt->dep2,dep2,100);
+							sprintf(buf,"DEP - %s,%s -> %s,%s",d1,d2,dep1,dep2);
+							break;
+	case EVENT_NOTIFY:		sprintf(buf,"NOTIFY - %s,%s",d1,d2);
+							break;
+	case EVENT_ALLOCATE:	sprintf(buf,"NEW - %s,%s",d1,d2);
+							break;
+	default: break;
+	}
+	return 0;
+}
+

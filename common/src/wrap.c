@@ -165,6 +165,15 @@ int dsb_dictnz(const NID_t *d, const char *n)
 	return dsb_dict(d,&nn);
 }
 
+int dsb_dictzz(const char *d, const char *n)
+{
+	NID_t nn;
+	NID_t nd;
+	dsb_nid_fromStr(n,&nn);
+	dsb_nid_fromStr(d,&nd);
+	return dsb_dict(&nd,&nn);
+}
+
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
 	return dsb_define(d1,d2,v,0);

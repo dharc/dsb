@@ -88,7 +88,7 @@ int vol_hashnid(const struct NID *a, const struct NID *b)
 {
 	//TODO Make sure a and b are in correct order.
 	//TODO Improve hash function
-	return (a->ll + (b->ll*100)) % VOL_HASH_SIZE;
+	return (a->n + (b->n*100)) % VOL_HASH_SIZE;
 }
 
 /*
@@ -334,10 +334,57 @@ int vol_init(const NID_t *base)
 	return SUCCESS;
 }
 
+/*
+ * Open a file and dump hash table contents to it in CSV form.
+ */
+static int vol_save_file(const char *filename)
+{
+	int h=0;
+	FILE *fd;
+	struct VolHARCEntry *cur;
+
+	//Open relevant file.
+	fd = fopen(filename,"w");
+	if (fd == 0)
+	{
+		return DSB_ERROR(ERR_PERFILESAVE,filename);
+	}
+
+	//Write the lastallocated NID
+	fprintf(fd, "%x\n", lastallocated);
+
+	//For every hash location
+	for (h=0; h<VOL_HASH_SIZE; h++)
+	{
+		cur = voltable[h];
+		//For every element at this hash location
+		while (cur != 0)
+		{
+			//Save it!!
+			dsb_harc_serialize(fd, &cur->harc);
+			cur = cur->next;
+		}
+	}
+
+	fclose(fd);
+
+	return 0;
+}
+
+extern unsigned int dbgflags;
+
 int vol_final()
 {
 	//TODO Cleanup all entries.
 	//TODO Cleanup all regions.
+
+#ifdef _DEBUG
+	if (dbgflags & DBG_VOLATILE)
+	{
+		vol_save_file("./volatile.log");
+	}
+#endif
+
 	return SUCCESS;
 }
 
