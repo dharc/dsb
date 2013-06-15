@@ -334,6 +334,8 @@ int vol_init(const NID_t *base)
 	return SUCCESS;
 }
 
+#ifdef _DEBUG
+
 /*
  * Open a file and dump hash table contents to it in CSV form.
  */
@@ -372,6 +374,8 @@ static int vol_save_file(const char *filename)
 }
 
 extern unsigned int dbgflags;
+
+#endif
 
 int vol_final()
 {
