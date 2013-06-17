@@ -62,6 +62,7 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 	{
 	//---------------------------------------------------------------------
 	case EVENT_GET:
+	case EVENT_GETDEF:
 		*((int*)buf) = e->resid;
 		memcpy(buf,&e->resid,sizeof(int));
 		buf += sizeof(int);
@@ -109,6 +110,7 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 	{
 	//---------------------------------------------------------------------
 	case EVENT_GET:
+	case EVENT_GETDEF:
 		//e->resid = *((int*)buf);
 		memcpy(&e->resid,buf,sizeof(int));
 		buf += sizeof(int);
@@ -204,6 +206,9 @@ int dsb_event_pretty(const Event_t *evt, char *buf, int len)
 	{
 	case EVENT_GET:			//dsb_nid_toStr(evt->res,dep1,100);
 							sprintf(buf,"GET - %s,%s",d1,d2);
+							break;
+	case EVENT_GETDEF:			//dsb_nid_toStr(evt->res,dep1,100);
+							sprintf(buf,"GETDEF - %s,%s",d1,d2);
 							break;
 	case EVENT_DEFINE:		dsb_nid_toStr(&evt->def,def,100);
 							sprintf(buf,"DEFINE - %s,%s = %s (%d)",d1,d2,def,evt->eval);

@@ -928,3 +928,29 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 	return SUCCESS;
 }
 
+int dsb_disassemble(const NID_t *src, int size, char *output, int max)
+{
+	int i;
+	char buf[100];
+
+	for (i=0; i<size; i++)
+	{
+		if (src[i].header == 0 && src[i].t == NID_VMOP)
+		{
+			switch((unsigned int)VM_OP(src[i].ll))
+			{
+			case VMOP_RET:	sprintf(output,"ret %%%d\n",(unsigned int)VMREG_A(src[i].ll)); break;
+			case VMOP_LOAD:	sprintf(output,"load %%%d %d\n",(unsigned int)VMREG_A(src[i].ll),(unsigned int)VMREG_D(src[i].ll)); break;
+			default: break;
+			}
+		}
+		else
+		{
+			dsb_nid_toStr(&src[i],buf,100);
+			sprintf(output,"data %s\n",buf);
+		}
+		output += strlen(output);
+	}
+	return 0;
+}
+

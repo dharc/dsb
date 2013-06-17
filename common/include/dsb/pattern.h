@@ -1,7 +1,7 @@
 /*
- * assember.h
+ * pattern.h
  *
- *  Created on: 31 May 2013
+ *  Created on: 17 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,8 +32,10 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ASSEMBER_H_
-#define ASSEMBER_H_
+#ifndef PATTERN_H_
+#define PATTERN_H_
+
+#include "dsb/pattern_types.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -42,40 +44,33 @@ extern "C"
 
 typedef struct NID NID_t;
 
-struct VMLabel
-{
-	char label[10];
-	int lip;
-};
-
-#define MAX_LABELS		100
+/** @file pattern.h */
 
 /**
- * Compile DSB assembly into byte code. The resulting byte code can be
- * interpreted using dsb_vm_interpret.
- * @param source Assembly string.
- * @param output Array of NIDs to put the byte code into.
- * @param max Size of the output array.
- * @return SUCCESS or assembly error.
+ * Query whether a NID corresponds to a particular pattern.
+ * @param n NID to test
+ * @param t Type of pattern to check for.
+ * @return 1 for yes, 0 for no.
  */
-int dsb_assemble(const char *source, NID_t *output, int max);
-
-int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip);
+int dsb_pattern_isA(const NID_t *n, int t);
 
 /**
- * Populate the labels array with all labels in the source and their corresponding
- * location in the final compiled code. Should be use to initialise the labels array
- * before attempting to actual assemble the code.
- * @param labels
- * @param source
- * @return SUCCESS.
+ * Get the most specific pattern that a NID matches.
+ * @param n NID to check
+ * @return Pattern number
  */
-int dsb_assemble_labels(struct VMLabel *labels, const char *source);
+unsigned int dsb_pattern_what(const NID_t *n);
 
-int dsb_disassemble(const NID_t *src, int size, char *output, int max);
+/**
+ * Check if one pattern is a more general form of another.
+ * @param type Specific type
+ * @param supertype More general type
+ * @return 1 for yes, 0 for no.
+ */
+int dsb_pattern_typeIsA(int type, int supertype);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ASSEMBER_H_ */
+#endif /* PATTERN_H_ */

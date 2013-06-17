@@ -77,6 +77,12 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						event->flags |= EVTFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
+	case EVENT_GETDEF:
+						*(event->res) = harc->def;
+						//event->eval = harc->e;
+						event->flags |= EVTFLAG_DONE;
+						return SUCCESS;
+	//-------------------------------------------------------------------------
 	case EVENT_DEFINE:	harc->e = event->eval;
 						harc->def = event->def;
 						harc->flags |= HARC_OUTOFDATE;

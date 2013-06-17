@@ -39,6 +39,12 @@ either expressed or implied, of the FreeBSD Project.
 
 struct NID;
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * @addtogroup Modules
  * Search, load and register modules. Modules can provide new handlers, agents,
@@ -91,6 +97,10 @@ int dsb_module_updateall();
 int dsb_module_init();
 
 int dsb_module_final();
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */
 

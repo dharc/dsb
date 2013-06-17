@@ -1,7 +1,7 @@
 /*
- * assember.h
+ * pattern_types.h
  *
- *  Created on: 31 May 2013
+ *  Created on: 17 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,50 +32,35 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ASSEMBER_H_
-#define ASSEMBER_H_
+#ifndef PATTERN_TYPES_H_
+#define PATTERN_TYPES_H_
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
-typedef struct NID NID_t;
+/* Graph pattern type IDs. */
 
-struct VMLabel
-{
-	char label[10];
-	int lip;
-};
 
-#define MAX_LABELS		100
+//NID Types
+#define		DSB_PATTERN_NULL			0x00000000
+#define		DSB_PATTERN_BOOLEAN			(DSB_PATTERN_NULL+1)
+#define		DSB_PATTERN_OPERATOR		(DSB_PATTERN_NULL+2)
+#define		DSB_PATTERN_NUMBER 			0x00000100
+#define		DSB_PATTERN_INTEGER			(DSB_PATTERN_NUMBER+1)
+#define		DSB_PATTERN_REAL			(DSB_PATTERN_NUMBER+2)
+#define		DSB_PATTERN_CHARACTER		(DSB_PATTERN_NUMBER+3)
+#define		DSB_PATTERN_OBJECT			0x00000200
 
-/**
- * Compile DSB assembly into byte code. The resulting byte code can be
- * interpreted using dsb_vm_interpret.
- * @param source Assembly string.
- * @param output Array of NIDs to put the byte code into.
- * @param max Size of the output array.
- * @return SUCCESS or assembly error.
- */
-int dsb_assemble(const char *source, NID_t *output, int max);
+//Array relatives.
+#define		DSB_PATTERN_ARRAY			0x00010000
+#define		DSB_PATTERN_LABEL			(DSB_PATTERN_ARRAY+1)
+#define		DSB_PATTERN_STRING			(DSB_PATTERN_ARRAY+2)
+#define		DSB_PATTERN_BYTECODE		(DSB_PATTERN_ARRAY+3)
 
-int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip);
+//Display Patterns.
+#define		DSB_PATTERN_DISPLAY			0x00020000
+#define		DSB_PATTERN_SHAPE_LINE		(DSB_PATTERN_DISPLAY+1)
+#define		DSB_PATTERN_SHAPE_RECTANGLE	(DSB_PATTERN_DISPLAY+2)
+#define		DSB_PATTERN_SHAPE_IMAGE		(DSB_PATTERN_DISPLAY+3)
+#define		DSB_PATTERN_SHAPE_TEXT		(DSB_PATTERN_DISPLAY+4)
 
-/**
- * Populate the labels array with all labels in the source and their corresponding
- * location in the final compiled code. Should be use to initialise the labels array
- * before attempting to actual assemble the code.
- * @param labels
- * @param source
- * @return SUCCESS.
- */
-int dsb_assemble_labels(struct VMLabel *labels, const char *source);
 
-int dsb_disassemble(const NID_t *src, int size, char *output, int max);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* ASSEMBER_H_ */
+#endif /* PATTERN_TYPES_H_ */

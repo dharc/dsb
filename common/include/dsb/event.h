@@ -55,6 +55,7 @@ enum EventType
 
 	EVENT_GET=0x100,	//!< Get the head of a HARC
 	EVENT_ALLOCATE,		//!< Allocate a new NID
+	EVENT_GETDEF,
 
 	EVENT_DEP=0x200,	//!< Add a dependency to a HARC
 	EVENT_INVALID		//!< EVENT_INVALID
