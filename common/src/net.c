@@ -110,6 +110,7 @@ int dsb_net_init()
 	messages[DSBNET_EVENTRESULT].cb = dsb_net_cb_result;
 	messages[DSBNET_ERROR].cb = dsb_net_cb_error;
 	messages[DSBNET_BASE].cb = dsb_net_cb_base;
+	messages[DSBNET_DEBUGGER].cb = dsb_net_cb_debugger;
 
 	return 0;
 }

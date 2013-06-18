@@ -107,7 +107,7 @@ int net_handler(Event_t *evt)
 	struct NetRouteEntry *ent;
 	int hash;
 
-	printf("Remote event routing to: %x:%x:%x:%x:%x:%x\n",evt->d1.mac[0], evt->d1.mac[1], evt->d1.mac[2], evt->d1.mac[3], evt->d1.mac[4], evt->d1.mac[5]);
+	//printf("Remote event routing to: %x:%x:%x:%x:%x:%x\n",evt->d1.mac[0], evt->d1.mac[1], evt->d1.mac[2], evt->d1.mac[3], evt->d1.mac[4], evt->d1.mac[5]);
 
 	hash = hashserial((const char*)evt->d1.mac);
 	ent = routetable[hash];
@@ -122,6 +122,11 @@ int net_handler(Event_t *evt)
 		ent = ent->next;
 	}
 
-	return DSB_ERROR(ERR_NOROUTE,0);
+	{
+		//We cannot route so generate a warning.
+		char buf[100];
+		sprintf(buf,"serial = %02x:%02x:%02x:%02x:%02x:%02x",evt->d1.mac[0],evt->d1.mac[1],evt->d1.mac[2],evt->d1.mac[3],evt->d1.mac[4],evt->d1.mac[5]);
+		return DSB_ERROR(WARN_NOROUTE,buf);
+	}
 }
 

@@ -134,16 +134,16 @@ int dsb_net_cb_event(void *sock, void *data)
 			{
 				dsb_net_send_result(sock, evt->resid, &res);
 			}
-			else
-			{
-				dsb_net_send_error(sock,ret);
-			}
+			//else
+			//{
+			//	dsb_net_send_error(sock,ret,"");
+			//}
 			dsb_event_free(evt);
 			return count;
 		}
 		else
 		{
-			dsb_net_send_error(sock,evt->err);
+			//dsb_net_send_error(sock,evt->err,"");
 			dsb_event_free(evt);
 			return count;
 		}
@@ -181,20 +181,42 @@ int dsb_net_send_base(void *sock)
 	return SUCCESS;
 }
 
-int dsb_net_send_error(void *sock, int err)
+int dsb_net_send_error(void *sock, int err, const char *msg)
 {
-	char *buffer = dsb_net_buffer(8);
-	*((int*)buffer) = err;
-	dsb_net_send(sock, DSBNET_ERROR, buffer, sizeof(int));
+	int len = strlen(msg);
+	char *buffer = dsb_net_buffer(8+len+2);
+	//*((int*)buffer) = err;
+	memcpy(buffer,&err,sizeof(int));
+	memcpy(buffer+sizeof(int),msg,len+1);
+	dsb_net_send(sock, DSBNET_ERROR, buffer, sizeof(int)+len+1);
 	return SUCCESS;
 }
 
 int dsb_net_send_debugger(void *sock, int flags)
 {
 	char *buffer = dsb_net_buffer(8);
-	*((int*)buffer) = flags;
+	//*((int*)buffer) = flags;
+	memcpy(buffer,&flags,sizeof(int));
 	dsb_net_send(sock, DSBNET_DEBUGGER, buffer, sizeof(int));
 	return SUCCESS;
+}
+
+void *dbgsocket=0;
+
+static void log_handler(int err, const char *msg)
+{
+	if (msg == 0) msg = "";
+	dsb_net_send_error(dbgsocket,err,msg);
+}
+
+int dsb_net_cb_debugger(void *sock, void *data)
+{
+	int flags;
+	memcpy(&flags,data,sizeof(int));
+	dbgsocket = sock;
+	dsb_log_handler(log_handler);
+	//dsb_debug(flags);
+	return 0;
 }
 
 /*int dsb_net_cb_login(void *sock, void *data)
@@ -214,8 +236,14 @@ int dsb_net_cb_base(void *sock, void *data)
 
 int dsb_net_cb_error(void *sock, void *data)
 {
-	DSB_ERROR(*((int*)data),0);
-	return sizeof(int);
+	int errnum;
+	int len;
+
+	memcpy(&errnum,data,sizeof(int));
+	data += sizeof(int);
+	len = strlen(data);
+	DSB_ERROR(errnum,(const char*)data);
+	return sizeof(int)+len;
 }
 
 int dsb_net_send_result(void *sock, int id, const NID_t *res)

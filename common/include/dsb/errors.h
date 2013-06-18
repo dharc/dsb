@@ -51,12 +51,11 @@ enum
 {
 	SUCCESS=0,			//!< SUCCESS
 
-	ERR_ERROR=1000,
+	ERR_ERROR=0x1000,
 	ERR_NIDSTR,			///< Invalid NID String
 	ERR_REINIT,			///< Multiple init
 	ERR_NOINIT,			///< Not initialised
 	ERR_ROUTE_SLOT,		///< No spare slots
-	ERR_NOROUTE,		///< No handler for event
 	ERR_ROUTE_MISSING,	///< Missing handler for event
 	ERR_NID_FREE,		///< Can't free NID.
 	ERR_NOTSENT,		///< Event hasn't been sent.
@@ -93,6 +92,7 @@ enum
 	ERR_PERFILELOAD,
 
 	WARN_START=0x2000,
+	WARN_NOROUTE,		///< No handler for event
 
 	INFO_START=0x3000,
 	INFO_NETACCEPT,

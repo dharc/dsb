@@ -125,6 +125,7 @@ void make_bool()
 void make_system()
 {
 	NID_t sys;
+	NID_t tmp;
 	dsb_new(&Root,&sys);
 	dsb_setnzn(&Root,"system",&sys);
 	dsb_dictnz(&Root,"system");
@@ -138,12 +139,23 @@ void make_system()
 #endif
 	dsb_dictnz(&sys,"os");
 
-#ifdef _DEBUG
-	dsb_setnzn(&sys,"debug",&True);
-#else
-	dsb_setnzn(&sys,"debug",&False);
-#endif
+	dsb_new(&Root,&tmp);
+	dsb_setnzn(&sys,"debug",&tmp);
 	dsb_dictnz(&sys,"debug");
+
+#ifdef _DEBUG
+	dsb_setnzn(&tmp,"compiled",&True);
+#else
+	dsb_setnzn(&tmp,"compiled",&False);
+#endif
+	dsb_dictnz(&tmp,"compiled");
+
+	dsb_setnzn(&tmp,"queues",&False);
+	dsb_dictnz(&tmp,"queues");
+	dsb_setnzn(&tmp,"net",&False);
+	dsb_dictnz(&tmp,"net");
+	dsb_setnzn(&tmp,"log",&False);
+	dsb_dictnz(&tmp,"log");
 }
 
 //Internally compiled modules.

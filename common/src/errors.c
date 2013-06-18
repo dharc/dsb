@@ -37,6 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/config.h"
 
 unsigned int dbgflags = 0;
+static void (*loghandler)(int,const char*);
 
 const char *dsb_log_str(int err)
 {
@@ -47,7 +48,6 @@ const char *dsb_log_str(int err)
 	case ERR_NOINIT:			return "Not Initialised";
 	case ERR_REINIT:			return "Multiple Initialisation";
 	case ERR_ROUTE_SLOT:		return "No spare router slots";
-	case ERR_NOROUTE:			return "No known route for event";
 	case ERR_ROUTE_MISSING:		return "Missing handler in route table";
 	case ERR_INVALIDEVENT:		return "Invalid event type";
 	case ERR_INVALIDMOD:		return "Module is invalid";
@@ -75,6 +75,8 @@ const char *dsb_log_str(int err)
 	case INFO_NETLISTEN:		return "Net Listening";
 	case INFO_NETDISCONNECT:	return "Client disconnected";
 
+	case WARN_NOROUTE:			return "No known route for event";
+
 	case DEBUG_NETMSG:			return "Net Message";
 	case DEBUG_NETEVENT:		return "Net Event";
 	case DEBUG_RESETNAMES:		return "Reset Names";
@@ -89,12 +91,24 @@ int dsb_debug(unsigned int flags)
 	return 0;
 }
 
+int dsb_log_handler(void (*handler)(int,const char*))
+{
+	loghandler = handler;
+	return 0;
+}
+
 int dsb_log(int msg, const char *str)
 {
 	if (msg == SUCCESS) return SUCCESS;
 
+	if (loghandler != 0)
+	{
+		loghandler(msg,str);
+		return msg;
+	}
+
 	//Is this an error message
-	if (msg >> 12 == 0)
+	if (msg >> 12 == 1)
 	{
 		if (str == 0)
 		{

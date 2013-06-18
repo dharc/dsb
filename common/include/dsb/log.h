@@ -42,6 +42,7 @@ either expressed or implied, of the FreeBSD Project.
 #define DBG_EVENTS			(8+4+2+1)
 #define DBG_NET				16
 #define DBG_VOLATILE		32
+#define DBG_LOG				64
 
 /**
  * Set debug flags. Only works in a debug build.
@@ -64,6 +65,8 @@ const char *dsb_log_str(int err);
  * @return errno, as passed in the parameter.
  */
 int dsb_log(int msg, const char *str);
+
+int dsb_log_handler(void (*)(int,const char*));
 
 #define DSB_ERROR(A,B) dsb_log(A,B)
 

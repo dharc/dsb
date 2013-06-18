@@ -105,9 +105,11 @@ int dsb_route(struct Event *evt)
 	}
 	else
 	{
-		return DSB_ERROR(ERR_ROUTE_MISSING,0);
+		char buf[100];
+		sprintf(buf,"serial = %02x:%02x:%02x:%02x:%02x:%02x\n",evt->d1.mac[0],evt->d1.mac[1],evt->d1.mac[2],evt->d1.mac[3],evt->d1.mac[4],evt->d1.mac[5]);
+		return DSB_ERROR(ERR_ROUTE_MISSING,buf);
 	}
 
 	//Failed to find a matching handler.
-	return DSB_ERROR(ERR_NOROUTE,0);
+	return DSB_ERROR(WARN_NOROUTE,0);
 }
