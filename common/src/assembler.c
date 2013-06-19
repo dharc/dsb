@@ -161,58 +161,6 @@ static int vm_assemble_reg(const char *line, int *reg, int *i)
 	return 0;
 }
 
-static int asm_load(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int tmp;
-	int regA;
-	int regB;
-	int regC = 0;
-	int i = 0;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White space
-
-	//Multi-register load
-	if (line[i] == '%')
-	{
-		//Get a register
-		if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-		//With an offset as well
-		if (line[i] == '+' || line[i] == '-')
-		{
-			//Get an offset value
-			tmp = vm_assemble_off(labels,&line[i],&regC);
-			if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-			i += tmp;
-		}
-
-		//Insert OP into output
-		dsb_nid_op(VM_LOADR(regA,regB,regC),&output[*ip]);
-		*ip = *ip + 1;
-	}
-	else
-	{
-		//Get an offset value
-		tmp = vm_assemble_off(labels,&line[i],&regB);
-		if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-		i += tmp;
-
-		//Insert OP into output
-		dsb_nid_op(VM_LOAD(regA,regB),&output[*ip]);
-		*ip = *ip + 1;
-	}
-
-	return i;
-}
-
-static int asm_store(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
 static int asm_jump(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i = 0;
@@ -224,11 +172,8 @@ static int asm_jump(struct VMLabel *labels, const char *line, NID_t *output, int
 	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
 	i += tmp;
 
-	//Must be signed char size.
-	if (regA < -128 || regA > 127) return DSB_ERROR(ERR_ASMINVALOFF,&line[i]);
-
 	//Insert OP into output
-	dsb_nid_op(VM_JUMP(regA),&output[*ip]);
+	dsb_nid_op(VM_JMP(regA),&output[*ip]);
 	*ip = *ip + 1;
 
 	return i;
@@ -294,7 +239,7 @@ static int asm_jneq(struct VMLabel *labels, const char *line, NID_t *output, int
 	if (regC < -128 || regC > 127) return DSB_ERROR(ERR_ASMINVALOFF,&line[i]);
 
 	//Insert OP into output
-	dsb_nid_op(VM_JNEQ(regA,regB,regC),&output[*ip]);
+	dsb_nid_op(VM_JNE(regA,regB,regC),&output[*ip]);
 	*ip = *ip + 1;
 
 	return i;
@@ -341,7 +286,7 @@ static int asm_read(struct VMLabel *labels, const char *line, NID_t *output, int
 	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
-	dsb_nid_op(VM_READ(regA,regB,regC),&output[*ip]);
+	dsb_nid_op(VM_GET(regA,regB,regC),&output[*ip]);
 	*ip = *ip + 1;
 
 	return i;
@@ -377,7 +322,7 @@ static int asm_write(struct VMLabel *labels, const char *line, NID_t *output, in
 	i += tmp;
 
 	//Insert OP into output
-	dsb_nid_op(VM_WRITE(regA,regB,regC,regD),&output[*ip]);
+	dsb_nid_op(VM_DEF(regA,regB,regC),&output[*ip]);
 	*ip = *ip + 1;
 
 	return i;
@@ -440,7 +385,7 @@ static int asm_copy(struct VMLabel *labels, const char *line, NID_t *output, int
 	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
 
 	//Insert OP into output
-	dsb_nid_op(VM_COPY(regA,regB),&output[*ip]);
+	dsb_nid_op(VM_CPY(regA,regB),&output[*ip]);
 	*ip = *ip + 1;
 
 	return i;
@@ -717,6 +662,7 @@ static int asm_shiftl(struct VMLabel *labels, const char *line, NID_t *output, i
 	int tmp;
 	int regA;
 	int regB;
+	int regC = 0;
 	int i = 0;
 
 	//Get a register
@@ -730,7 +676,7 @@ static int asm_shiftl(struct VMLabel *labels, const char *line, NID_t *output, i
 	i += tmp;
 
 	//Insert OP into output
-	dsb_nid_op(VM_SHIFTL(regA,regB),&output[*ip]);
+	dsb_nid_op(VM_SHL(regA,regB,regC),&output[*ip]);
 	*ip = *ip + 1;
 
 	return i;
@@ -741,6 +687,7 @@ static int asm_shiftr(struct VMLabel *labels, const char *line, NID_t *output, i
 	int tmp;
 	int regA;
 	int regB;
+	int regC = 0;
 	int i = 0;
 
 	//Get a register
@@ -754,7 +701,7 @@ static int asm_shiftr(struct VMLabel *labels, const char *line, NID_t *output, i
 	i += tmp;
 
 	//Insert OP into output
-	dsb_nid_op(VM_SHIFTR(regA,regB),&output[*ip]);
+	dsb_nid_op(VM_SHR(regA,regB,regC),&output[*ip]);
 	*ip = *ip + 1;
 
 	return i;
@@ -776,8 +723,6 @@ static int asm_float(struct VMLabel *labels, const char *line, NID_t *output, in
 }
 
 static struct AsmToken asmops[] = {
-		ASMOP(load),
-		ASMOP(store),
 		ASMOP(jump),
 		ASMOP(jeq),
 		ASMOP(jneq),
@@ -937,10 +882,9 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 	{
 		if (src[i].header == 0 && src[i].t == NID_VMOP)
 		{
-			switch((unsigned int)VM_OP(src[i].ll))
+			switch(VMGET_OP(src[i].ll))
 			{
-			case VMOP_RET:	sprintf(output,"ret %%%d\n",(unsigned int)VMREG_A(src[i].ll)); break;
-			case VMOP_LOAD:	sprintf(output,"load %%%d %d\n",(unsigned int)VMREG_A(src[i].ll),(unsigned int)VMREG_D(src[i].ll)); break;
+			case VMOP_RET:	sprintf(output,"ret %%%d\n",(unsigned int)VMGET_A(src[i].ll)); break;
 			default: break;
 			}
 		}

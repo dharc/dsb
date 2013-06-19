@@ -198,7 +198,7 @@ int dsb_nid_geq(const NID_t *n1, const NID_t *n2)
 	return ((n1->header >= n2->header) && (n1->t >= n2->t) && (n1->ll >= n2->ll));
 }
 
-int dsb_nid_op(unsigned int op, NID_t *n)
+int dsb_nid_op(unsigned long long op, NID_t *n)
 {
 	n->header = 0;
 	n->t = NID_VMOP;

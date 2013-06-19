@@ -57,32 +57,7 @@ int dsb_send(struct Event *evt)
 
 void test_vm_const()
 {
-	struct HARC harc;
-	NID_t code[100];
-	int i;
 
-	//Init code array to VMOP types.
-	for (i=0; i<100; i++)
-	{
-		code[i].header = 0;
-		code[i].t = NID_VMOP;
-	}
-
-	//Actual code.
-	code[0].ll = VM_LOAD(0,2);
-	code[1].ll = VM_RET(0);			// Return reg 0.
-	dsb_iton(55,&code[2]);			// reg 0 = 55
-
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
-	CHECK(harc.h.ll == 55);
-
-	//Actual code.
-	code[0].ll = VM_LOAD(15,2);
-	code[1].ll = VM_RET(15);			// Return reg 0.
-	dsb_iton(66,&code[2]);			// reg 0 = 55
-
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
-	CHECK(harc.h.ll == 66);
 
 	DONE;
 }
@@ -101,8 +76,7 @@ void test_vm_copy()
 	}
 
 	//Actual code.
-	code[0].ll = VM_LOAD(0,3);
-	code[1].ll = VM_COPY(0,1);
+	code[1].ll = VM_CPY(0,1);
 	code[2].ll = VM_RET(1);			// Return reg 0.
 	dsb_iton(55,&code[3]);			// reg 0 = 55
 
@@ -126,9 +100,7 @@ void test_vm_jump()
 	}
 
 	//Actual code for forward jump
-	code[0].ll = VM_LOAD(0,5);
-	code[1].ll = VM_LOAD(1,6);
-	code[2].ll = VM_JUMP(4);		// Jump to IP 6.
+	code[2].ll = VM_JMP(4);		// Jump to IP 6.
 	code[3].ll = VM_RET(0);			// Return reg 0.
 	code[4].ll = VM_RET(1);			// Return reg 1.
 	dsb_iton(77,&code[5]);			// reg 0 = 77
@@ -138,11 +110,9 @@ void test_vm_jump()
 	CHECK(harc.h.ll == 88);
 
 	//Backward jump.
-	code[0].ll = VM_LOAD(0,6);
-	code[1].ll = VM_LOAD(1,7);
-	code[2].ll = VM_JUMP(4);		// Jump to IP 6.
+	code[2].ll = VM_JMP(4);		// Jump to IP 6.
 	code[3].ll = VM_RET(0);			// Return reg 0.
-	code[4].ll = VM_JUMP(3);
+	code[4].ll = VM_JMP(3);
 	code[5].ll = VM_RET(1);			// Return reg 1.
 	dsb_iton(99,&code[6]);			// reg 0 = 99
 	dsb_iton(33,&code[7]);			// reg 1 = 33
@@ -167,10 +137,6 @@ void test_vm_jeq()
 	}
 
 	//Actual code for forward jeq
-	code[0].ll = VM_LOAD(0,7);
-	code[1].ll = VM_LOAD(1,8);
-	code[2].ll = VM_LOAD(2,9);
-	code[3].ll = VM_LOAD(3,10);
 	code[4].ll = VM_JEQ(2,3,6);		// Jump to IP 10 if reg2 == reg3
 	code[5].ll = VM_RET(0);			// Return reg 0.
 	code[6].ll = VM_RET(1);			// Return reg 1.
@@ -204,11 +170,7 @@ void test_vm_jneq()
 	}
 
 	//Actual code for forward jeq
-	code[0].ll = VM_LOAD(0,7);
-	code[1].ll = VM_LOAD(1,8);
-	code[2].ll = VM_LOAD(2,9);
-	code[3].ll = VM_LOAD(3,10);
-	code[4].ll = VM_JNEQ(2,3,6);		// Jump to IP 10 if reg2 == reg3
+	code[4].ll = VM_JNE(2,3,6);		// Jump to IP 10 if reg2 == reg3
 	code[5].ll = VM_RET(0);			// Return reg 0.
 	code[6].ll = VM_RET(1);			// Return reg 1.
 	dsb_iton(2,&code[7]);			// reg 0 = 2
@@ -241,9 +203,7 @@ void test_vm_read()
 	}
 
 	//Actual code.
-	code[0].ll = VM_LOAD(0,4);
-	code[1].ll = VM_LOAD(1,5);
-	code[2].ll = VM_READ(0,1,0);	// reg 0 = GET(reg 0, reg 1)
+	code[2].ll = VM_GET(0,1,0);	// reg 0 = GET(reg 0, reg 1)
 	code[3].ll = VM_RET(0);			// Return reg 0.
 	dsb_iton(55,&code[4]);			// reg 0 = 55
 	dsb_iton(0,&code[5]);			// reg 1 = 0
@@ -259,14 +219,14 @@ void test_vm_asmconst()
 	NID_t code[50];
 
 	CHECK(dsb_assemble("load %2 1", code, 50) == 1);
-	CHECK(VMREG_A(code[0].ll) == 2);
+	CHECK(VMGET_A(code[0].ll) == 2);
 	CHECK((char)(code[0].ll & 0xFF) == 1);
-	CHECK(VM_OP(code[0].ll) == VMOP_LOAD);
+	//CHECK(VM_OP(code[0].ll) == VMOP_LOA);
 
 	CHECK(dsb_assemble("load %4 66\n", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == 66);
-	CHECK(VMREG_A(code[0].ll) == 4);
-	CHECK(VM_OP(code[0].ll) == VMOP_LOAD);
+	CHECK(VMGET_A(code[0].ll) == 4);
+	//CHECK(VM_OP(code[0].ll) == VMOP_LOAD);
 
 	DONE;
 }
@@ -277,15 +237,15 @@ void test_vm_asmjump()
 
 	CHECK(dsb_assemble("jump 55", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == 55);
-	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
+	CHECK(VMGET_OP(code[0].ll) == VMOP_JMP);
 
 	CHECK(dsb_assemble("jump -55", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == -55);
-	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
+	CHECK(VMGET_OP(code[0].ll) == VMOP_JMP);
 
 	CHECK(dsb_assemble("jump -128", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == -128);
-	CHECK(VM_OP(code[0].ll) == VMOP_JUMP);
+	CHECK(VMGET_OP(code[0].ll) == VMOP_JMP);
 
 	DONE;
 }
@@ -295,9 +255,9 @@ void test_vm_asmcopy()
 	NID_t code[10];
 
 	CHECK(dsb_assemble("copy %3 %4", code, 50) == 1);
-	CHECK(VMREG_A(code[0].ll) == 3);
-	CHECK(VMREG_B(code[0].ll) == 4);
-	CHECK(VM_OP(code[0].ll) == VMOP_COPY);
+	CHECK(VMGET_A(code[0].ll) == 3);
+	CHECK(VMGET_B(code[0].ll) == 4);
+	CHECK(VMGET_OP(code[0].ll) == VMOP_CPY);
 
 	DONE;
 }

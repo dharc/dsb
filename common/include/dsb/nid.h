@@ -179,7 +179,7 @@ int dsb_nid_eq(const NID_t *n1, const NID_t *n2);
 int dsb_nid_leq(const NID_t *n1, const NID_t *n2);
 int dsb_nid_geq(const NID_t *n1, const NID_t *n2);
 
-int dsb_nid_op(unsigned int op, NID_t *n);
+int dsb_nid_op(unsigned long long op, NID_t *n);
 
 /**
  * Checks the MAC component against the local MAC. If there is no MAC then it

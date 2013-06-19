@@ -70,44 +70,64 @@ int dsb_vm_interpret(NID_t *code, int maxip, const NID_t *params, int pn, NID_t 
 
 int dsb_vm_interpret_ctx(struct VMContext *ctx)
 {
-	unsigned int op;
+	unsigned long long op;
+	unsigned int varno;
+	unsigned int varno2;
+	unsigned int varno3;
+	//unsigned int varno4;
 
 	//Main VM loop.
 	while ((ctx->ip < ctx->codesize) && (ctx->timeout-- > 0))
 	{
 		//Not a valid instruction.
 		if (ctx->code[ctx->ip].t != NID_VMOP)	return -1;
-		op = (unsigned int)ctx->code[ctx->ip].ll;
+		op = ctx->code[ctx->ip].ll;
 
 		//Switch on operation type.
-		switch(VM_OP(op))
+		switch(VMGET_OP(op))
 		{
-		case VMOP_LOAD:		ctx->reg[VMREG_A(op)] = ctx->code[op & 0xFF];
-							break;
-		case VMOP_RET:		*ctx->result = ctx->reg[VMREG_A(op)];
+		case VMOP_RET:		varno = VMGET_A(op);
+							*ctx->result = (varno == 0) ? ctx->code[ctx->ip++] : ctx->vars[varno-1];
 							return -1;
-		case VMOP_COPY:		ctx->reg[VMREG_B(op)] = ctx->reg[VMREG_A(op)];
+
+		case VMOP_CPY:		varno = VMGET_B(op);
+							ctx->vars[VMGET_A(op)-1] = (varno == 0) ? ctx->code[ctx->ip++] : ctx->vars[varno-1];
 							break;
-		case VMOP_JUMP:		ctx->ip = (char)(op & 0xFF);
+
+		case VMOP_JMP:		ctx->ip = (short)(VMGET_LABEL(op));
 							continue;
-		case VMOP_JEQ:		if (dsb_nid_eq(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)]) == 1)
+
+		case VMOP_JEQ:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+#pragma GCC diagnostic ignored "-Wsequence-point"
+							if (dsb_nid_eq(
+								(varno == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno-1],
+								(varno2 == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno2-1]
+								) == 1)
 							{
-								ctx->ip = (char)(op & 0xFF); continue;
+								ctx->ip = (short)(VMGET_LABEL(op)); continue;
 							}
+#pragma GCC diagnostic pop
 							break;
-		case VMOP_JNEQ:		if (dsb_nid_eq(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)]) == 0)
-							{
-								ctx->ip = (char)(op & 0xFF); continue;
-							}
+
+		case VMOP_GET:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+#pragma GCC diagnostic ignored "-Wsequence-point"
+							dsb_get(
+								(varno2 == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno2-1],
+								(varno3 == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno3-1],
+								&ctx->vars[varno-1]);
+#pragma GCC diagnostic pop
 							break;
-		case VMOP_READ:		dsb_get(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)]);
-							break;
-		case VMOP_WRITE:	dsb_define(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],ctx->reg[VMREG_D(op)].ll);
-							break;
-		case VMOP_DEP:		dsb_dependency(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],&ctx->reg[VMREG_D(op)]);
-							break;
-		case VMOP_INC:		ctx->reg[VMREG_A(op)].ll++;
-							break;
+
+
+		//case VMOP_WRITE:	dsb_define(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],ctx->reg[VMREG_D(op)].ll);
+		//					break;
+		//case VMOP_DEP:		dsb_dependency(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],&ctx->reg[VMREG_D(op)]);
+		//					break;
+		//case VMOP_INC:		ctx->reg[VMREG_A(op)].ll++;
+		//					break;
 
 		default: break;
 		}
