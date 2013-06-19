@@ -99,6 +99,7 @@ unsigned int dsb_pattern_what(const NID_t *n)
 
 		if (strcmp(buf,"display") == 0) return DSB_PATTERN_DISPLAY;
 		else if (strcmp(buf,"line") == 0) return DSB_PATTERN_SHAPE_LINE;
+		else if (strcmp(buf,"text") == 0) return DSB_PATTERN_SHAPE_TEXT;
 	}
 
 	return DSB_PATTERN_OBJECT;

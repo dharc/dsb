@@ -37,9 +37,18 @@ either expressed or implied, of the FreeBSD Project.
 
 typedef struct NID NID_t;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int dsb_clone_shallow(const NID_t *src, const NID_t *dest);
 
 int dsb_clone_deep(const NID_t *src, const NID_t *dest);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* CLONE_H_ */

@@ -183,9 +183,15 @@ int dsb_new(const NID_t *base, NID_t *n)
 int dsb_dict(const NID_t *d, const NID_t *n)
 {
 	NID_t dict;
+	NID_t tmp;
+
+	//Don't add integers to the dictionary...
+	//These are iterated as arrays already!
+	if (n->header == 0 && n->t == NID_INTEGER) return 0;
+
 	dsb_get(d,&Keys,&dict);
 
-	//Make dictionary if it doesnt exist.
+	//Make dictionary if it doesn't exist.
 	if (dsb_nid_eq(&dict,&Null) == 1)
 	{
 		dsb_new(d,&dict);
@@ -193,7 +199,13 @@ int dsb_dict(const NID_t *d, const NID_t *n)
 		dsb_set(d,&Keys,&dict);
 	}
 
-	dsb_array_push(&dict,n);
+	//Only add if not already in the dictionary.
+	dsb_get(&dict,n,&tmp);
+	if (dsb_nid_eq(&tmp,&Null) == 1)
+	{
+		dsb_array_push(&dict,n);
+		dsb_set(&dict,n,&dict);
+	}
 	return SUCCESS;
 }
 

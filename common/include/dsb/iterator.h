@@ -47,9 +47,11 @@ extern "C"
 struct DSBIterator
 {
 	NID_t object;
+	int mode;		//0 uses dictionary, 1 checks for array.
 	int count;
 	int current;
 	NID_t *buffer;
+	NID_t temp;
 };
 
 int dsb_iterator_begin(struct DSBIterator *it, const NID_t *n);

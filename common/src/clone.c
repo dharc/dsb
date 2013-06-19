@@ -52,6 +52,8 @@ int dsb_clone_shallow(const NID_t *src, const NID_t *dest)
 		//TODO Fix eval problem... remove need for eval!
 		dsb_getdef(src,curkey,&def,&eval);
 		dsb_define(dest,curkey,&def,0);
+		//Now add dictionary
+		dsb_dict(dest,curkey);
 		curkey = dsb_iterator_next(&it);
 	}
 

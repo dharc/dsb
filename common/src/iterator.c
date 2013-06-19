@@ -47,16 +47,62 @@ int dsb_iterator_begin(struct DSBIterator *it, const NID_t *n)
 	//Get the dictionary object
 	dsb_get(n,&Keys,&keys);
 
+	//Start by iterating over the dictionary...
 	it->object = *n;
 	it->count = dsb_array_readalloc(&keys,&it->buffer);
 	it->current = 0;
+	it->mode = 0;
 	return 0;
 }
 
+//const NID_t *dsb_iterator_first(struct DSBIterator *it)
+//{
+//	it->current = 0;
+//	if (it->count == it->current) return 0;
+//	return &it->buffer[it->current++];
+//}
+
 const NID_t *dsb_iterator_next(struct DSBIterator *it)
 {
-	if (it->count == it->current) return 0;
-	return &it->buffer[it->current++];
+	//End of items...
+	if (it->count == it->current)
+	{
+		if (it->mode == 0)
+		{
+			//Switch to array iteration mode.
+			it->mode = 1;
+			if (it->buffer != 0) free(it->buffer);
+			it->buffer = 0;
+			it->count = 0;
+			dsb_getnni(&it->object,&Size,&it->count);
+			it->current = -1;
+
+			//No array elements.
+			if (it->count == 0) return 0;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+	if (it->mode == 0)
+	{
+		return &it->buffer[it->current++];
+	}
+	else
+	{
+		if (it->current == -1)
+		{
+			it->current = 0;
+			return &Size;
+		}
+		else
+		{
+			dsb_iton(it->current++,&it->temp);
+			return &it->temp;
+		}
+	}
 }
 
 int dsb_iterator_end(struct DSBIterator *it)

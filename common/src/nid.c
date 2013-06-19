@@ -445,6 +445,43 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 	return SUCCESS;
 }
 
+int dsb_nid_pretty(const NID_t *nid, char *str, int len)
+{
+	if (nid->header == 0)
+	{
+		if (nid->t == NID_INTEGER)
+		{
+			sprintf(str, "%d", (unsigned int)nid->ll);
+			return SUCCESS;
+		}
+		else if (nid->t == NID_REAL)
+		{
+			sprintf(str, "%0.4f", (float)nid->dbl);
+			return SUCCESS;
+		}
+		else if (nid->t == NID_CHARACTER)
+		{
+			str[0] = '\'';
+			str[1] = nid->chr;
+			str[2] = '\'';
+			str[3] = 0;
+			return SUCCESS;
+		}
+	}
+
+	if (dsb_names_revlookup(nid,str,len) == 0) return SUCCESS;
+
+	if (nid->hasMac == 1)
+	{
+		strcpy(str,"<object>");
+	}
+	else
+	{
+		strcpy(str,"<unknown>");
+	}
+	return SUCCESS;
+}
+
 int dsb_nid_toRawStr(const struct NID *nid, char *str, int len)
 {
 	if (nid->hasMac == 1)

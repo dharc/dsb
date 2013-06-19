@@ -222,6 +222,8 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len);
 
 int dsb_nid_toRawStr(const struct NID *nid, char *str, int len);
 
+int dsb_nid_pretty(const NID_t *nid, char *str, int len);
+
 /**
  * Generate a NID from a string.
  * @param str Input string.
