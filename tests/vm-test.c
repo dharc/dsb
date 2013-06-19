@@ -235,7 +235,7 @@ void test_vm_asmjump()
 {
 	NID_t code[10];
 
-	CHECK(dsb_assemble("jump 55", code, 50) == 1);
+	CHECK(dsb_assemble("jmp 55", code, 50) == 1);
 	CHECK((char)(code[0].ll & 0xFF) == 55);
 	CHECK(VMGET_OP(code[0].ll) == VMOP_JMP);
 
@@ -247,6 +247,17 @@ void test_vm_asmjump()
 	CHECK((char)(code[0].ll & 0xFF) == -128);
 	CHECK(VMGET_OP(code[0].ll) == VMOP_JMP);
 
+	DONE;
+}
+
+void test_asm_jeq()
+{
+	NID_t code[100];
+
+	CHECK(dsb_assemble("jeq 55 0 0", code, 50) == 3);
+	CHECK(code[0].ll == VM_JEQ(55,0,0));
+	CHECK(code[1].ll == 0);
+	CHECK(code[2].ll == 0);
 	DONE;
 }
 
@@ -290,19 +301,21 @@ int main(int argc, char *argv[])
 	dsb_nid_init();
 	dsb_event_init();
 
-	dsb_test(test_vm_const);
-	dsb_test(test_vm_copy);
-	dsb_test(test_vm_jump);
-	dsb_test(test_vm_jeq);
-	dsb_test(test_vm_jneq);
-	dsb_test(test_vm_read);
+	//dsb_test(test_vm_const);
+	//dsb_test(test_vm_copy);
+	//dsb_test(test_vm_jump);
+	//dsb_test(test_vm_jeq);
+	//dsb_test(test_vm_jneq);
+	//dsb_test(test_vm_read);
 
-	dsb_test(test_vm_asmconst);
-	dsb_test(test_vm_asmjump);
-	dsb_test(test_vm_asmcomments);
-	dsb_test(test_vm_asmcopy);
+	//dsb_test(test_vm_asmconst);
+	//dsb_test(test_vm_asmjump);
+	//dsb_test(test_vm_asmcomments);
+	//dsb_test(test_vm_asmcopy);
 
-	dsb_test(test_asm_label);
+	//dsb_test(test_asm_label);
+
+	dsb_test(test_asm_jeq);
 
 	dsb_event_final();
 	dsb_nid_final();

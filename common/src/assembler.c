@@ -43,6 +43,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <malloc.h>
 #include <string.h>
 
+//Auto split ops into functions.
 struct AsmToken
 {
 	char *name;
@@ -50,6 +51,9 @@ struct AsmToken
 };
 
 #define ASMOP(A)	{#A, asm_##A}
+
+//TODO DONT USE GLOBAL VARIABLE FOR THIS
+static int varid;
 
 /*
  * Append a new label to the labels structure. Read the label name from line
@@ -142,6 +146,71 @@ static int vm_assemble_off(struct VMLabel *labels,const char *line, int *off)
 }
 
 /*
+ * Parse a variable name and lookup value.
+ */
+static int vm_assemble_var(struct VMLabel *labels,const char *line, int *ix)
+{
+	//Is it a label?
+	if (line[0] == '$')
+	{
+		int i;
+		int len;
+
+		for (i=0; i<MAX_LABELS; i++)
+		{
+			len = strlen(labels[i].label);
+			if (strncmp(labels[i].label,line,len) == 0)
+			{
+				*ix += len+1;
+				return labels[i].lip;
+			}
+		}
+
+		//Not found so add the label.
+		varid++;
+		vm_assemble_addlabel(labels,&line[1],&varid);
+		return varid;
+	}
+
+	//DSB_ERROR(WARN_ASMEXPECTVAR,line);
+	return 0;
+}
+
+static int vm_assemble_nidvar(struct VMLabel *labels, const char *line, NID_t *nid, int *ix)
+{
+	if (line[0] == '$')
+	{
+		return vm_assemble_var(labels,line,ix);
+	}
+	else
+	{
+		//Get a NID
+		char buf[100];
+		int i=0;
+		while (line[i] != ' ' && line[i] != '\t' && line[i] != '.' && line[i] != '\n' && line[i] != 0)
+		{
+			buf[i] = line[i];
+			i++;
+		}
+		buf[i] = 0;
+		dsb_nid_fromStr(buf,nid);
+		*ix += i;
+
+		//0 means used NID not var.
+		return 0;
+	}
+}
+
+static int vm_assemble_eol(const char *line, int *ix)
+{
+	int i=0;
+	while (line[i] == ' ' || line[i] == '\t') i++;
+	*ix = *ix + i;
+	if (line[i] == '\n' || line[i] == 0) return 1;
+	return 0;
+}
+
+/*
  * Parse a register number.
  */
 static int vm_assemble_reg(const char *line, int *reg, int *i)
@@ -161,7 +230,7 @@ static int vm_assemble_reg(const char *line, int *reg, int *i)
 	return 0;
 }
 
-static int asm_jump(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_jmp(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i = 0;
 	int tmp;
@@ -183,36 +252,41 @@ static int asm_jeq(struct VMLabel *labels, const char *line, NID_t *output, int 
 {
 	int i=0;
 	int tmp;
-	int regA;
-	int regB;
-	int regC;
+	int varA;
+	int varB;
+	int off;
+	NID_t n1;
+	NID_t n2;
 
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
+	if (vm_assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
 
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get an offset value
-	tmp = vm_assemble_off(labels,&line[i],&regC);
+	//Get an jump value
+	tmp = vm_assemble_off(labels,&line[i],&off);
 	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
 	i += tmp;
 
-	//Must be signed char size.
-	if (regC < -128 || regC > 127) return DSB_ERROR(ERR_ASMINVALOFF,&line[i]);
+	if (vm_assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+
+	//Get a variable
+	varA = vm_assemble_nidvar(labels, &line[i], &n1, &i);
+
+	if (vm_assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+
+	//Get a variable
+	varB = vm_assemble_nidvar(labels, &line[i], &n2, &i);
+
 
 	//Insert OP into output
-	dsb_nid_op(VM_JEQ(regA,regB,regC),&output[*ip]);
+	dsb_nid_op(VM_JEQ(off,varA,varB),&output[*ip]);
 	*ip = *ip + 1;
+	//Insert optional constant NIDs
+	if (varA == 0) output[(*ip)++] = n1;
+	if (varB == 0) output[(*ip)++] = n2;
 
 	return i;
 }
 
-static int asm_jneq(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_jne(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
 	int tmp;
@@ -255,17 +329,17 @@ static int asm_jgt(struct VMLabel *labels, const char *line, NID_t *output, int 
 	return 0;
 }
 
-static int asm_jleq(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_jle(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	return 0;
 }
 
-static int asm_jgeq(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_jge(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	return 0;
 }
 
-static int asm_read(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_get(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
 	int regA;
@@ -292,7 +366,7 @@ static int asm_read(struct VMLabel *labels, const char *line, NID_t *output, int
 	return i;
 }
 
-static int asm_write(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_def(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
 	int tmp;
@@ -366,12 +440,12 @@ static int asm_new(struct VMLabel *labels, const char *line, NID_t *output, int 
 	return 0;
 }
 
-static int asm_delete(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_del(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	return 0;
 }
 
-static int asm_copy(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_cpy(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i = 0;
 	int regA, regB;
@@ -406,7 +480,7 @@ static int asm_ret(struct VMLabel *labels, const char *line, NID_t *output, int 
 	return i;
 }
 
-static int asm_data(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_const(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
 
@@ -657,7 +731,7 @@ static int asm_neg(struct VMLabel *labels, const char *line, NID_t *output, int 
 	return i;
 }
 
-static int asm_shiftl(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_shl(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int tmp;
 	int regA;
@@ -682,7 +756,7 @@ static int asm_shiftl(struct VMLabel *labels, const char *line, NID_t *output, i
 	return i;
 }
 
-static int asm_shiftr(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_shr(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int tmp;
 	int regA;
@@ -707,7 +781,7 @@ static int asm_shiftr(struct VMLabel *labels, const char *line, NID_t *output, i
 	return i;
 }
 
-static int asm_clear(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_clr(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	return 0;
 }
@@ -717,27 +791,30 @@ static int asm_int(struct VMLabel *labels, const char *line, NID_t *output, int 
 	return 0;
 }
 
-static int asm_float(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int asm_flt(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	return 0;
 }
 
 static struct AsmToken asmops[] = {
-		ASMOP(jump),
+		ASMOP(jmp),
 		ASMOP(jeq),
-		ASMOP(jneq),
+		ASMOP(jne),
 		ASMOP(jlt),
 		ASMOP(jgt),
-		ASMOP(jleq),
-		ASMOP(jgeq),
-		ASMOP(read),
-		ASMOP(write),
+		ASMOP(jle),
+		ASMOP(jge),
+
+		ASMOP(get),
+		ASMOP(def),
 		ASMOP(dep),
 		ASMOP(new),
-		ASMOP(delete),
-		ASMOP(copy),
+		ASMOP(del),
+
+		ASMOP(cpy),
 		ASMOP(ret),
-		ASMOP(data),
+		ASMOP(const),
+
 		ASMOP(inc),
 		ASMOP(dec),
 		ASMOP(add),
@@ -748,11 +825,13 @@ static struct AsmToken asmops[] = {
 		ASMOP(or),
 		ASMOP(xor),
 		ASMOP(neg),
-		ASMOP(shiftl),
-		ASMOP(shiftr),
-		ASMOP(clear),
+		ASMOP(shl),
+		ASMOP(shr),
+		ASMOP(clr),
 		ASMOP(int),
-		ASMOP(float),
+		ASMOP(flt),
+
+		//TODO high level ops.
 		{"null",0}
 };
 
