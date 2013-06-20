@@ -69,7 +69,7 @@ static int vm_assemble_addlabel(struct VMLabel *labels, const char *line, int *i
 	int len;
 	for (len=0; len<9; len++)
 	{
-		if (line[len] < 'a' || line[len] > 'z') break;
+		if ((line[len] < 'a' || line[len] > 'z') && (line[len] < '0' || line[len] > '9')) break;
 	}
 
 	for (i=0; i<MAX_LABELS; i++)
@@ -87,39 +87,40 @@ static int vm_assemble_addlabel(struct VMLabel *labels, const char *line, int *i
 	return len;
 }
 
-static int assemble_off(struct VMLabel *labels,const char *line, int *off, int *ix);
+static int assemble_off(struct AsmContext *ctx,const char *line, int *off, int *ix);
 
 /*
  * Search the labels list for a match and return the location.
  */
-static int vm_assemble_lookup(struct VMLabel *labels, const char *line)
+static int vm_assemble_lookup(struct AsmContext *ctx, const char *line, int *off)
 {
 	int i;
 	int len;
-	int off = 0;
 	int dum = 0;
+
+	*off = 0;
 
 	for (i=0; i<MAX_LABELS; i++)
 	{
-		len = strlen(labels[i].label);
-		if (strncmp(labels[i].label,line,len) == 0)
+		len = strlen(ctx->labels[i].label);
+		if (strncmp(ctx->labels[i].label,line,len) == 0)
 		{
-			off = labels[i].lip;
+			*off = ctx->labels[i].lip;
 			if (line[len] == '+' || line[len] == '-')
 			{
-				assemble_off(labels, &line[len], &len, &dum);
-				off += len;
+				assemble_off(ctx, &line[len], &len, &dum);
+				*off += len;
 			}
 			break;
 		}
 	}
-	return off;
+	return len;
 }
 
 /*
  * Parse an integer offset/address value or other integer constant
  */
-static int assemble_off(struct VMLabel *labels,const char *line, int *off, int *ix)
+static int assemble_off(struct AsmContext *ctx,const char *line, int *off, int *ix)
 {
 	int i=0;
 	int neg = 0;
@@ -133,8 +134,7 @@ static int assemble_off(struct VMLabel *labels,const char *line, int *off, int *
 	//Is it a label?
 	if (line[0] == ':')
 	{
-		*off = vm_assemble_lookup(labels,&line[1]);
-		*ix = *ix + 1;
+		*ix = *ix + vm_assemble_lookup(ctx,&line[1],off) + 1;
 		return 0;
 	}
 
@@ -162,7 +162,7 @@ static int assemble_off(struct VMLabel *labels,const char *line, int *off, int *
 /*
  * Parse a variable name and lookup value.
  */
-static int assemble_var(struct VMLabel *labels,const char *line, int *ix)
+static int assemble_var(struct AsmContext *ctx,const char *line, int *ix)
 {
 	//Is it a label?
 	if (line[0] == '$')
@@ -172,18 +172,19 @@ static int assemble_var(struct VMLabel *labels,const char *line, int *ix)
 
 		for (i=0; i<MAX_LABELS; i++)
 		{
-			if (labels[i].lip == -1) break;
-			len = strlen(labels[i].label);
-			if (strncmp(labels[i].label,&line[1],len) == 0)
+			if (ctx->labels[i].lip == -1) break;
+			len = strlen(ctx->labels[i].label);
+			if (len == 0) continue;
+			if (strncmp(ctx->labels[i].label,&line[1],len) == 0)
 			{
 				*ix += len+1;
-				return labels[i].lip;
+				return ctx->labels[i].lip;
 			}
 		}
 
 		//Not found so add the label.
 		varid++;
-		*ix = *ix + vm_assemble_addlabel(labels,&line[1],&varid, 1) + 1;
+		*ix = *ix + vm_assemble_addlabel(ctx->labels,&line[1],&varid, 1) + 1;
 
 		return varid;
 	}
@@ -192,11 +193,11 @@ static int assemble_var(struct VMLabel *labels,const char *line, int *ix)
 	return 0;
 }
 
-static int assemble_nidvar(struct VMLabel *labels, const char *line, NID_t *nid, int *ix)
+static int assemble_nidvar(struct AsmContext *ctx, const char *line, NID_t *nid, int *ix)
 {
 	if (line[0] == '$')
 	{
-		return assemble_var(labels,line,ix);
+		return assemble_var(ctx,line,ix);
 	}
 	else
 	{
@@ -227,7 +228,7 @@ static int assemble_eol(const char *line, int *ix)
 }
 
 
-static int assemble_op(struct AsmToken *tok, struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char *line)
 {
 	int i=0;
 	int off = 0;
@@ -243,75 +244,130 @@ static int assemble_op(struct AsmToken *tok, struct VMLabel *labels, const char 
 	//Parse required labels
 	if (tok->ls > 0)
 	{
-		if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-		if (assemble_off(labels,&line[i],&off,&i) != 0) return 0;
+		if (assemble_eol(&line[i], &i) == 1)
+		{
+			char errbuf[100];
+			sprintf(errbuf,"label expected :%d",ctx->line);
+			return DSB_ERROR(ERR_ASMMISSING,errbuf);
+		}
+		if (assemble_off(ctx,&line[i],&off,&i) != 0) return 0;
 	}
 
 	if (tok->vs > 0)
 	{
-		if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-		varA = assemble_var(labels, &line[i], &i);
-		if (varA == 0) return DSB_ERROR(ERR_ASMNOTVAR,line);
+		if (assemble_eol(&line[i], &i) == 1)
+		{
+			char errbuf[100];
+			sprintf(errbuf,"variable expected :%d",ctx->line);
+			return DSB_ERROR(ERR_ASMMISSING,errbuf);
+		}
+		varA = assemble_var(ctx, &line[i], &i);
+		if (varA == 0)
+		{
+			char errbuf[100];
+			sprintf(errbuf,":%d",ctx->line);
+			return DSB_ERROR(ERR_ASMNOTVAR,line);
+		}
 
 		if (tok->nvs > 0)
 		{
-			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-			varB = assemble_nidvar(labels, &line[i], &n2, &i);
+			if (assemble_eol(&line[i], &i) == 1)
+			{
+				char errbuf[100];
+				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				return DSB_ERROR(ERR_ASMMISSING,errbuf);
+			}
+			varB = assemble_nidvar(ctx, &line[i], &n2, &i);
 		}
 		if (tok->nvs > 1)
 		{
-			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-			varC = assemble_nidvar(labels, &line[i], &n3, &i);
+			if (assemble_eol(&line[i], &i) == 1)
+			{
+				char errbuf[100];
+				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				return DSB_ERROR(ERR_ASMMISSING,errbuf);
+			}
+			varC = assemble_nidvar(ctx, &line[i], &n3, &i);
 		}
 		if (tok->nvs > 2)
 		{
-			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-			varD = assemble_nidvar(labels, &line[i], &n4, &i);
+			if (assemble_eol(&line[i], &i) == 1)
+			{
+				char errbuf[100];
+				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				return DSB_ERROR(ERR_ASMMISSING,errbuf);
+			}
+			varD = assemble_nidvar(ctx, &line[i], &n4, &i);
 		}
 	}
 	else
 	{
 		if (tok->nvs > 0)
 		{
-			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-			varA = assemble_nidvar(labels, &line[i], &n1, &i);
+			if (assemble_eol(&line[i], &i) == 1)
+			{
+				char errbuf[100];
+				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				return DSB_ERROR(ERR_ASMMISSING,errbuf);
+			}
+			varA = assemble_nidvar(ctx, &line[i], &n1, &i);
 		}
 		if (tok->nvs > 1)
 		{
-			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-			varB = assemble_nidvar(labels, &line[i], &n2, &i);
+			if (assemble_eol(&line[i], &i) == 1)
+			{
+				char errbuf[100];
+				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				return DSB_ERROR(ERR_ASMMISSING,errbuf);
+			}
+			varB = assemble_nidvar(ctx, &line[i], &n2, &i);
 		}
 		if (tok->nvs > 2)
 		{
-			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-			varC = assemble_nidvar(labels, &line[i], &n3, &i);
+			if (assemble_eol(&line[i], &i) == 1)
+			{
+				char errbuf[100];
+				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				return DSB_ERROR(ERR_ASMMISSING,errbuf);
+			}
+			varC = assemble_nidvar(ctx, &line[i], &n3, &i);
 		}
 		if (tok->nvs > 3)
 		{
-			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-			varD = assemble_nidvar(labels, &line[i], &n4, &i);
+			if (assemble_eol(&line[i], &i) == 1)
+			{
+				char errbuf[100];
+				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				return DSB_ERROR(ERR_ASMMISSING,errbuf);
+			}
+			varD = assemble_nidvar(ctx, &line[i], &n4, &i);
 		}
 	}
 
 	//Should be end of line now.
-	if (assemble_eol(&line[i], &i) == 0) return DSB_ERROR(ERR_ASMTOOMANY,line);
+	if (assemble_eol(&line[i], &i) == 0)
+	{
+		char errbuf[100];
+		sprintf(errbuf,"%5s :%d",&line[i],ctx->line);
+		return DSB_ERROR(ERR_ASMTOOMANY,errbuf);
+	}
 
 	//Insert OP into output
-	dsb_nid_op(((unsigned long long)tok->op << 32) | ((unsigned long long)off << 32) | (varA << 24) | (varB << 16) | (varC << 8) | varD,&output[*ip]);
-	*ip = *ip + 1;
+	dsb_nid_op(((unsigned long long)tok->op << 32) | ((unsigned long long)off << 32) | (varA << 24) | (varB << 16) | (varC << 8) | varD,&ctx->output[ctx->ip]);
+	ctx->ip = ctx->ip + 1;
 	//Insert optional constant NIDs
 	if (tok->vs > 0)
 	{
-		if (varB == 0 && tok->nvs >= 1) output[(*ip)++] = n2;
-		if (varC == 0 && tok->nvs >= 2) output[(*ip)++] = n3;
-		if (varD == 0 && tok->nvs >= 3) output[(*ip)++] = n4;
+		if (varB == 0 && tok->nvs >= 1) ctx->output[ctx->ip++] = n2;
+		if (varC == 0 && tok->nvs >= 2) ctx->output[ctx->ip++] = n3;
+		if (varD == 0 && tok->nvs >= 3) ctx->output[ctx->ip++] = n4;
 	}
 	else
 	{
-		if (varA == 0 && tok->nvs >= 1) output[(*ip)++] = n1;
-		if (varB == 0 && tok->nvs >= 2) output[(*ip)++] = n2;
-		if (varC == 0 && tok->nvs >= 3) output[(*ip)++] = n3;
-		if (varD == 0 && tok->nvs >= 4) output[(*ip)++] = n4;
+		if (varA == 0 && tok->nvs >= 1) ctx->output[ctx->ip++] = n1;
+		if (varB == 0 && tok->nvs >= 2) ctx->output[ctx->ip++] = n2;
+		if (varC == 0 && tok->nvs >= 3) ctx->output[ctx->ip++] = n3;
+		if (varD == 0 && tok->nvs >= 4) ctx->output[ctx->ip++] = n4;
 	}
 
 	return 0;
@@ -361,7 +417,7 @@ static struct AsmToken asmops[] = {
  * Assemble a single line, fill output and return number of elements
  * written to the output.
  */
-int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+int dsb_assemble_line(struct AsmContext *ctx, const char *line)
 {
 	int i = 0;
 	char opbuf[20];
@@ -394,7 +450,7 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 		if (strcmp(opbuf,asmops[i].name) == 0)
 		{
 			//Parse operands and generate opcode.
-			assemble_op(&asmops[i],labels,tmp+1,output,ip);
+			assemble_op(&asmops[i],ctx,tmp+1);
 			break;
 		}
 		i++;
@@ -402,7 +458,9 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 
 	if (asmops[i].op == 0)
 	{
-		DSB_ERROR(ERR_ASMUNKOP,line);
+		char errbuf[100];
+		sprintf(errbuf,"%s :%d",opbuf,ctx->line);
+		DSB_ERROR(ERR_ASMUNKOP,errbuf);
 	}
 
 	return 1;
@@ -410,23 +468,29 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 
 int dsb_assemble(const char *source, NID_t *output, int max)
 {
-	int ip = 0;
-	struct VMLabel *labels = malloc(sizeof(struct VMLabel)*MAX_LABELS);
+	struct AsmContext ctx;
 
-	dsb_assemble_labels(labels,source);
+	ctx.ip = 0;
+	ctx.output = output;
+	ctx.maxout = max;
+	ctx.line = 1;
+	ctx.labels = malloc(sizeof(struct VMLabel)*MAX_LABELS);
+
+	dsb_assemble_labels(ctx.labels,source);
 
 	//For every line
 	while(1)
 	{
-		dsb_assemble_line(labels,source,output,&ip);
+		dsb_assemble_line(&ctx,source);
 		//Move to next line if there is one.
 		source = strchr(source,'\n');
 		if (source == 0) break;
 		source++;
+		ctx.line++;
 	}
 
-	free(labels);
-	return ip;
+	free(ctx.labels);
+	return ctx.ip;
 }
 
 int dsb_assemble_labels(struct VMLabel *labels, const char *source)
@@ -434,13 +498,24 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 	int i;
 	int ip = 0;
 
-	varid = 0;
+	varid = 3;
 
 	for (i=0; i<MAX_LABELS; i++)
 	{
 		labels[i].lip = -1;
-		//labels[i].mode = 0;
+		labels[i].mode = 0;
 	}
+
+	//Initialise the built-in variables
+	strcpy(labels[0].label,"t1");
+	labels[0].lip = 1;
+	labels[0].mode = 1;
+	strcpy(labels[1].label,"t2");
+	labels[1].lip = 2;
+	labels[1].mode = 1;
+	strcpy(labels[2].label,"h");
+	labels[2].lip = 3;
+	labels[2].mode = 1;
 
 	//For every line
 	while(1)
@@ -465,6 +540,7 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 			if (source[i] != '\n' && source[i] != '#' && source[i] != 0)
 			{
 				//Needs to figure out number of constant params.
+				//Number of words not starting with $
 				ip++;
 			}
 		}

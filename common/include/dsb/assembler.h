@@ -49,6 +49,15 @@ struct VMLabel
 	int mode;		//0 = label, 1 = variable
 };
 
+struct AsmContext
+{
+	NID_t *output;
+	int ip;
+	int maxout;
+	int line;
+	struct VMLabel *labels;
+};
+
 #define MAX_LABELS		100
 
 /**
@@ -61,7 +70,7 @@ struct VMLabel
  */
 int dsb_assemble(const char *source, NID_t *output, int max);
 
-int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, int *ip);
+int dsb_assemble_line(struct AsmContext *ctx, const char *line);
 
 /**
  * Populate the labels array with all labels in the source and their corresponding

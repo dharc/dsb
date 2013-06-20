@@ -133,6 +133,7 @@ typedef struct HARC HARC_t;
 #define VM_NEG(A,B)			VMOP2(VMOP_NEG,A,B)
 #define VM_SHL(A,B,C)		VMOP3(VMOP_SHL,A,B,C)
 #define VM_SHR(A,B,C)		VMOP3(VMOP_SHR,A,B,C)
+#define VM_CLR(A)			VMOP1(VMOP_CLR,A)
 
 //Extract variable numbers
 #define VMGET_A(A)			(((A) >> 24) & 0xFF)

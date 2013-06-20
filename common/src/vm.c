@@ -39,6 +39,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/specials.h"
 #include "dsb/wrap.h"
 #include "dsb/array.h"
+#include "dsb/globals.h"
 #include <malloc.h>
 
 int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
@@ -76,7 +77,9 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 	unsigned int varno3;
 	NID_t *n1;
 	NID_t *n2;
-	//unsigned int varno4;
+	NID_t *n3;
+	NID_t *n4;
+	unsigned int varno4;
 
 	//Main VM loop.
 	while ((ctx->ip < ctx->codesize) && (ctx->timeout-- > 0))
@@ -109,6 +112,56 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 							}
 							break;
 
+		case VMOP_JNE:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							if (dsb_nid_eq(n1,n2) == 0)
+							{
+								ctx->ip = (short)(VMGET_LABEL(op)); continue;
+							}
+							break;
+
+		case VMOP_JLE:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							if (dsb_ntoi(n1) <= dsb_ntoi(n2))
+							{
+								ctx->ip = (short)(VMGET_LABEL(op)); continue;
+							}
+							break;
+
+		case VMOP_JGE:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							if (dsb_ntoi(n1) >= dsb_ntoi(n2))
+							{
+								ctx->ip = (short)(VMGET_LABEL(op)); continue;
+							}
+							break;
+
+		case VMOP_JLT:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							if (dsb_ntoi(n1) < dsb_ntoi(n2))
+							{
+								ctx->ip = (short)(VMGET_LABEL(op)); continue;
+							}
+							break;
+
+		case VMOP_JGT:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							if (dsb_ntoi(n1) > dsb_ntoi(n2))
+							{
+								ctx->ip = (short)(VMGET_LABEL(op)); continue;
+							}
+							break;
+
 		case VMOP_GET:		varno = VMGET_A(op);
 							varno2 = VMGET_B(op);
 							varno3 = VMGET_C(op);
@@ -117,15 +170,121 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 							dsb_get(n1,n2,&ctx->vars[varno-1]);
 							break;
 
+		case VMOP_DEF:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n3 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_define(n1,n2,n3,0);
+							break;
 
-		//case VMOP_WRITE:	dsb_define(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],ctx->reg[VMREG_D(op)].ll);
-		//					break;
-		//case VMOP_DEP:		dsb_dependency(&ctx->reg[VMREG_A(op)],&ctx->reg[VMREG_B(op)],&ctx->reg[VMREG_C(op)],&ctx->reg[VMREG_D(op)]);
-		//					break;
-		//case VMOP_INC:		ctx->reg[VMREG_A(op)].ll++;
-		//					break;
+		case VMOP_DEP:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							varno4 = VMGET_D(op);
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n3 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							n4 = (varno4 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno4-1];
+							dsb_dependency(n1,n2,n3,n4);
+							break;
 
-		default: return DSB_ERROR(ERR_VMINVALIP,0);
+		case VMOP_NEW:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							dsb_new(n1,&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_ADD:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1)+dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_SUB:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1)-dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_DIV:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1) / dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_MUL:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1)*dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_AND:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1) & dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_OR:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1) | dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_XOR:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1) ^ dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_SHL:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1) << dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_SHR:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_iton(dsb_ntoi(n1) >> dsb_ntoi(n2),&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_INC:		varno = VMGET_A(op);
+							ctx->vars[varno-1].ll++;
+							break;
+
+		case VMOP_DEC:		varno = VMGET_A(op);
+							ctx->vars[varno-1].ll--;
+							break;
+
+		case VMOP_CLR:		varno = VMGET_A(op);
+							ctx->vars[varno-1] = Null;
+							break;
+
+		default: 			{
+								char buf[100];
+								sprintf(buf, "op = %08x",(unsigned int)VMGET_OP(op));
+								return DSB_ERROR(ERR_VMINVALIP,buf);
+							}
 		}
 
 		ctx->ip++;
