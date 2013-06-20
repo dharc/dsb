@@ -266,7 +266,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 		{
 			char errbuf[100];
 			sprintf(errbuf,":%d",ctx->line);
-			return DSB_ERROR(ERR_ASMNOTVAR,line);
+			return DSB_ERROR(ERR_ASMNOTVAR,errbuf);
 		}
 
 		if (tok->nvs > 0)

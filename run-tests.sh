@@ -19,6 +19,7 @@ if [ -x "./nid-test" ]; then
 	./module-test
 	./volatile-test
 	./eval-test
+	./asm-test
 	./vm-test
 	./proc-test
 	echo "================================================================================"

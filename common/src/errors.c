@@ -71,7 +71,7 @@ const char *dsb_log_str(int err)
 	case ERR_NETRESULT:			return "Unexpected event result";
 	case ERR_NETCB:				return "Net message callback error";
 
-	case ERR_ASMNOTVAR:			return "Expected a variable";
+	case ERR_ASMNOTVAR:			return "Assembler: Expected a variable";
 	case ERR_ASMNOTOFF:			return "Assembler: Expected a label";
 	case ERR_ASMINVALOFF:		return "Assembler: Invalid asm label";
 	case ERR_ASMMISSING:		return "Assembler: Missing parameter";

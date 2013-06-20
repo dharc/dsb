@@ -54,15 +54,15 @@ void test_asm_jeq()
 	CHECK(code[2].ll == 6);
 
 	CHECK(dsb_assemble("jeq 55 $x 6", code, 50) == 2);
-	CHECK(code[0].ll == VM_JEQ(55,1,0));
+	CHECK(code[0].ll == VM_JEQ(55,4,0));
 	CHECK(code[1].ll == 6);
 
 	CHECK(dsb_assemble("jeq 55 7 $y", code, 50) == 2);
-	CHECK(code[0].ll == VM_JEQ(55,0,1));
+	CHECK(code[0].ll == VM_JEQ(55,0,4));
 	CHECK(code[1].ll == 7);
 
 	CHECK(dsb_assemble("jeq 55 $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_JEQ(55,1,2));
+	CHECK(code[0].ll == VM_JEQ(55,4,5));
 
 	//Missing parameter checks.
 	CHECK(dsb_assemble("jeq 55 $x $y 7", code, 50) == 0);
@@ -84,15 +84,15 @@ void test_asm_jne()
 	CHECK(code[2].ll == 6);
 
 	CHECK(dsb_assemble("jne 55 $x 6", code, 50) == 2);
-	CHECK(code[0].ll == VM_JNE(55,1,0));
+	CHECK(code[0].ll == VM_JNE(55,4,0));
 	CHECK(code[1].ll == 6);
 
 	CHECK(dsb_assemble("jne 55 7 $y", code, 50) == 2);
-	CHECK(code[0].ll == VM_JNE(55,0,1));
+	CHECK(code[0].ll == VM_JNE(55,0,4));
 	CHECK(code[1].ll == 7);
 
 	CHECK(dsb_assemble("jne 55 $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_JNE(55,1,2));
+	CHECK(code[0].ll == VM_JNE(55,4,5));
 	DONE;
 }
 
@@ -106,15 +106,15 @@ void test_asm_jle()
 	CHECK(code[2].ll == 6);
 
 	CHECK(dsb_assemble("jle 55 $x 6", code, 50) == 2);
-	CHECK(code[0].ll == VM_JLE(55,1,0));
+	CHECK(code[0].ll == VM_JLE(55,4,0));
 	CHECK(code[1].ll == 6);
 
 	CHECK(dsb_assemble("jle 55 7 $y", code, 50) == 2);
-	CHECK(code[0].ll == VM_JLE(55,0,1));
+	CHECK(code[0].ll == VM_JLE(55,0,4));
 	CHECK(code[1].ll == 7);
 
 	CHECK(dsb_assemble("jle 55 $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_JLE(55,1,2));
+	CHECK(code[0].ll == VM_JLE(55,4,5));
 	DONE;
 }
 
@@ -128,15 +128,15 @@ void test_asm_jge()
 	CHECK(code[2].ll == 6);
 
 	CHECK(dsb_assemble("jge 55 $x 6", code, 50) == 2);
-	CHECK(code[0].ll == VM_JGE(55,1,0));
+	CHECK(code[0].ll == VM_JGE(55,4,0));
 	CHECK(code[1].ll == 6);
 
 	CHECK(dsb_assemble("jge 55 7 $y", code, 50) == 2);
-	CHECK(code[0].ll == VM_JGE(55,0,1));
+	CHECK(code[0].ll == VM_JGE(55,0,4));
 	CHECK(code[1].ll == 7);
 
 	CHECK(dsb_assemble("jge 55 $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_JGE(55,1,2));
+	CHECK(code[0].ll == VM_JGE(55,4,5));
 	DONE;
 }
 
@@ -150,15 +150,15 @@ void test_asm_jlt()
 	CHECK(code[2].ll == 6);
 
 	CHECK(dsb_assemble("jlt 55 $x 6", code, 50) == 2);
-	CHECK(code[0].ll == VM_JLT(55,1,0));
+	CHECK(code[0].ll == VM_JLT(55,4,0));
 	CHECK(code[1].ll == 6);
 
 	CHECK(dsb_assemble("jlt 55 7 $y", code, 50) == 2);
-	CHECK(code[0].ll == VM_JLT(55,0,1));
+	CHECK(code[0].ll == VM_JLT(55,0,4));
 	CHECK(code[1].ll == 7);
 
 	CHECK(dsb_assemble("jlt 55 $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_JLT(55,1,2));
+	CHECK(code[0].ll == VM_JLT(55,4,5));
 	DONE;
 }
 
@@ -172,15 +172,15 @@ void test_asm_jgt()
 	CHECK(code[2].ll == 6);
 
 	CHECK(dsb_assemble("jgt 55 $x 6", code, 50) == 2);
-	CHECK(code[0].ll == VM_JGT(55,1,0));
+	CHECK(code[0].ll == VM_JGT(55,4,0));
 	CHECK(code[1].ll == 6);
 
 	CHECK(dsb_assemble("jgt 55 7 $y", code, 50) == 2);
-	CHECK(code[0].ll == VM_JGT(55,0,1));
+	CHECK(code[0].ll == VM_JGT(55,0,4));
 	CHECK(code[1].ll == 7);
 
 	CHECK(dsb_assemble("jgt 55 $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_JGT(55,1,2));
+	CHECK(code[0].ll == VM_JGT(55,4,5));
 	DONE;
 }
 
@@ -189,12 +189,12 @@ void test_asm_get()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("get $x 10 11", code, 50) == 3);
-	CHECK(code[0].ll == VM_GET(1,0,0));
+	CHECK(code[0].ll == VM_GET(4,0,0));
 	CHECK(code[1].ll == 10);
 	CHECK(code[2].ll == 11);
 
 	CHECK(dsb_assemble("get $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_GET(1,2,3));
+	CHECK(code[0].ll == VM_GET(4,5,6));
 
 	//Missing variable.
 	CHECK(dsb_assemble("get 5 $y $z", code, 50) == 0);
@@ -213,7 +213,7 @@ void test_asm_def()
 	CHECK(code[3].ll == 25);
 
 	CHECK(dsb_assemble("def $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_DEF(1,2,3));
+	CHECK(code[0].ll == VM_DEF(4,5,6));
 
 	DONE;
 }
@@ -230,13 +230,13 @@ void test_asm_dep()
 	CHECK(code[4].ll == 26);
 
 	CHECK(dsb_assemble("dep 23 24 25 $x", code, 50) == 4);
-	CHECK(code[0].ll == VM_DEP(0,0,0,1));
+	CHECK(code[0].ll == VM_DEP(0,0,0,4));
 	CHECK(code[1].ll == 23);
 	CHECK(code[2].ll == 24);
 	CHECK(code[3].ll == 25);
 
 	CHECK(dsb_assemble("dep $x $y $z $w", code, 50) == 1);
-	CHECK(code[0].ll == VM_DEP(1,2,3,4));
+	CHECK(code[0].ll == VM_DEP(4,5,6,7));
 
 	CHECK(dsb_assemble("dep $x $y $z", code, 50) == 0);
 
@@ -248,11 +248,11 @@ void test_asm_new()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("new $x 55", code, 50) == 2);
-	CHECK(code[0].ll == VM_NEW(1,0));
+	CHECK(code[0].ll == VM_NEW(4,0));
 	CHECK(code[1].ll == 55);
 
 	CHECK(dsb_assemble("new $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_NEW(1,2));
+	CHECK(code[0].ll == VM_NEW(4,5));
 
 	DONE;
 }
@@ -267,7 +267,7 @@ void test_asm_del()
 	CHECK(code[2].ll == 55);
 
 	CHECK(dsb_assemble("del $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_DEL(1,2));
+	CHECK(code[0].ll == VM_DEL(4,5));
 
 	DONE;
 }
@@ -277,11 +277,11 @@ void test_asm_cpy()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("cpy $x 55", code, 50) == 2);
-	CHECK(code[0].ll == VM_CPY(1,0));
+	CHECK(code[0].ll == VM_CPY(4,0));
 	CHECK(code[1].ll == 55);
 
 	CHECK(dsb_assemble("cpy $x $y", code, 50) == 1);
-	CHECK(code[0].ll == VM_CPY(1,2));
+	CHECK(code[0].ll == VM_CPY(4,5));
 
 	CHECK(dsb_assemble("cpy 44 $y", code, 50) == 0);
 
@@ -297,7 +297,7 @@ void test_asm_ret()
 	CHECK(code[1].ll == 77);
 
 	CHECK(dsb_assemble("ret $x", code, 50) == 1);
-	CHECK(code[0].ll == VM_RET(1));
+	CHECK(code[0].ll == VM_RET(4));
 
 	DONE;
 }
@@ -307,12 +307,12 @@ void test_asm_add()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("add $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_ADD(1,0,0));
+	CHECK(code[0].ll == VM_ADD(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("add $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_ADD(1,2,3));
+	CHECK(code[0].ll == VM_ADD(4,5,6));
 
 	CHECK(dsb_assemble("add 3 $y $z", code, 50) == 0);
 
@@ -324,12 +324,12 @@ void test_asm_sub()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("sub $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_SUB(1,0,0));
+	CHECK(code[0].ll == VM_SUB(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("sub $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_SUB(1,2,3));
+	CHECK(code[0].ll == VM_SUB(4,5,6));
 
 	CHECK(dsb_assemble("sub 3 $y $z", code, 50) == 0);
 
@@ -341,12 +341,12 @@ void test_asm_div()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("div $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_DIV(1,0,0));
+	CHECK(code[0].ll == VM_DIV(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("div $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_DIV(1,2,3));
+	CHECK(code[0].ll == VM_DIV(4,5,6));
 
 	CHECK(dsb_assemble("div 3 $y $z", code, 50) == 0);
 
@@ -358,12 +358,12 @@ void test_asm_mul()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("mul $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_MUL(1,0,0));
+	CHECK(code[0].ll == VM_MUL(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("mul $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_MUL(1,2,3));
+	CHECK(code[0].ll == VM_MUL(4,5,6));
 
 	CHECK(dsb_assemble("mul 3 $y $z", code, 50) == 0);
 
@@ -375,12 +375,12 @@ void test_asm_shl()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("shl $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_SHL(1,0,0));
+	CHECK(code[0].ll == VM_SHL(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("shl $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_SHL(1,2,3));
+	CHECK(code[0].ll == VM_SHL(4,5,6));
 
 	CHECK(dsb_assemble("shl 3 $y $z", code, 50) == 0);
 
@@ -392,12 +392,12 @@ void test_asm_shr()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("shr $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_SHR(1,0,0));
+	CHECK(code[0].ll == VM_SHR(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("shr $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_SHR(1,2,3));
+	CHECK(code[0].ll == VM_SHR(4,5,6));
 
 	CHECK(dsb_assemble("shr 3 $y $z", code, 50) == 0);
 
@@ -409,12 +409,12 @@ void test_asm_and()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("and $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_AND(1,0,0));
+	CHECK(code[0].ll == VM_AND(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("and $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_AND(1,2,3));
+	CHECK(code[0].ll == VM_AND(4,5,6));
 
 	CHECK(dsb_assemble("and 3 $y $z", code, 50) == 0);
 
@@ -426,12 +426,12 @@ void test_asm_or()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("or $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_OR(1,0,0));
+	CHECK(code[0].ll == VM_OR(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("or $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_OR(1,2,3));
+	CHECK(code[0].ll == VM_OR(4,5,6));
 
 	CHECK(dsb_assemble("or 3 $y $z", code, 50) == 0);
 
@@ -443,16 +443,16 @@ void test_asm_xor()
 	NID_t code[100];
 
 	CHECK(dsb_assemble("xor $x 4 5", code, 50) == 3);
-	CHECK(code[0].ll == VM_XOR(1,0,0));
+	CHECK(code[0].ll == VM_XOR(4,0,0));
 	CHECK(code[1].ll == 4);
 	CHECK(code[2].ll == 5);
 
 	CHECK(dsb_assemble("xor $x $y $z", code, 50) == 1);
-	CHECK(code[0].ll == VM_XOR(1,2,3));
+	CHECK(code[0].ll == VM_XOR(4,5,6));
 
 	//Test for matching of var names
 	CHECK(dsb_assemble("xor $x $x $x", code, 50) == 1);
-	CHECK(code[0].ll == VM_XOR(1,1,1));
+	CHECK(code[0].ll == VM_XOR(4,4,4));
 
 	CHECK(dsb_assemble("xor 3 $y $z", code, 50) == 0);
 
