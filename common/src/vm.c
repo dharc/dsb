@@ -42,7 +42,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/globals.h"
 #include <malloc.h>
 
-int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
+int dsb_vm_call(const NID_t *func, const HARC_t *harc, NID_t *res)
 {
 	int maxip;	//End of instructions.
 	NID_t *code = malloc(sizeof(NID_t)*1000);
@@ -51,14 +51,14 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res)
 	maxip = dsb_array_read(func, code, 1000);
 
 	//Run the interpreter.
-	dsb_vm_interpret(code,maxip,params,pn,res);
+	dsb_vm_interpret(code,maxip,harc,res);
 
 	free(code);
 
 	return SUCCESS;
 }
 
-int dsb_vm_interpret(NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res)
+int dsb_vm_interpret(NID_t *code, int maxip, const HARC_t *harc, NID_t *res)
 {
 	struct VMContext ctx;
 	ctx.ip = 0;
@@ -66,6 +66,14 @@ int dsb_vm_interpret(NID_t *code, int maxip, const NID_t *params, int pn, NID_t 
 	ctx.code = code;
 	ctx.codesize = maxip;
 	ctx.result = res;
+
+	if (harc != 0)
+	{
+		ctx.vars[0] = harc->t1;
+		ctx.vars[1] = harc->t2;
+		ctx.vars[2] = harc->h;
+	}
+
 	return dsb_vm_interpret_ctx(&ctx);
 }
 

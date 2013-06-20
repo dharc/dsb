@@ -76,7 +76,7 @@ void test_vm_copy()
 	dsb_iton(50,&code[1]);
 	dsb_nid_op(VM_RET(1),&code[2]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 50);
 
 	//Actual code.
@@ -85,7 +85,7 @@ void test_vm_copy()
 	dsb_nid_op(VM_CPY(2,1),&code[2]);
 	dsb_nid_op(VM_RET(2),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 54);
 
 	DONE;
@@ -103,7 +103,7 @@ void test_vm_get()
 	dsb_iton(51,&code[3]);
 	dsb_nid_op(VM_RET(2),&code[4]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 666);
 
 	DONE;
@@ -121,7 +121,7 @@ void test_vm_def()
 	dsb_nid_op(VM_RET(0),&code[4]);
 	dsb_iton(53,&code[5]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(evtd1.ll == 50);
 	CHECK(evtd2.ll == 51);
 	CHECK(evtres.ll == 52);
@@ -143,7 +143,7 @@ void test_vm_jeq()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	//Params are not equal
@@ -155,7 +155,7 @@ void test_vm_jeq()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	//Params are equal with variable
@@ -168,7 +168,7 @@ void test_vm_jeq()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	//Params are equal with variable
@@ -181,7 +181,7 @@ void test_vm_jeq()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	DONE;
@@ -201,7 +201,7 @@ void test_vm_jne()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	//Params are not equal
@@ -213,7 +213,7 @@ void test_vm_jne()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	//Params are equal with variable
@@ -226,7 +226,7 @@ void test_vm_jne()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	//Params are equal with variable
@@ -239,7 +239,7 @@ void test_vm_jne()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	DONE;
@@ -259,7 +259,7 @@ void test_vm_jle()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	//Params are not lequal
@@ -271,7 +271,7 @@ void test_vm_jle()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	//Params are lequal with variable
@@ -284,7 +284,7 @@ void test_vm_jle()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	//Params are equal with variable
@@ -297,7 +297,7 @@ void test_vm_jle()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	DONE;
@@ -317,7 +317,7 @@ void test_vm_jge()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	//Params are not lequal
@@ -329,7 +329,7 @@ void test_vm_jge()
 	dsb_nid_op(VM_RET(0),&code[5]);
 	dsb_iton(77,&code[6]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 77);
 
 	//Params are lequal with variable
@@ -342,7 +342,7 @@ void test_vm_jge()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	//Params are equal with variable
@@ -355,7 +355,7 @@ void test_vm_jge()
 	dsb_nid_op(VM_RET(0),&code[6]);
 	dsb_iton(77,&code[7]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 66);
 
 	DONE;
@@ -371,7 +371,7 @@ void test_vm_add()
 	dsb_iton(50,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 90);
 
 	DONE;
@@ -387,7 +387,7 @@ void test_vm_sub()
 	dsb_iton(50,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == -10);
 
 	DONE;
@@ -403,7 +403,7 @@ void test_vm_div()
 	dsb_iton(50,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 40 / 50);
 
 	DONE;
@@ -419,7 +419,7 @@ void test_vm_mul()
 	dsb_iton(3,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 30);
 
 	DONE;
@@ -435,7 +435,7 @@ void test_vm_and()
 	dsb_iton(3,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 3);
 
 	DONE;
@@ -451,7 +451,7 @@ void test_vm_or()
 	dsb_iton(2,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 3);
 
 	DONE;
@@ -467,7 +467,7 @@ void test_vm_xor()
 	dsb_iton(2,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 1);
 
 	DONE;
@@ -483,7 +483,7 @@ void test_vm_shl()
 	dsb_iton(4,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 16);
 
 	DONE;
@@ -499,7 +499,7 @@ void test_vm_shr()
 	dsb_iton(4,&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 1);
 
 	DONE;
@@ -515,7 +515,7 @@ void test_vm_inc()
 	dsb_nid_op(VM_INC(1),&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 17);
 
 	DONE;
@@ -531,7 +531,7 @@ void test_vm_dec()
 	dsb_nid_op(VM_DEC(1),&code[2]);
 	dsb_nid_op(VM_RET(1),&code[3]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(harc.h.ll == 15);
 
 	DONE;
@@ -545,7 +545,7 @@ void test_vm_clr()
 	dsb_nid_op(VM_CLR(1),&code[0]);
 	dsb_nid_op(VM_RET(1),&code[1]);
 
-	CHECK(dsb_vm_interpret(code,100, 0,0, &harc.h) == -1);
+	CHECK(dsb_vm_interpret(code,100, 0, &harc.h) == -1);
 	CHECK(dsb_nid_eq(&harc.h,&Null) == 1);
 
 	DONE;

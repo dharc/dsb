@@ -44,7 +44,7 @@ either expressed or implied, of the FreeBSD Project.
 int eval_vm(struct HARC *harc)
 {
 	//Run the interpreter.
-	dsb_vm_call(&harc->def,&harc->t1,2,&harc->h);
+	dsb_vm_call(&harc->def,harc,&harc->h);
 
 	return SUCCESS;
 }

@@ -440,7 +440,7 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 	}
 	else
 	{
-		sprintf(str,"[%02x:%04x:%016x]",nid->header,nid->t,(unsigned int)nid->ll);
+		sprintf(str,"[%02x:%04x:%08x%08x]",nid->header,nid->t,nid->b,nid->a);
 	}
 	return SUCCESS;
 }
@@ -497,7 +497,7 @@ int dsb_nid_toRawStr(const struct NID *nid, char *str, int len)
 	}
 	else
 	{
-		sprintf(str,"[%02x:%04x:%016x]",nid->header,nid->t,(unsigned int)nid->ll);
+		sprintf(str,"[%02x:%04x:%08x%08x]",nid->header,nid->t,nid->b,nid->a);
 	}
 	return SUCCESS;
 }

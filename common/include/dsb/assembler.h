@@ -72,6 +72,8 @@ int dsb_assemble(const char *source, NID_t *output, int max);
 
 int dsb_assemble_line(struct AsmContext *ctx, const char *line);
 
+int dsb_assemble_compile(struct AsmContext *ctx, const char *source);
+
 /**
  * Populate the labels array with all labels in the source and their corresponding
  * location in the final compiled code. Should be use to initialise the labels array

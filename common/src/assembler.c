@@ -82,6 +82,12 @@ static int vm_assemble_addlabel(struct VMLabel *labels, const char *line, int *i
 			labels[i].mode = mode;
 			break;
 		}
+		else if (strncmp(labels[i].label,line,len) == 0)
+		{
+			//Update value
+			labels[i].lip = *ip;
+			break;
+		}
 	}
 
 	return len;
@@ -434,6 +440,7 @@ int dsb_assemble_line(struct AsmContext *ctx, const char *line)
 	//Do we have a label?
 	if (line[i] == ':')
 	{
+		vm_assemble_addlabel(ctx->labels,&line[i+1],&ctx->ip, 0);
 		return 0;
 	}
 
@@ -466,28 +473,39 @@ int dsb_assemble_line(struct AsmContext *ctx, const char *line)
 	return 1;
 }
 
-int dsb_assemble(const char *source, NID_t *output, int max)
+int dsb_assemble_compile(struct AsmContext *ctx, const char *source)
 {
-	struct AsmContext ctx;
-
-	ctx.ip = 0;
-	ctx.output = output;
-	ctx.maxout = max;
-	ctx.line = 1;
-	ctx.labels = malloc(sizeof(struct VMLabel)*MAX_LABELS);
-
-	dsb_assemble_labels(ctx.labels,source);
+	ctx->ip = 0;
+	ctx->line = 1;
 
 	//For every line
 	while(1)
 	{
-		dsb_assemble_line(&ctx,source);
+		dsb_assemble_line(ctx,source);
 		//Move to next line if there is one.
 		source = strchr(source,'\n');
 		if (source == 0) break;
 		source++;
-		ctx.line++;
+		ctx->line++;
 	}
+
+	return 0;
+}
+
+int dsb_assemble(const char *source, NID_t *output, int max)
+{
+	struct AsmContext ctx;
+	ctx.output = output;
+	ctx.maxout = max;
+	ctx.labels = malloc(sizeof(struct VMLabel)*MAX_LABELS);
+
+	dsb_assemble_labels(ctx.labels,source);
+
+	//Compile once without valid labels.
+	dsb_assemble_compile(&ctx, source);
+	//Compile again to patch labels.
+	//TODO find way not to do a double compile.
+	dsb_assemble_compile(&ctx, source);
 
 	free(ctx.labels);
 	return ctx.ip;
@@ -496,8 +514,6 @@ int dsb_assemble(const char *source, NID_t *output, int max)
 int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 {
 	int i;
-	int ip = 0;
-
 	varid = 3;
 
 	for (i=0; i<MAX_LABELS; i++)
@@ -518,7 +534,7 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 	labels[2].mode = 1;
 
 	//For every line
-	while(1)
+	/*while(1)
 	{
 		i = 0;
 
@@ -549,7 +565,7 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 		source = strchr(source,'\n');
 		if (source == 0) break;
 		source++;
-	}
+	}*/
 
 	return SUCCESS;
 }

@@ -155,7 +155,6 @@ struct VMContext
 {
 	NID_t *code;		///< NID array containing the code
 	int codesize;			///< Size of the code array.
-	const NID_t *params[4];	///< Parameters passed to the code.
 	int ip;					///< Instruction pointer.
 	int timeout;			///< Max instructions to execute before halt.
 	NID_t *result;			///< Any return value from script.
@@ -171,7 +170,7 @@ struct VMContext
  * @param res Location to put the result.
  * @return SUCCESS.
  */
-int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res);
+int dsb_vm_call(const NID_t *func, const HARC_t *harc, NID_t *res);
 
 /**
  * Interpret a NID array as VM code. Instead of getting the code from the graph
@@ -184,7 +183,7 @@ int dsb_vm_call(const NID_t *func, const NID_t *params, int pn, NID_t *res);
  * @param res Location to put the result.
  * @return SUCCESS.
  */
-int dsb_vm_interpret(NID_t *code, int maxip, const NID_t *params, int pn, NID_t *res);
+int dsb_vm_interpret(NID_t *code, int maxip, const HARC_t *harc, NID_t *res);
 
 int dsb_vm_interpret_ctx(struct VMContext *ctx);
 
