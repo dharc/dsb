@@ -47,10 +47,14 @@ either expressed or implied, of the FreeBSD Project.
 struct AsmToken
 {
 	char *name;
-	int (*opfunc)(struct VMLabel *labels, const char *line, NID_t *output, int *ip);
+	//int (*opfunc)(struct VMLabel *labels, const char *line, NID_t *output, int *ip);
+	unsigned int op;
+	int ls;		//Number of labels (0 or 1)
+	int vs;		//Number of required variables
+	int nvs;	//Number of required var/nids
 };
 
-#define ASMOP(A)	{#A, asm_##A}
+#define ASMOP(A,B,C,D,E)	{#A, B, C, D, E}
 
 //TODO DONT USE GLOBAL VARIABLE FOR THIS
 static int varid;
@@ -59,7 +63,7 @@ static int varid;
  * Append a new label to the labels structure. Read the label name from line
  * and uses the value of *ip as the labels location.
  */
-static void vm_assemble_addlabel(struct VMLabel *labels, const char *line, int *ip)
+static int vm_assemble_addlabel(struct VMLabel *labels, const char *line, int *ip, int mode)
 {
 	int i;
 	int len;
@@ -75,12 +79,15 @@ static void vm_assemble_addlabel(struct VMLabel *labels, const char *line, int *
 			strncpy(labels[i].label, line, len);
 			labels[i].label[len] = 0;
 			labels[i].lip = *ip;
+			labels[i].mode = mode;
 			break;
 		}
 	}
+
+	return len;
 }
 
-static int vm_assemble_off(struct VMLabel *labels,const char *line, int *off);
+static int assemble_off(struct VMLabel *labels,const char *line, int *off, int *ix);
 
 /*
  * Search the labels list for a match and return the location.
@@ -90,6 +97,7 @@ static int vm_assemble_lookup(struct VMLabel *labels, const char *line)
 	int i;
 	int len;
 	int off = 0;
+	int dum = 0;
 
 	for (i=0; i<MAX_LABELS; i++)
 	{
@@ -99,7 +107,7 @@ static int vm_assemble_lookup(struct VMLabel *labels, const char *line)
 			off = labels[i].lip;
 			if (line[len] == '+' || line[len] == '-')
 			{
-				vm_assemble_off(labels, &line[len], &len);
+				assemble_off(labels, &line[len], &len, &dum);
 				off += len;
 			}
 			break;
@@ -111,25 +119,30 @@ static int vm_assemble_lookup(struct VMLabel *labels, const char *line)
 /*
  * Parse an integer offset/address value or other integer constant
  */
-static int vm_assemble_off(struct VMLabel *labels,const char *line, int *off)
+static int assemble_off(struct VMLabel *labels,const char *line, int *off, int *ix)
 {
 	int i=0;
 	int neg = 0;
 	*off = 0;
 
+	if (line[0] == '$')
+	{
+		return DSB_ERROR(ERR_ASMNOTOFF,line);
+	}
+
 	//Is it a label?
 	if (line[0] == ':')
 	{
 		*off = vm_assemble_lookup(labels,&line[1]);
-		return 1;
+		*ix = *ix + 1;
+		return 0;
 	}
 
 	if (line[0] == '-') {
 		i++;
 		neg = 1;
 	}
-
-	if (line[0] == '+') {
+	else if (line[0] == '+') {
 		i++;
 	}
 
@@ -142,13 +155,14 @@ static int vm_assemble_off(struct VMLabel *labels,const char *line, int *off)
 
 	if (neg == 1 && i == 1) return 0;
 
-	return i;
+	*ix = *ix + i;
+	return 0;
 }
 
 /*
  * Parse a variable name and lookup value.
  */
-static int vm_assemble_var(struct VMLabel *labels,const char *line, int *ix)
+static int assemble_var(struct VMLabel *labels,const char *line, int *ix)
 {
 	//Is it a label?
 	if (line[0] == '$')
@@ -158,8 +172,9 @@ static int vm_assemble_var(struct VMLabel *labels,const char *line, int *ix)
 
 		for (i=0; i<MAX_LABELS; i++)
 		{
+			if (labels[i].lip == -1) break;
 			len = strlen(labels[i].label);
-			if (strncmp(labels[i].label,line,len) == 0)
+			if (strncmp(labels[i].label,&line[1],len) == 0)
 			{
 				*ix += len+1;
 				return labels[i].lip;
@@ -168,7 +183,8 @@ static int vm_assemble_var(struct VMLabel *labels,const char *line, int *ix)
 
 		//Not found so add the label.
 		varid++;
-		vm_assemble_addlabel(labels,&line[1],&varid);
+		*ix = *ix + vm_assemble_addlabel(labels,&line[1],&varid, 1) + 1;
+
 		return varid;
 	}
 
@@ -176,11 +192,11 @@ static int vm_assemble_var(struct VMLabel *labels,const char *line, int *ix)
 	return 0;
 }
 
-static int vm_assemble_nidvar(struct VMLabel *labels, const char *line, NID_t *nid, int *ix)
+static int assemble_nidvar(struct VMLabel *labels, const char *line, NID_t *nid, int *ix)
 {
 	if (line[0] == '$')
 	{
-		return vm_assemble_var(labels,line,ix);
+		return assemble_var(labels,line,ix);
 	}
 	else
 	{
@@ -201,7 +217,7 @@ static int vm_assemble_nidvar(struct VMLabel *labels, const char *line, NID_t *n
 	}
 }
 
-static int vm_assemble_eol(const char *line, int *ix)
+static int assemble_eol(const char *line, int *ix)
 {
 	int i=0;
 	while (line[i] == ' ' || line[i] == '\t') i++;
@@ -210,629 +226,135 @@ static int vm_assemble_eol(const char *line, int *ix)
 	return 0;
 }
 
-/*
- * Parse a register number.
- */
-static int vm_assemble_reg(const char *line, int *reg, int *i)
-{
-	if (line[0] == '%')
-	{
-		//Read a single HEX digit for reg id.
-		if (line[1] >= '0' && line[1] <= '9') *reg = line[1]-'0';
-		else if (line[1] >= 'a' && line[1] <= 'f') *reg = line[1]-'a';
-		else return 0;
 
-		*i += 2;
-		return 1;
-	}
-
-	DSB_ERROR(ERR_ASMNOTREG,line);
-	return 0;
-}
-
-static int asm_jmp(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i = 0;
-	int tmp;
-	int regA;
-
-	//Get an offset value
-	tmp = vm_assemble_off(labels,&line[i],&regA);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-	i += tmp;
-
-	//Insert OP into output
-	dsb_nid_op(VM_JMP(regA),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_jeq(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
+static int assemble_op(struct AsmToken *tok, struct VMLabel *labels, const char *line, NID_t *output, int *ip)
 {
 	int i=0;
-	int tmp;
-	int varA;
-	int varB;
-	int off;
+	int off = 0;
+	int varA = 0;
+	int varB = 0;
+	int varC = 0;
+	int varD = 0;
 	NID_t n1;
 	NID_t n2;
+	NID_t n3;
+	NID_t n4;
 
-	if (vm_assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+	//Parse required labels
+	if (tok->ls > 0)
+	{
+		if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+		if (assemble_off(labels,&line[i],&off,&i) != 0) return 0;
+	}
 
-	//Get an jump value
-	tmp = vm_assemble_off(labels,&line[i],&off);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-	i += tmp;
+	if (tok->vs > 0)
+	{
+		if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+		varA = assemble_var(labels, &line[i], &i);
+		if (varA == 0) return DSB_ERROR(ERR_ASMNOTVAR,line);
 
-	if (vm_assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+		if (tok->nvs > 0)
+		{
+			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+			varB = assemble_nidvar(labels, &line[i], &n2, &i);
+		}
+		if (tok->nvs > 1)
+		{
+			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+			varC = assemble_nidvar(labels, &line[i], &n3, &i);
+		}
+		if (tok->nvs > 2)
+		{
+			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+			varD = assemble_nidvar(labels, &line[i], &n4, &i);
+		}
+	}
+	else
+	{
+		if (tok->nvs > 0)
+		{
+			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+			varA = assemble_nidvar(labels, &line[i], &n1, &i);
+		}
+		if (tok->nvs > 1)
+		{
+			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+			varB = assemble_nidvar(labels, &line[i], &n2, &i);
+		}
+		if (tok->nvs > 2)
+		{
+			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+			varC = assemble_nidvar(labels, &line[i], &n3, &i);
+		}
+		if (tok->nvs > 3)
+		{
+			if (assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
+			varD = assemble_nidvar(labels, &line[i], &n4, &i);
+		}
+	}
 
-	//Get a variable
-	varA = vm_assemble_nidvar(labels, &line[i], &n1, &i);
-
-	if (vm_assemble_eol(&line[i], &i) == 1) return DSB_ERROR(ERR_ASMMISSING,line);
-
-	//Get a variable
-	varB = vm_assemble_nidvar(labels, &line[i], &n2, &i);
-
+	//Should be end of line now.
+	if (assemble_eol(&line[i], &i) == 0) return DSB_ERROR(ERR_ASMTOOMANY,line);
 
 	//Insert OP into output
-	dsb_nid_op(VM_JEQ(off,varA,varB),&output[*ip]);
+	dsb_nid_op(((unsigned long long)tok->op << 32) | ((unsigned long long)off << 32) | (varA << 24) | (varB << 16) | (varC << 8) | varD,&output[*ip]);
 	*ip = *ip + 1;
 	//Insert optional constant NIDs
-	if (varA == 0) output[(*ip)++] = n1;
-	if (varB == 0) output[(*ip)++] = n2;
+	if (tok->vs > 0)
+	{
+		if (varB == 0 && tok->nvs >= 1) output[(*ip)++] = n2;
+		if (varC == 0 && tok->nvs >= 2) output[(*ip)++] = n3;
+		if (varD == 0 && tok->nvs >= 3) output[(*ip)++] = n4;
+	}
+	else
+	{
+		if (varA == 0 && tok->nvs >= 1) output[(*ip)++] = n1;
+		if (varB == 0 && tok->nvs >= 2) output[(*ip)++] = n2;
+		if (varC == 0 && tok->nvs >= 3) output[(*ip)++] = n3;
+		if (varD == 0 && tok->nvs >= 4) output[(*ip)++] = n4;
+	}
 
-	return i;
-}
-
-static int asm_jne(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int tmp;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get an offset value
-	tmp = vm_assemble_off(labels,&line[i],&regC);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-	i += tmp;
-
-	//Must be signed char size.
-	if (regC < -128 || regC > 127) return DSB_ERROR(ERR_ASMINVALOFF,&line[i]);
-
-	//Insert OP into output
-	dsb_nid_op(VM_JNE(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_jlt(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_jgt(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_jle(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_jge(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_get(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_GET(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_def(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int tmp;
-	int regA;
-	int regB;
-	int regC;
-	int regD;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	++i;
-
-	//Get an evaluator value
-	tmp = vm_assemble_off(labels,&line[i],&regD);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-	i += tmp;
-
-	//Insert OP into output
-	dsb_nid_op(VM_DEF(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_dep(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-	int regD;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	++i;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regD, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_DEP(regA,regB,regC,regD),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_new(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_del(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_cpy(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i = 0;
-	int regA, regB;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_CPY(regA,regB),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_ret(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_RET(regA),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_const(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-
-	//Insert OP into output
-	dsb_nid_fromStr(&line[i],&output[*ip]);
-	*ip = *ip + 1;
-
-	return 0;
-}
-
-static int asm_inc(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_INC(regA),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_dec(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_DEC(regA),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_add(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_ADD(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_sub(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_SUB(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_mul(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_MUL(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_div(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_DIV(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_and(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_AND(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_or(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_OR(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_xor(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-	int regC;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regC, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_XOR(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_neg(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int i=0;
-	int regA;
-	int regB;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White Space.
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regB, &i) == 0) return ERR_ASMNOTREG;
-
-	//Insert OP into output
-	dsb_nid_op(VM_NEG(regA,regB),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_shl(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int tmp;
-	int regA;
-	int regB;
-	int regC = 0;
-	int i = 0;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White space
-
-	//Get an offset value
-	tmp = vm_assemble_off(labels,&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-	i += tmp;
-
-	//Insert OP into output
-	dsb_nid_op(VM_SHL(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_shr(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	int tmp;
-	int regA;
-	int regB;
-	int regC = 0;
-	int i = 0;
-
-	//Get a register
-	if (vm_assemble_reg(&line[i],&regA, &i) == 0) return ERR_ASMNOTREG;
-
-	++i; //White space
-
-	//Get an offset value
-	tmp = vm_assemble_off(labels,&line[i],&regB);
-	if (tmp == 0) return DSB_ERROR(ERR_ASMNOTOFF,&line[i]);
-	i += tmp;
-
-	//Insert OP into output
-	dsb_nid_op(VM_SHR(regA,regB,regC),&output[*ip]);
-	*ip = *ip + 1;
-
-	return i;
-}
-
-static int asm_clr(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_int(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
-	return 0;
-}
-
-static int asm_flt(struct VMLabel *labels, const char *line, NID_t *output, int *ip)
-{
 	return 0;
 }
 
 static struct AsmToken asmops[] = {
-		ASMOP(jmp),
-		ASMOP(jeq),
-		ASMOP(jne),
-		ASMOP(jlt),
-		ASMOP(jgt),
-		ASMOP(jle),
-		ASMOP(jge),
+		//Name, OP, LS, VS, NVS
+		ASMOP(jmp,VMOP_JMP,1,0,0),
+		ASMOP(jeq,VMOP_JEQ,1,0,2),
+		ASMOP(jne,VMOP_JNE,1,0,2),
+		ASMOP(jlt,VMOP_JLT,1,0,2),
+		ASMOP(jgt,VMOP_JGT,1,0,2),
+		ASMOP(jle,VMOP_JLE,1,0,2),
+		ASMOP(jge,VMOP_JGE,1,0,2),
 
-		ASMOP(get),
-		ASMOP(def),
-		ASMOP(dep),
-		ASMOP(new),
-		ASMOP(del),
+		ASMOP(get,VMOP_GET,0,1,2),
+		ASMOP(def,VMOP_DEF,0,0,3),
+		ASMOP(dep,VMOP_DEP,0,0,4),
+		ASMOP(new,VMOP_NEW,0,1,1),
+		ASMOP(del,VMOP_DEL,0,0,2),
 
-		ASMOP(cpy),
-		ASMOP(ret),
-		ASMOP(const),
+		ASMOP(cpy,VMOP_CPY,0,1,1),
+		ASMOP(ret,VMOP_RET,0,0,1),
+		//ASMOP(const),
 
-		ASMOP(inc),
-		ASMOP(dec),
-		ASMOP(add),
-		ASMOP(sub),
-		ASMOP(mul),
-		ASMOP(div),
-		ASMOP(and),
-		ASMOP(or),
-		ASMOP(xor),
-		ASMOP(neg),
-		ASMOP(shl),
-		ASMOP(shr),
-		ASMOP(clr),
-		ASMOP(int),
-		ASMOP(flt),
+		ASMOP(inc,VMOP_INC,0,1,0),
+		ASMOP(dec,VMOP_DEC,0,1,0),
+		ASMOP(add,VMOP_ADD,0,1,2),
+		ASMOP(sub,VMOP_SUB,0,1,2),
+		ASMOP(mul,VMOP_MUL,0,1,2),
+		ASMOP(div,VMOP_DIV,0,1,2),
+		ASMOP(and,VMOP_AND,0,1,2),
+		ASMOP(or,VMOP_OR,0,1,2),
+		ASMOP(xor,VMOP_XOR,0,1,2),
+		ASMOP(neg,VMOP_NEG,0,1,2),
+		ASMOP(shl,VMOP_SHL,0,1,2),
+		ASMOP(shr,VMOP_SHR,0,1,2),
+		ASMOP(clr,VMOP_CLR,0,1,0),
+		ASMOP(int,VMOP_INT,0,1,1),
+		ASMOP(flt,VMOP_FLT,0,1,1),
 
 		//TODO high level ops.
-		{"null",0}
+		{"null",0,0,0,0}
 };
 
 /*
@@ -856,10 +378,7 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 	//Do we have a label?
 	if (line[i] == ':')
 	{
-		++i;
-		//Skip label then white space
-		while (line[i] != 0 && line[i] != ' ' && line[i] != '\t' && line[i] != '\n') ++i;
-		while (line[i] == ' ' || line[i] == '\t') ++i;
+		return 0;
 	}
 
 	//Parse operation into buffer (space ends op)
@@ -870,15 +389,20 @@ int dsb_assemble_line(struct VMLabel *labels, const char *line, NID_t *output, i
 
 	//Search for operation parser function
 	i = 0;
-	while (asmops[i].opfunc != 0)
+	while (asmops[i].op != 0)
 	{
 		if (strcmp(opbuf,asmops[i].name) == 0)
 		{
 			//Parse operands and generate opcode.
-			asmops[i].opfunc(labels,tmp+1,output,ip);
+			assemble_op(&asmops[i],labels,tmp+1,output,ip);
 			break;
 		}
 		i++;
+	}
+
+	if (asmops[i].op == 0)
+	{
+		DSB_ERROR(ERR_ASMUNKOP,line);
 	}
 
 	return 1;
@@ -910,9 +434,12 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 	int i;
 	int ip = 0;
 
+	varid = 0;
+
 	for (i=0; i<MAX_LABELS; i++)
 	{
 		labels[i].lip = -1;
+		//labels[i].mode = 0;
 	}
 
 	//For every line
@@ -930,17 +457,16 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 		if (source[i] == ':')
 		{
 			//Add the label
-			vm_assemble_addlabel(labels,&source[i+1],&ip);
-			++i;
-			//Skip label then white space
-			while (source[i] != 0 && source[i] != ' ' && source[i] != '\t' && source[i] != '\n') ++i;
-			while (source[i] == ' ' || source[i] == '\t') ++i;
+			vm_assemble_addlabel(labels,&source[i+1],&ip, 0);
 		}
-
-		//Is the line an instruction
-		if (source[i] != '\n' && source[i] != '#' && source[i] != 0)
+		else
 		{
-			ip++;
+			//Is the line an instruction
+			if (source[i] != '\n' && source[i] != '#' && source[i] != 0)
+			{
+				//Needs to figure out number of constant params.
+				ip++;
+			}
 		}
 
 		//Move to next line if there is one.

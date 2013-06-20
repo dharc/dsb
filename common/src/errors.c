@@ -71,9 +71,14 @@ const char *dsb_log_str(int err)
 	case ERR_NETRESULT:			return "Unexpected event result";
 	case ERR_NETCB:				return "Net message callback error";
 
-	case ERR_ASMNOTREG:			return "Invalid asm variable";
-	case ERR_ASMNOTOFF:			return "Invalid asm NID";
-	case ERR_ASMINVALOFF:		return "Invalid asm label";
+	case ERR_ASMNOTVAR:			return "Expected a variable";
+	case ERR_ASMNOTOFF:			return "Assembler: Expected a label";
+	case ERR_ASMINVALOFF:		return "Assembler: Invalid asm label";
+	case ERR_ASMMISSING:		return "Assembler: Missing parameter";
+	case ERR_ASMTOOMANY:		return "Assembler: Too many parameters";
+	case ERR_ASMUNKOP:			return "Assembler: Unknown operation";
+
+	case ERR_VMINVALIP:			return "VM: Unknown instruction";
 
 	case INFO_NETACCEPT:		return "New connection.";
 	case INFO_NETLISTEN:		return "Net Listening";

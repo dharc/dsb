@@ -141,7 +141,7 @@ typedef struct HARC HARC_t;
 #define VMGET_D(A)			((A) & 0xFF)
 
 //Extract op code without var numbers or address.
-#define VMGET_OP(A)			((A) & 0xFFFF000000000000)
+#define VMGET_OP(A)			(((A) & 0xFFFF000000000000) >> 32)
 
 #define VMGET_LABEL(A)		(((A) >> 32) & 0xFFFF)
 

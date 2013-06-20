@@ -74,24 +74,26 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 	unsigned int varno;
 	unsigned int varno2;
 	unsigned int varno3;
+	NID_t *n1;
+	NID_t *n2;
 	//unsigned int varno4;
 
 	//Main VM loop.
 	while ((ctx->ip < ctx->codesize) && (ctx->timeout-- > 0))
 	{
 		//Not a valid instruction.
-		if (ctx->code[ctx->ip].t != NID_VMOP)	return -1;
+		if (ctx->code[ctx->ip].t != NID_VMOP)	return DSB_ERROR(ERR_VMINVALIP,0);
 		op = ctx->code[ctx->ip].ll;
 
 		//Switch on operation type.
 		switch(VMGET_OP(op))
 		{
 		case VMOP_RET:		varno = VMGET_A(op);
-							*ctx->result = (varno == 0) ? ctx->code[ctx->ip++] : ctx->vars[varno-1];
+							*ctx->result = (varno == 0) ? ctx->code[++ctx->ip] : ctx->vars[varno-1];
 							return -1;
 
 		case VMOP_CPY:		varno = VMGET_B(op);
-							ctx->vars[VMGET_A(op)-1] = (varno == 0) ? ctx->code[ctx->ip++] : ctx->vars[varno-1];
+							ctx->vars[VMGET_A(op)-1] = (varno == 0) ? ctx->code[++ctx->ip] : ctx->vars[varno-1];
 							break;
 
 		case VMOP_JMP:		ctx->ip = (short)(VMGET_LABEL(op));
@@ -99,26 +101,20 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 
 		case VMOP_JEQ:		varno = VMGET_A(op);
 							varno2 = VMGET_B(op);
-#pragma GCC diagnostic ignored "-Wsequence-point"
-							if (dsb_nid_eq(
-								(varno == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno-1],
-								(varno2 == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno2-1]
-								) == 1)
+							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
+							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							if (dsb_nid_eq(n1,n2) == 1)
 							{
 								ctx->ip = (short)(VMGET_LABEL(op)); continue;
 							}
-#pragma GCC diagnostic pop
 							break;
 
 		case VMOP_GET:		varno = VMGET_A(op);
 							varno2 = VMGET_B(op);
 							varno3 = VMGET_C(op);
-#pragma GCC diagnostic ignored "-Wsequence-point"
-							dsb_get(
-								(varno2 == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno2-1],
-								(varno3 == 0) ? &ctx->code[ctx->ip++] : &ctx->vars[varno3-1],
-								&ctx->vars[varno-1]);
-#pragma GCC diagnostic pop
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_get(n1,n2,&ctx->vars[varno-1]);
 							break;
 
 
@@ -129,7 +125,7 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 		//case VMOP_INC:		ctx->reg[VMREG_A(op)].ll++;
 		//					break;
 
-		default: break;
+		default: return DSB_ERROR(ERR_VMINVALIP,0);
 		}
 
 		ctx->ip++;

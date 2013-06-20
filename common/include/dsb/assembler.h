@@ -46,6 +46,7 @@ struct VMLabel
 {
 	char label[10];
 	int lip;
+	int mode;		//0 = label, 1 = variable
 };
 
 #define MAX_LABELS		100
