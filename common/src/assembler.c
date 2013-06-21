@@ -43,6 +43,8 @@ either expressed or implied, of the FreeBSD Project.
 #include <malloc.h>
 #include <string.h>
 
+#define TOKEN_COMMENT ';'
+
 //Auto split ops into functions.
 struct AsmToken
 {
@@ -134,7 +136,10 @@ static int assemble_off(struct AsmContext *ctx,const char *line, int *off, int *
 
 	if (line[0] == '$')
 	{
-		return DSB_ERROR(ERR_ASMNOTOFF,line);
+		char errbuf[100];
+		sprintf(errbuf,"offset or label expected :%d",ctx->line);
+		ctx->error = 1;
+		return DSB_ERROR(ERR_ASMNOTOFF,errbuf);
 	}
 
 	//Is it a label?
@@ -229,7 +234,7 @@ static int assemble_eol(const char *line, int *ix)
 	int i=0;
 	while (line[i] == ' ' || line[i] == '\t') i++;
 	*ix = *ix + i;
-	if (line[i] == '\n' || line[i] == 0) return 1;
+	if ((line[i] == '\n') || (line[i] == 0) || (line[i] == TOKEN_COMMENT)) return 1;
 	return 0;
 }
 
@@ -254,6 +259,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 		{
 			char errbuf[100];
 			sprintf(errbuf,"label expected :%d",ctx->line);
+			ctx->error = 1;
 			return DSB_ERROR(ERR_ASMMISSING,errbuf);
 		}
 		if (assemble_off(ctx,&line[i],&off,&i) != 0) return 0;
@@ -265,6 +271,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 		{
 			char errbuf[100];
 			sprintf(errbuf,"variable expected :%d",ctx->line);
+			ctx->error = 1;
 			return DSB_ERROR(ERR_ASMMISSING,errbuf);
 		}
 		varA = assemble_var(ctx, &line[i], &i);
@@ -272,6 +279,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 		{
 			char errbuf[100];
 			sprintf(errbuf,":%d",ctx->line);
+			ctx->error = 1;
 			return DSB_ERROR(ERR_ASMNOTVAR,errbuf);
 		}
 
@@ -281,6 +289,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 			{
 				char errbuf[100];
 				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				ctx->error = 1;
 				return DSB_ERROR(ERR_ASMMISSING,errbuf);
 			}
 			varB = assemble_nidvar(ctx, &line[i], &n2, &i);
@@ -291,6 +300,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 			{
 				char errbuf[100];
 				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				ctx->error = 1;
 				return DSB_ERROR(ERR_ASMMISSING,errbuf);
 			}
 			varC = assemble_nidvar(ctx, &line[i], &n3, &i);
@@ -301,6 +311,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 			{
 				char errbuf[100];
 				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				ctx->error = 1;
 				return DSB_ERROR(ERR_ASMMISSING,errbuf);
 			}
 			varD = assemble_nidvar(ctx, &line[i], &n4, &i);
@@ -314,6 +325,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 			{
 				char errbuf[100];
 				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				ctx->error = 1;
 				return DSB_ERROR(ERR_ASMMISSING,errbuf);
 			}
 			varA = assemble_nidvar(ctx, &line[i], &n1, &i);
@@ -324,6 +336,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 			{
 				char errbuf[100];
 				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				ctx->error = 1;
 				return DSB_ERROR(ERR_ASMMISSING,errbuf);
 			}
 			varB = assemble_nidvar(ctx, &line[i], &n2, &i);
@@ -334,6 +347,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 			{
 				char errbuf[100];
 				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				ctx->error = 1;
 				return DSB_ERROR(ERR_ASMMISSING,errbuf);
 			}
 			varC = assemble_nidvar(ctx, &line[i], &n3, &i);
@@ -344,6 +358,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 			{
 				char errbuf[100];
 				sprintf(errbuf,"variable or NID expected :%d",ctx->line);
+				ctx->error = 1;
 				return DSB_ERROR(ERR_ASMMISSING,errbuf);
 			}
 			varD = assemble_nidvar(ctx, &line[i], &n4, &i);
@@ -355,6 +370,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 	{
 		char errbuf[100];
 		sprintf(errbuf,"%5s :%d",&line[i],ctx->line);
+		ctx->error = 1;
 		return DSB_ERROR(ERR_ASMTOOMANY,errbuf);
 	}
 
@@ -435,7 +451,7 @@ int dsb_assemble_line(struct AsmContext *ctx, const char *line)
 	//Check for blank line or end of input.
 	if (line[i] == 0 || line[i] == '\n') return 0;
 	//Check for a comment line.
-	if (line[i] == '#') return 0;
+	if (line[i] == TOKEN_COMMENT) return 0;
 
 	//Do we have a label?
 	if (line[i] == ':')
@@ -467,6 +483,7 @@ int dsb_assemble_line(struct AsmContext *ctx, const char *line)
 	{
 		char errbuf[100];
 		sprintf(errbuf,"%s :%d",opbuf,ctx->line);
+		ctx->error = 1;
 		DSB_ERROR(ERR_ASMUNKOP,errbuf);
 	}
 
@@ -476,6 +493,7 @@ int dsb_assemble_line(struct AsmContext *ctx, const char *line)
 int dsb_assemble_compile(struct AsmContext *ctx, const char *source)
 {
 	ctx->ip = 0;
+	ctx->error = 0;
 	ctx->line = 1;
 
 	//For every line
@@ -573,24 +591,45 @@ int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 {
 	int i;
-	char buf[100];
+	int j;
+	//char buf[100];
+	//int varA;
+	//int varB;
+	//int varC;
+	//int varD;
+	//int off;
+	int op;
 
 	for (i=0; i<size; i++)
 	{
 		if (src[i].header == 0 && src[i].t == NID_VMOP)
 		{
-			switch(VMGET_OP(src[i].ll))
+			op = VMGET_OP(src[i].ll);
+			//varA = VMGET_A(src[i].ll);
+			//varB = VMGET_A(src[i].ll);
+			//varC = VMGET_A(src[i].ll);
+			//varD = VMGET_A(src[i].ll);
+			//off = VMGET_LABEL(src[i].ll);
+
+			j = 0;
+			while (asmops[j].op != 0)
 			{
-			case VMOP_RET:	sprintf(output,"ret %%%d\n",(unsigned int)VMGET_A(src[i].ll)); break;
-			default: break;
+				if (op == asmops[j].op)
+				{
+					//DECODE OP
+					sprintf(output,"%s\n",asmops[j].name);
+					break;
+				}
+				j++;
 			}
+
+			output += strlen(output);
 		}
 		else
 		{
-			dsb_nid_toStr(&src[i],buf,100);
-			sprintf(output,"data %s\n",buf);
+			//ERROR
 		}
-		output += strlen(output);
+
 	}
 	return 0;
 }

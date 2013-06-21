@@ -56,6 +56,7 @@ struct AsmContext
 	int maxout;
 	int line;
 	struct VMLabel *labels;
+	int error;
 };
 
 #define MAX_LABELS		100
