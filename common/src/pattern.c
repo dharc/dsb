@@ -32,10 +32,10 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/pattern.h"
-#include "dsb/pattern_types.h"
-#include "dsb/nid.h"
-#include "dsb/specials.h"
+#include "dsb/patterns/pattern.h"
+#include "dsb/patterns/pattern_types.h"
+#include "dsb/core/nid.h"
+#include "dsb/core/specials.h"
 #include "dsb/wrap.h"
 #include "dsb/names.h"
 #include "dsb/globals.h"

@@ -33,11 +33,11 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/test.h"
-#include "dsb/nid.h"
-#include "dsb/event.h"
+#include "dsb/core/nid.h"
+#include "dsb/core/event.h"
 #include "dsb/router.h"
-#include "dsb/module.h"
-#include "dsb/specials.h"
+#include "dsb/core/module.h"
+#include "dsb/core/specials.h"
 
 int dsb_send(struct Event *evt)
 {

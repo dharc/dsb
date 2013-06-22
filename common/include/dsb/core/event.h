@@ -39,8 +39,8 @@ either expressed or implied, of the FreeBSD Project.
 
 #define MAX_EVENT_PARAMS	6
 
-#include "dsb/harc.h"
-#include "dsb/nid.h"
+#include "dsb/core/harc.h"
+#include "dsb/core/nid.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -1,5 +1,5 @@
-#include "dsb/harc.h"
-#include "dsb/nid.h"
+#include "dsb/core/harc.h"
+#include "dsb/core/nid.h"
 #include "dsb/errors.h"
 
 HARC_t *dsb_harc(const NID_t *t1, const NID_t *t2, HARC_t *harc)

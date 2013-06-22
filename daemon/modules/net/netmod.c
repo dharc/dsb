@@ -56,9 +56,9 @@ typedef int socklen_t;
 #define SOCKET_ERROR -1
 #endif
 
-#include "dsb/module.h"
+#include "dsb/core/module.h"
 #include "dsb/errors.h"
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 #include "dsb/net.h"
 #include "dsb/net_protocol.h"
 #include "dsb/router.h"

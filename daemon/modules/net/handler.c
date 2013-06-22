@@ -32,7 +32,7 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/net.h"
 #include "dsb/net_protocol.h"
 #include "dsb/errors.h"

@@ -32,13 +32,13 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/vm.h"
-#include "dsb/harc.h"
+#include "dsb/core/vm.h"
+#include "dsb/core/harc.h"
 #include "dsb/errors.h"
-#include "dsb/nid.h"
-#include "dsb/specials.h"
+#include "dsb/core/nid.h"
+#include "dsb/core/specials.h"
 #include "dsb/wrap.h"
-#include "dsb/array.h"
+#include "dsb/patterns/array.h"
 #include "dsb/assembler.h"
 #include <malloc.h>
 #include <string.h>

@@ -32,12 +32,12 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/harc.h"
-#include "dsb/nid.h"
+#include "dsb/core/harc.h"
+#include "dsb/core/nid.h"
 #include "dsb/errors.h"
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/evaluator.h"
-#include "dsb/dependency.h"
+#include "dsb/core/dependency.h"
 #include "dsb/wrap.h"
 #include <malloc.h>
 

@@ -1,5 +1,5 @@
 #include "dsb/test.h"
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 #include "dsb/errors.h"
 #include <string.h>
 #include <stdio.h>

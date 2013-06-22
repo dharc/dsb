@@ -32,9 +32,9 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/module.h"
+#include "dsb/core/module.h"
 #include "dsb/router.h"
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
 #include "dsb/evaluator.h"
 #include "dsb/harc_d.h"

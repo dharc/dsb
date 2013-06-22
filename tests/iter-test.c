@@ -33,10 +33,10 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/test.h"
-#include "dsb/iterator.h"
+#include "dsb/algorithms/iterator.h"
 #include "dsb/wrap.h"
-#include "dsb/event.h"
-#include "dsb/specials.h"
+#include "dsb/core/event.h"
+#include "dsb/core/specials.h"
 
 int dsb_send(struct Event *evt)
 {

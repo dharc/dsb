@@ -33,10 +33,10 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/wrap.h"
-#include "dsb/nid.h"
-#include "dsb/event.h"
+#include "dsb/core/nid.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
-#include "dsb/array.h"
+#include "dsb/patterns/array.h"
 #include "dsb/globals.h"
 
 //Needs to be implemented elsewhere.

@@ -32,7 +32,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef _HARC_H_
 #define _HARC_H_
 
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 #include "dsb/config.h"
 
 #include <stdio.h>

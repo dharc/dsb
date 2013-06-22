@@ -1,4 +1,4 @@
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
 #include <malloc.h>
 #include <string.h>

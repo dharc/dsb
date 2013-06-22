@@ -35,12 +35,12 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef COMMON_H_
 #define COMMON_H_
 
-#include "dsb/nid.h"
-#include "dsb/event.h"
+#include "dsb/core/nid.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
 #include "dsb/wrap.h"
 #include "dsb/net.h"
-#include "dsb/module.h"
+#include "dsb/core/module.h"
 #include "dsb/names.h"
 
 #ifdef __cplusplus

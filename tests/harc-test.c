@@ -33,15 +33,15 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/test.h"
-#include "dsb/harc.h"
+#include "dsb/core/harc.h"
 #include "dsb/harc_d.h"
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 #include "dsb/wrap.h"
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/evaluator.h"
 #include "dsb/errors.h"
-#include "dsb/module.h"
-#include "dsb/dependency.h"
+#include "dsb/core/module.h"
+#include "dsb/core/dependency.h"
 #include <malloc.h>
 
 Event_t lastevt;

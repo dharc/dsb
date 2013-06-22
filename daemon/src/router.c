@@ -33,10 +33,10 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/router.h"
-#include "dsb/nid.h"
-#include "dsb/event.h"
+#include "dsb/core/nid.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
-#include "dsb/harc.h"
+#include "dsb/core/harc.h"
 
 static int (*localvolatile[16])(struct Event *);
 static int (*localpersist[16])(struct Event *);

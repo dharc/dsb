@@ -33,9 +33,9 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/test.h"
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 #include "dsb/names.h"
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
 
 #include <string.h>

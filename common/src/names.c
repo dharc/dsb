@@ -32,15 +32,15 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 #include "dsb/globals.h"
-#include "dsb/specials.h"
-#include "dsb/string.h"
-#include "dsb/array.h"
+#include "dsb/core/specials.h"
+#include "dsb/patterns/string.h"
+#include "dsb/patterns/array.h"
 #include "dsb/names.h"
 #include "dsb/errors.h"
 #include "dsb/wrap.h"
-#include "dsb/thread.h"
+#include "dsb/core/thread.h"
 
 #include <string.h>
 #include <malloc.h>

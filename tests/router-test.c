@@ -34,8 +34,8 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/test.h"
 #include "dsb/router.h"
-#include "dsb/event.h"
-#include "dsb/nid.h"
+#include "dsb/core/event.h"
+#include "dsb/core/nid.h"
 
 int math_handler1_called = 0;
 

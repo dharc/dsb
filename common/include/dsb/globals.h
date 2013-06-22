@@ -37,7 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 
 /** @file globals.h */
 
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 
 #ifdef __cplusplus
 extern "C"

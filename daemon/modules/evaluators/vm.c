@@ -32,10 +32,10 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/vm.h"
-#include "dsb/harc.h"
+#include "dsb/core/vm.h"
+#include "dsb/core/harc.h"
 #include "dsb/errors.h"
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 
 /*
  * DSB Virtual Machine Evaluator. Takes DSB intermediate code and interprets it

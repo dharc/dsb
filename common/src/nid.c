@@ -1,6 +1,6 @@
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 #include "dsb/errors.h"
-#include "dsb/specials.h"
+#include "dsb/core/specials.h"
 #include "dsb/names.h"
 #include <string.h>
 #include <stdlib.h>

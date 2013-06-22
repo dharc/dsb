@@ -32,9 +32,9 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/clone.h"
-#include "dsb/nid.h"
-#include "dsb/iterator.h"
+#include "dsb/algorithms/clone.h"
+#include "dsb/core/nid.h"
+#include "dsb/algorithms/iterator.h"
 #include "dsb/wrap.h"
 
 int dsb_clone_shallow(const NID_t *src, const NID_t *dest)

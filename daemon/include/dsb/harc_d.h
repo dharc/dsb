@@ -37,7 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 
 /** @file harc_d.h */
 
-#include "dsb/harc.h"
+#include "dsb/core/harc.h"
 
 /**
  * Processes an event on a hyperarc.

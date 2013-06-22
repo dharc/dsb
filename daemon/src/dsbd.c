@@ -32,7 +32,7 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/module.h"
+#include "dsb/core/module.h"
 #include "dsb/errors.h"
 #include "dsb/processor.h"
 #include "dsb/router.h"

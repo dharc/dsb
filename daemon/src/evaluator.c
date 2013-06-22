@@ -33,7 +33,7 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/evaluator.h"
-#include "dsb/harc.h"
+#include "dsb/core/harc.h"
 #include "dsb/errors.h"
 
 typedef int (*eval_t)(HARC_t *harc);

@@ -33,13 +33,13 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/processor.h"
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
 #include "dsb/router.h"
-#include "dsb/module.h"
+#include "dsb/core/module.h"
 #include "dsb/net_protocol.h"
 #include "dsb/config.h"
-#include "dsb/thread.h"
+#include "dsb/core/thread.h"
 #include <malloc.h>
 #include <unistd.h>
 #include <sys/time.h>

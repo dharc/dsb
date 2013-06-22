@@ -33,7 +33,7 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/evaluator.h"
-#include "dsb/module.h"
+#include "dsb/core/module.h"
 #include "dsb/errors.h"
 #include "dsb/globals.h"
 #include "dsb/wrap.h"

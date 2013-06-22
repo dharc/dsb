@@ -35,7 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef NET_PROTOCOL_H_
 #define NET_PROTOCOL_H_
 
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 
 /**
  * @file net_protocol.h

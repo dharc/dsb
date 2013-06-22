@@ -32,11 +32,11 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/iterator.h"
-#include "dsb/nid.h"
+#include "dsb/algorithms/iterator.h"
+#include "dsb/core/nid.h"
 #include "dsb/wrap.h"
 #include "dsb/globals.h"
-#include "dsb/array.h"
+#include "dsb/patterns/array.h"
 
 #include <malloc.h>
 

@@ -42,7 +42,7 @@ extern "C"
 {
 #endif
 
-#include "dsb/nid.h"
+#include "dsb/core/nid.h"
 
 typedef struct HARC HARC_t;
 

@@ -34,7 +34,7 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/test.h"
 #include "dsb/processor.h"
-#include "dsb/event.h"
+#include "dsb/core/event.h"
 #include "dsb/errors.h"
 
 //extern int queue_insert(int q, Event_t *e);
