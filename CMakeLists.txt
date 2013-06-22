@@ -57,6 +57,9 @@ target_link_libraries(proc-test dsbcommon)
 add_executable(vm-test tests/vm-test.c)
 target_link_libraries(vm-test dsbcommon)
 
+add_executable(vm-perf tests/vm-perf.c)
+target_link_libraries(vm-perf dsbcommon)
+
 add_executable(asm-test tests/asm-test.c)
 target_link_libraries(asm-test dsbcommon)
 

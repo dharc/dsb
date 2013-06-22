@@ -42,6 +42,10 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/globals.h"
 #include <malloc.h>
 
+//#ifdef X86_64
+#include "arch/vm_x86_64.c"
+//#endif
+
 int dsb_vm_call(const NID_t *func, const HARC_t *harc, NID_t *res)
 {
 	int maxip;	//End of instructions.
@@ -62,7 +66,7 @@ int dsb_vm_interpret(NID_t *code, int maxip, const HARC_t *harc, NID_t *res)
 {
 	struct VMContext ctx;
 	ctx.ip = 0;
-	ctx.timeout = 10000;
+	ctx.timeout = 10000000;
 	ctx.code = code;
 	ctx.codesize = maxip;
 	ctx.result = res;

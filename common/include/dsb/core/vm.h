@@ -187,6 +187,8 @@ int dsb_vm_interpret(NID_t *code, int maxip, const HARC_t *harc, NID_t *res);
 
 int dsb_vm_interpret_ctx(struct VMContext *ctx);
 
+int dsb_vm_arch_compile(NID_t *code, int size, void **output);
+
 
 #ifdef __cplusplus
 }
