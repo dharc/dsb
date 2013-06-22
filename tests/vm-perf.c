@@ -70,7 +70,9 @@ int generate_benchmark2()
 	int ip = 0;
 
 	dsb_nid_op(VM_CPY(1,2),&code[ip++]);	//cpy $count 100000
-	dsb_nid_op(0,&code[ip++]);
+	dsb_nid_op(VM_INC(1),&code[ip++]);
+	dsb_nid_op(VM_RET(3),&code[ip++]);
+	//dsb_nid_op(0,&code[ip++]);
 	return ip;
 }
 
@@ -98,7 +100,9 @@ int main(int argc, char *argv[])
 	long long ticks;
 	double secs;
 	int i;
-	void *output;
+	int (*output)(void *);
+	int size;
+	NID_t vars[16];
 
 	dsb_nid_init();
 	dsb_event_init();
@@ -120,9 +124,18 @@ int main(int argc, char *argv[])
 	secs = (double)ticks / 1000000.0;
 	printf("Benchmark 1: %fs or %.2f kop/s\n",(float)secs,300004000.0 / (float)secs / 100000.0);
 
-	//generate_benchmark2();
+	size = generate_benchmark2();
 	//Now compile the code
-	dsb_vm_arch_compile(code,100,&output);
+	dsb_vm_arch_compile(code,size,(void**)&output);
+
+	//Init the vars
+	dsb_iton(50,&vars[0]);
+	dsb_iton(60,&vars[1]);
+
+	//Now run the code!!!!!!!!!!
+	size = output(&vars);
+
+	printf("Woo = %d -> %llu\n",size,vars[0].ll);
 
 	dsb_event_final();
 	dsb_nid_final();
