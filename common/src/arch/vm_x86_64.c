@@ -84,25 +84,34 @@ either expressed or implied, of the FreeBSD Project.
 
 #define OPSIZE_64	0x48
 
+//x86 byte order
 #define EMIT8(A)	((unsigned char*)output)[(*rip)++] = (unsigned char)A
-#define EMIT16(A)	EMIT8((A) >> 8); EMIT8(A & 0xFF)
 #define EMIT32(A)	EMIT8((A) & 0xFF); EMIT8(((A) >> 8) & 0xFF); EMIT8(((A) >> 16) & 0xFF); EMIT8((A) >> 24)
+#define EMIT64(A)	EMIT8((A) & 0xFF); EMIT8(((A) >> 8) & 0xFF); EMIT8(((A) >> 16) & 0xFF); EMIT8(((A) >> 24) &0xFF); EMIT8(((A) >> 32) &0xFF); EMIT8(((A) >> 40) &0xFF); EMIT8(((A) >> 48) &0xFF); EMIT8(((A) >> 56) &0xFF);
 
 //2byte OPS
 //R2 is always address register.
+
+//Move register to register
 #define MOVQ(R1,R2)			EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x88)); EMIT8(REGADDR(R1,R2))
+
+//Move to mem with 32bit displacement
 #define MOVQ_R32(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_R(0x88)); EMIT8(DISP32(R1,R2)) //+disp
 #define MOVQ_W32(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x88)); EMIT8(DISP32(R1,R2)) //+disp
 #define LEAQ(R1,R2)			EMIT8(OPSIZE_64); EMIT8(OP_64(0x8D)); EMIT8(DISP32(R1,R2)) //+disp
 
+//Move to mem with 8bit displacement.
 #define MOVQ_R8(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_R(0x88)); EMIT8(DISP8(R1,R2)) //+disp
 #define MOVQ_W8(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x88)); EMIT8(DISP8(R1,R2)) //+disp
 #define LEAQ_8(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64(0x8D)); EMIT8(DISP8(R1,R2)) //+disp
 
+//Move to mem with no displacement.
 #define MOVQ_R(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_R(0x88)); EMIT8(INDIRECT(R1,R2))
 #define MOVQ_W(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x88)); EMIT8(INDIRECT(R1,R2))
 
+//Move constant into register R
 #define MOVQ_I32(R)			EMIT8(OPSIZE_64); EMIT8(0xC7); EMIT8(REGADDR(0,R)); // + 32bit immediate.
+#define MOVQ_I64(R)			EMIT8(OPSIZE_64); EMIT8(0xB8 | R); // + 64bit
 
 //1byte OPS
 #define PUSHQ(R)	EMIT8(0x50 | R)
@@ -111,7 +120,7 @@ either expressed or implied, of the FreeBSD Project.
 
 static int gen_init(void *output, int *rip)
 {
-
+	//Save stack stuff and get vars parameter into rax.
 	PUSHQ(RBP);						// pushq %rbp
 	MOVQ(RSP,RBP);					// movq %rsp, %rbp
 	MOVQ_W8(RDI,RBP); EMIT8(-8);	// movq %rdi, -8(%rbp)
@@ -161,6 +170,14 @@ static int gen_copy_vc(int a, NID_t *b, void *output, int *rip)
 	unsigned long long *bp = (unsigned long long*)b;
 	//Actual memory offsets
 	a = a * sizeof(NID_t);
+
+	MOVQ_I64(RCX); EMIT64(bp[0]);
+	if (a == 0) { MOVQ_W(RCX,RAX); }
+	else { MOVQ_W8(RCX,RAX); EMIT8(a+0); }
+	MOVQ_I64(RCX); EMIT64(bp[1]);
+	MOVQ_W8(RCX,RAX); EMIT8(a+8);
+	MOVQ_I64(RCX); EMIT64(bp[2]);
+	MOVQ_W8(RCX,RAX); EMIT8(a+16);
 
 	printf("movq $%llu, %%rcx\n", bp[0]);
 	printf("movq %%rcx, %d(%%rax)\n", a+0);
@@ -229,11 +246,12 @@ int dsb_vm_arch_compile(NID_t *code, int size, void **output)
 	//unsigned int varC;
 	//unsigned int varD;
 
-	//*output = malloc(1000);
+	//Allocate executable memory.
 	*output = mmap(0,1000,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANON,-1,0);
 
 	if (output == 0) return DSB_ERROR(ERR_NOEXECMEM,0);
 
+	//Prefix code.
 	gen_init(*output,&rip);
 
 	while (ip < size)
@@ -248,7 +266,7 @@ int dsb_vm_arch_compile(NID_t *code, int size, void **output)
 		switch (op)
 		{
 		case VMOP_CPY:	if (varB != 0) { gen_copy_vv(varA-1,varB-1,*output,&rip); }
-						else { gen_copy_vc(varA-1,&code[++ip],output,&rip); }
+						else { gen_copy_vc(varA-1,&code[++ip],*output,&rip); }
 						break;
 		case VMOP_INC:	gen_inc_v(varA-1,*output,&rip);
 						break;

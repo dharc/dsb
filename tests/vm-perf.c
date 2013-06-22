@@ -69,9 +69,12 @@ int generate_benchmark2()
 {
 	int ip = 0;
 
-	dsb_nid_op(VM_CPY(1,2),&code[ip++]);	//cpy $count 100000
+	dsb_nid_op(VM_CPY(1,0),&code[ip++]);	//cpy $count 100000
+	code[ip].header = 0;
+	code[ip].t = 1;
+	code[ip++].ll = 0x4546474849;
 	dsb_nid_op(VM_INC(1),&code[ip++]);
-	dsb_nid_op(VM_RET(3),&code[ip++]);
+	dsb_nid_op(VM_RET(1),&code[ip++]);
 	//dsb_nid_op(0,&code[ip++]);
 	return ip;
 }
