@@ -160,33 +160,30 @@ static int gen_init(void *output, int *rip)
  */
 static int gen_readVar(int v, int ix, int reg, void *output, int *rip)
 {
-	MOVQ_R8(RAX,RBP); EMIT8(-8);	// movq -8(%rbp), %rax
-	if (v != 0) { ADDQ_I8(RAX); EMIT8(v); }			// addq $v, %rax
-	if (ix == 0) { MOVQ_R(reg,RAX); }
-	else { MOVQ_R8(reg,RAX); EMIT8(ix*8); }	// movq ix*8(%rax), %reg
-
-
-	//printf("movq -8(%%rbp), %%rax\n");
-	//if (v != 0) printf("addq $%d, %%rax\n",v);
-	//printf("movq %d(%%rax), %%%d\n",ix*8,reg);
+	MOVQ_R8(RAX,RBP); EMIT8(-8);				// movq -8(%rbp), %rax
+	if (v != 0) { ADDQ_I8(RAX); EMIT8(v); }		// addq $v, %rax
+	if (ix == 0) { MOVQ_R(reg,RAX); }			// movq (%rax), %reg
+	else { MOVQ_R8(reg,RAX); EMIT8(ix*8); }		// movq ix*8(%rax), %reg
 
 	return 0;
 }
 
+/*
+ * Write reg back into var v (component ix).
+ */
 static int gen_writeVar(int v, int ix, int reg, void *output, int *rip)
 {
-	MOVQ_R8(RAX,RBP); EMIT8(-8);	// movq -8(%rbp), %rax
-	if (v != 0) { ADDQ_I8(RAX); EMIT8(v); }			// addq $v, %rax
-	if (ix == 0) { MOVQ_W(reg,RAX); }
-	else { MOVQ_W8(reg,RAX); EMIT8(ix*8); }	// movq %reg, ix*8(%rax)
-
-	//printf("movq -8(%%rbp), %%rax\n");
-	//if (v != 0) printf("addq $%d, %%rax\n",v);
-	//printf("movq %%%d, %d(%%rax)\n",reg,ix*8);
+	MOVQ_R8(RAX,RBP); EMIT8(-8);				// movq -8(%rbp), %rax
+	if (v != 0) { ADDQ_I8(RAX); EMIT8(v); }		// addq $v, %rax
+	if (ix == 0) { MOVQ_W(reg,RAX); }			// movq %reg, (%rax)
+	else { MOVQ_W8(reg,RAX); EMIT8(ix*8); }		// movq %reg, ix*8(%rax)
 
 	return 0;
 }
 
+/*
+ * Add b to c and put into a.
+ */
 static int gen_add_vvv(int a, int b, int c, void *output, int *rip)
 {
 	//Actual memory offsets.
@@ -194,13 +191,10 @@ static int gen_add_vvv(int a, int b, int c, void *output, int *rip)
 	b = b * sizeof(NID_t);
 	c = c * sizeof(NID_t);
 
-	//MOVQ_R8(RCX,RAX); EMIT8(b+16);
 	gen_readVar(b,2,RCX,output,rip);
 	gen_readVar(c,2,RAX,output,rip);
-	ADDQ(RAX,RCX);
-	//printf("add %%rax, %%rcx\n");
+	ADDQ(RAX,RCX);		//add %rax, %rcx
 	gen_writeVar(a,2,RCX,output,rip);
-	//MOVQ_W8(RCX,RAX); EMIT8(a+16);
 
 	return 0;
 }
@@ -233,21 +227,18 @@ static int gen_copy_vc(int a, NID_t *b, void *output, int *rip)
 	//Actual memory offsets
 	a = a * sizeof(NID_t);
 
-	MOVQ_I64(RCX); EMIT64(bp[0]);
-	//printf("movq $%llu, %%rcx\n", bp[0]);
+	MOVQ_I64(RCX); EMIT64(bp[0]);	//movq $bp[0], %rcx
 	gen_writeVar(a,0,RCX,output,rip);
-	MOVQ_I64(RCX); EMIT64(bp[1]);
-	//printf("movq $%llu, %%rcx\n", bp[1]);
+	MOVQ_I64(RCX); EMIT64(bp[1]);	//movq $bp[1], %rcx
 	gen_writeVar(a,1,RCX,output,rip);
-	MOVQ_I64(RCX); EMIT64(bp[2]);
-	//printf("movq $%llu, %%rcx\n", bp[2]);
+	MOVQ_I64(RCX); EMIT64(bp[2]);	//movq $bp[2], %rcx
 	gen_writeVar(a,2,RCX,output,rip);
 
 	return 0;
 }
 
 /*
- * Increment var a
+ * Increment var a by 1
  */
 static int gen_inc_v(int a, void *output, int *rip)
 {
@@ -255,31 +246,26 @@ static int gen_inc_v(int a, void *output, int *rip)
 	a = a * sizeof(NID_t);
 
 	gen_readVar(a,2,RCX,output,rip);
-	LEAQ_8(RCX,RCX); EMIT8(1);
-	//printf("leaq 1(%%rcx), %%rcx\n");
+	LEAQ_8(RCX,RCX); EMIT8(1);			//leaq 1(%rcx), %rcx
 	gen_writeVar(a,2,RCX,output,rip);
 
 	return 0;
 }
 
 /*
- * Increment var a
+ * Return var A index in rax register.
  */
 static int gen_ret_v(int a, void *output, int *rip)
 {
-	MOVQ_I32(RAX); EMIT32(a);
-	POPQ(RBP);
-	RET;
-
-	//printf("movq $%d, %%rax\n", a);
-	//printf("popq %%rbp\n");
-	//printf("ret\n");
+	MOVQ_I32(RAX); EMIT32(a);	//movq $a, %rax
+	POPQ(RBP);					//popq %rbp
+	RET;						//ret
 
 	return 0;
 }
 
 /*
- * jlt off a b
+ * Jump if a less than b.
  */
 static int gen_jlt_vv(unsigned int *iptable, int a, int b, int off, void *output, int *rip)
 {
@@ -289,15 +275,14 @@ static int gen_jlt_vv(unsigned int *iptable, int a, int b, int off, void *output
 
 	gen_readVar(b,2,RCX,output,rip);
 	gen_readVar(a,2,RAX,output,rip);
-	CMPQ(RCX,RAX);
-	//INT3;
-	//printf("cmpq %%rcx,%%rdx\n");
+	CMPQ(RCX,RAX);						//cmpq %%rcx,%rax
+	//INT3;								//int3
+
 	//Do we have the correct instruction pointer.
 	if (iptable[off] != 0xFFFFFFFF)
 	{
 		int roff = iptable[off] - (*rip) - 6;
-		JL_32; EMIT32(roff);
-		//printf("jl %d\n",roff);
+		JL_32; EMIT32(roff);			//jl d
 	}
 	else
 	{
@@ -343,7 +328,7 @@ int dsb_vm_arch_compile(NID_t *code, int size, void **output)
 		iptable[op] = 0xFFFFFFFF;
 	}
 
-	//Allocate executable memory.
+	//Allocate executable memory. Use munmap(addr,len) to free. Note, allocates pages
 	*output = mmap(0,1000,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANON,-1,0);
 
 	if (output == 0) return DSB_ERROR(ERR_NOEXECMEM,0);
