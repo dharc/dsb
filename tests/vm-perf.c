@@ -69,17 +69,17 @@ int generate_benchmark2()
 {
 	int ip = 0;
 
-	dsb_nid_op(VM_CPY(1,0),&code[ip++]);	//cpy $count 100000
-	code[ip].header = 0;
-	code[ip].t = 1;
-	code[ip++].ll = 0x4546474849;
-	dsb_nid_op(VM_INC(1),&code[ip++]);
+	//dsb_nid_op(VM_CPY(1,0),&code[ip++]);	//cpy $count 100000
+	//code[ip].header = 0;
+	//code[ip].t = 1;
+	//code[ip++].ll = 0x4546474849;
+	dsb_nid_op(VM_JLT(1,2,3),&code[ip++]);
 	dsb_nid_op(VM_RET(1),&code[ip++]);
 	//dsb_nid_op(0,&code[ip++]);
 	return ip;
 }
 
-static long long getTicks()
+/*static long long getTicks()
 {
 	#ifdef UNIX
 	unsigned long long ticks;
@@ -94,15 +94,15 @@ static long long getTicks()
 	QueryPerformanceCounter(&tks);
 	return (((unsigned long long)tks.HighPart << 32) + (unsigned long long)tks.LowPart);
 	#endif
-}
+}*/
 
 
 int main(int argc, char *argv[])
 {
 	HARC_t harc;
-	long long ticks;
-	double secs;
-	int i;
+	//long long ticks;
+	//double secs;
+	//int i;
 	int (*output)(void *);
 	int size;
 	NID_t vars[16];
@@ -110,9 +110,9 @@ int main(int argc, char *argv[])
 	dsb_nid_init();
 	dsb_event_init();
 
-	generate_benchmark1();
+	size = generate_benchmark1();
 
-	ticks = getTicks();
+	/*ticks = getTicks();
 
 	for (i=0; i<1000; i++)
 	{
@@ -125,9 +125,12 @@ int main(int argc, char *argv[])
 	ticks = getTicks() - ticks;
 
 	secs = (double)ticks / 1000000.0;
-	printf("Benchmark 1: %fs or %.2f kop/s\n",(float)secs,300004000.0 / (float)secs / 100000.0);
+	printf("Benchmark 1: %fs or %.2f kop/s\n",(float)secs,300004000.0 / (float)secs / 100000.0);*/
 
-	size = generate_benchmark2();
+	dsb_vm_interpret(code,100, 0, &harc.h);
+	printf("Interp Res = %llu\n",harc.h.ll);
+
+	//size = generate_benchmark2();
 	//Now compile the code
 	dsb_vm_arch_compile(code,size,(void**)&output);
 
@@ -135,10 +138,12 @@ int main(int argc, char *argv[])
 	dsb_iton(50,&vars[0]);
 	dsb_iton(60,&vars[1]);
 
+	printf("OUTPUT = %016llX\n",(unsigned long long)output);
+
 	//Now run the code!!!!!!!!!!
 	size = output(&vars);
 
-	printf("Woo = %d -> %llu\n",size,vars[0].ll);
+	printf("JIT Result = %llu\n",vars[size].ll);
 
 	dsb_event_final();
 	dsb_nid_final();

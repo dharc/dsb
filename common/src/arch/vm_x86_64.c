@@ -113,10 +113,30 @@ either expressed or implied, of the FreeBSD Project.
 #define MOVQ_I32(R)			EMIT8(OPSIZE_64); EMIT8(0xC7); EMIT8(REGADDR(0,R)); // + 32bit immediate.
 #define MOVQ_I64(R)			EMIT8(OPSIZE_64); EMIT8(0xB8 | R); // + 64bit
 
+#define ADDQ_R8(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_R(0x00)); EMIT8(DISP8(R1,R2)) //+disp
+#define ADDQ_W8(R1,R2)		EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x00)); EMIT8(DISP8(R1,R2)) //+disp
+#define ADDQ(R1,R2)			EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x00)); EMIT8(REGADDR(R1,R2))
+#define ADDQ_I8(R)			EMIT8(OPSIZE_64); EMIT8(0x83); EMIT8(REGADDR(0,R)) //+imed
+#define ADDQ_I32(R)			EMIT8(OPSIZE_64); EMIT8(0x81); EMIT8(REGADDR(0,R)) //+imed
+
+#define CMPQ(R1,R2)			EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x38)); EMIT8(REGADDR(R1,R2))
+
+#define JMP_64		EMIT(0xFF); EMIT8(REGADDR(4,0));
+#define CALL_64		EMIT(0xFF);	EMIT8(REGADDR(2,RBP));
+
 //1byte OPS
 #define PUSHQ(R)	EMIT8(0x50 | R)
 #define POPQ(R)		EMIT8(0x58 | R)
 #define RET			EMIT8(0xC3)
+#define JL_8		EMIT8(0x7C)					//Relative
+#define JL_32		EMIT8(0x0F); EMIT8(0x8C)	//Relative
+#define JLE_32		EMIT8(0x0F); EMIT8(0x8E)	//Relative
+#define JG_32		EMIT8(0x0F); EMIT8(0x8F)	//Relative
+#define JGE_32		EMIT8(0x0F); EMIT8(0x8D)	//Relative
+#define JE_32		EMIT8(0x0F); EMIT8(0x84)	//Relative
+#define JNE_32		EMIT8(0x0F); EMIT8(0x85)	//Relative
+#define JMP_REL_32	EMIT8(0xE9);				//Relative
+#define CALL_REL_32	EMIT8(0xE8);				//Relative
 
 static int gen_init(void *output, int *rip)
 {
@@ -130,6 +150,57 @@ static int gen_init(void *output, int *rip)
 }
 
 /*
+ * Read a var component into a register. v is an actual memory offset for the var.
+ * ix can be 0, 1 or 2 to get 1st, 2nd or 3rd 64bit part of a nid. (ll = 2).
+ */
+static int gen_readVar(int v, int ix, int reg, void *output, int *rip)
+{
+	MOVQ_R8(RAX,RBP); EMIT8(-8);	// movq -8(%rbp), %rax
+	if (v != 0) { ADDQ_I8(RAX); EMIT8(v); }			// addq $v, %rax
+	if (ix == 0) { MOVQ_R(reg,RAX); }
+	else { MOVQ_R8(reg,RAX); EMIT8(ix*8); }	// movq ix*8(%rax), %reg
+
+
+	printf("movq -8(%%rbp), %%rax\n");
+	if (v != 0) printf("addq $%d, %%rax\n",v);
+	printf("movq %d(%%rax), %%%d\n",ix*8,reg);
+
+	return 0;
+}
+
+static int gen_writeVar(int v, int ix, int reg, void *output, int *rip)
+{
+	MOVQ_R8(RAX,RBP); EMIT8(-8);	// movq -8(%rbp), %rax
+	if (v != 0) { ADDQ_I8(RAX); EMIT8(v); }			// addq $v, %rax
+	if (ix == 0) { MOVQ_W(reg,RAX); }
+	else { MOVQ_W8(reg,RAX); EMIT8(ix*8); }	// movq %reg, ix*8(%rax)
+
+	printf("movq -8(%%rbp), %%rax\n");
+	if (v != 0) printf("addq $%d, %%rax\n",v);
+	printf("movq %%%d, %d(%%rax)\n",reg,ix*8);
+
+	return 0;
+}
+
+static int gen_add_vvv(int a, int b, int c, void *output, int *rip)
+{
+	//Actual memory offsets.
+	a = a * sizeof(NID_t);
+	b = b * sizeof(NID_t);
+	c = c * sizeof(NID_t);
+
+	//MOVQ_R8(RCX,RAX); EMIT8(b+16);
+	gen_readVar(b,2,RCX,output,rip);
+	gen_readVar(c,2,RAX,output,rip);
+	ADDQ(RAX,RCX);
+	printf("add %%rax, %%rcx\n");
+	gen_writeVar(a,2,RCX,output,rip);
+	//MOVQ_W8(RCX,RAX); EMIT8(a+16);
+
+	return 0;
+}
+
+/*
  * Copy var b into var a
  */
 static int gen_copy_vv(int a, int b, void *output, int *rip)
@@ -138,26 +209,12 @@ static int gen_copy_vv(int a, int b, void *output, int *rip)
 	a = a * sizeof(NID_t);
 	b = b * sizeof(NID_t);
 
-	//TODO use larger displacement for values above 127
-
-	//If 0 then no need for displacement byte.
-	if (b == 0) { MOVQ_R(RCX,RAX); }
-	else { MOVQ_R8(RCX,RAX); EMIT8(b+0); }
-
-	if (a == 0) { MOVQ_W(RCX,RAX); }
-	else { MOVQ_W8(RCX,RAX); EMIT8(a+0); }
-
-	MOVQ_R8(RCX,RAX); EMIT8(b+8);
-	MOVQ_W8(RCX,RAX); EMIT8(a+8);
-	MOVQ_R8(RCX,RAX); EMIT8(b+16);
-	MOVQ_W8(RCX,RAX); EMIT8(a+16);
-
-	printf("movq %d(%%rax), %%rcx\n", b+0);
-	printf("movq %%rcx, %d(%%rax)\n", a+0);
-	printf("movq %d(%%rax), %%rcx\n", b+8);
-	printf("movq %%rcx, %d(%%rax)\n", a+8);
-	printf("movq %d(%%rax), %%rcx\n", b+16);
-	printf("movq %%rcx, %d(%%rax)\n", a+16);
+	gen_readVar(b,0,RCX,output,rip);
+	gen_writeVar(a,0,RCX,output,rip);
+	gen_readVar(b,1,RCX,output,rip);
+	gen_writeVar(a,1,RCX,output,rip);
+	gen_readVar(b,2,RCX,output,rip);
+	gen_writeVar(a,2,RCX,output,rip);
 
 	return 0;
 }
@@ -172,19 +229,14 @@ static int gen_copy_vc(int a, NID_t *b, void *output, int *rip)
 	a = a * sizeof(NID_t);
 
 	MOVQ_I64(RCX); EMIT64(bp[0]);
-	if (a == 0) { MOVQ_W(RCX,RAX); }
-	else { MOVQ_W8(RCX,RAX); EMIT8(a+0); }
-	MOVQ_I64(RCX); EMIT64(bp[1]);
-	MOVQ_W8(RCX,RAX); EMIT8(a+8);
-	MOVQ_I64(RCX); EMIT64(bp[2]);
-	MOVQ_W8(RCX,RAX); EMIT8(a+16);
-
 	printf("movq $%llu, %%rcx\n", bp[0]);
-	printf("movq %%rcx, %d(%%rax)\n", a+0);
+	gen_writeVar(a,0,RCX,output,rip);
+	MOVQ_I64(RCX); EMIT64(bp[1]);
 	printf("movq $%llu, %%rcx\n", bp[1]);
-	printf("movq %%rcx, %d(%%rax)\n", a+8);
+	gen_writeVar(a,1,RCX,output,rip);
+	MOVQ_I64(RCX); EMIT64(bp[2]);
 	printf("movq $%llu, %%rcx\n", bp[2]);
-	printf("movq %%rcx, %d(%%rax)\n", a+16);
+	gen_writeVar(a,2,RCX,output,rip);
 
 	return 0;
 }
@@ -197,13 +249,10 @@ static int gen_inc_v(int a, void *output, int *rip)
 	//Actual memory offsets
 	a = a * sizeof(NID_t);
 
-	MOVQ_R8(RCX,RAX); EMIT8(a+16);
+	gen_readVar(a,2,RCX,output,rip);
 	LEAQ_8(RCX,RCX); EMIT8(1);
-	MOVQ_W8(RCX,RAX); EMIT8(a+16);
-
-	printf("movq %d(%%rax), %%rcx\n", a+16);
 	printf("leaq 1(%%rcx), %%rcx\n");
-	printf("movq %%rcx, %d(%%rax)\n", a+16);
+	gen_writeVar(a,2,RCX,output,rip);
 
 	return 0;
 }
@@ -224,13 +273,48 @@ static int gen_ret_v(int a, void *output, int *rip)
 	return 0;
 }
 
+/*
+ * jlt off a b
+ */
+static int gen_jlt_vv(unsigned int *iptable, int a, int b, int off, void *output, int *rip)
+{
+	//Actual memory offsets
+	a = a * sizeof(NID_t);
+	b = b * sizeof(NID_t);
+
+	gen_readVar(b,2,RCX,output,rip);
+	gen_readVar(a,2,RAX,output,rip);
+	CMPQ(RCX,RAX);
+	printf("cmpq %%rax,%%rcx\n");
+	//Do we have the correct instruction pointer.
+	if (iptable[off] != 0xFFFFFFFF)
+	{
+		int roff = iptable[off]-*rip + 6;
+		JL_32; EMIT32(roff);
+		printf("jl %d\n",roff);
+	}
+	else
+	{
+		//NEED TO PATCH OFFSET LATER!!
+	}
+
+	return 0;
+}
+
 static void dump_hex(unsigned char *data, int len)
 {
 	int i;
 
 	for (i=0; i<len; i++)
 	{
-		printf("%02x ",data[i]);
+		if ((i % 10) == 0)
+		{
+			printf("\n%04x: %02x ",(unsigned int)i, data[i]);
+		}
+		else
+		{
+			printf("%02x ",data[i]);
+		}
 	}
 	printf("\n");
 }
@@ -240,11 +324,18 @@ int dsb_vm_arch_compile(NID_t *code, int size, void **output)
 	int ip = 0;
 	int rip = 0;
 	unsigned int op;
-	//unsigned int off;
+	unsigned int off;
 	unsigned int varA;
 	unsigned int varB;
-	//unsigned int varC;
+	unsigned int varC;
 	//unsigned int varD;
+
+	//TODO make this same size as "size" param.
+	unsigned int iptable[100];
+	for (op = 0; op<100; op++)
+	{
+		iptable[op] = 0xFFFFFFFF;
+	}
 
 	//Allocate executable memory.
 	*output = mmap(0,1000,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANON,-1,0);
@@ -257,11 +348,15 @@ int dsb_vm_arch_compile(NID_t *code, int size, void **output)
 	while (ip < size)
 	{
 		op = VMGET_OP(code[ip].ll);
-		//off = VMGET_LABEL(code[ip].ll);
+		off = VMGET_LABEL(code[ip].ll);
 		varA = VMGET_A(code[ip].ll);
 		varB = VMGET_B(code[ip].ll);
-		//varC = VMGET_C(code[ip].ll);
+		varC = VMGET_C(code[ip].ll);
 		//varD = VMGET_D(code[ip].ll);
+
+		//Map VM instruction pointer to real instruction pointer...
+		//Used for jumps.
+		iptable[ip] = rip;
 
 		switch (op)
 		{
@@ -271,6 +366,10 @@ int dsb_vm_arch_compile(NID_t *code, int size, void **output)
 		case VMOP_INC:	gen_inc_v(varA-1,*output,&rip);
 						break;
 		case VMOP_RET:	gen_ret_v(varA-1,*output,&rip);
+						break;
+		case VMOP_ADD:	if ((varB != 0) && (varC != 0)) { gen_add_vvv(varA-1,varB-1,varC-1, *output, &rip); }
+						break;
+		case VMOP_JLT:	if ((varA != 0) && (varB != 0)) { gen_jlt_vv(iptable,varA-1,varB-1,off,*output,&rip); }
 						break;
 		default: break;
 		}
