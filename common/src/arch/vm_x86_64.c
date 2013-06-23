@@ -41,6 +41,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <stdlib.h>
 #include <malloc.h>
 #include <sys/mman.h>
+#include <string.h>
 
 #define MOD_INDIRECT 0x00
 #define MOD_DISP8 0x40
@@ -86,7 +87,8 @@ either expressed or implied, of the FreeBSD Project.
 
 //x86 byte order
 #define EMIT8(A)	((unsigned char*)output)[(*rip)++] = (unsigned char)A
-#define EMIT32(A)	EMIT8((A) & 0xFF); EMIT8(((A) >> 8) & 0xFF); EMIT8(((A) >> 16) & 0xFF); EMIT8((A) >> 24)
+//#define EMIT32(A)	EMIT8((A) & 0xFF); EMIT8(((A) >> 8) & 0xFF); EMIT8(((A) >> 16) & 0xFF); EMIT8((A) >> 24)
+#define EMIT32(A)	memcpy(&(((unsigned char*)(output))[(*rip)]), &(A), 4); (*rip) = (*rip) + 4
 #define EMIT64(A)	EMIT8((A) & 0xFF); EMIT8(((A) >> 8) & 0xFF); EMIT8(((A) >> 16) & 0xFF); EMIT8(((A) >> 24) &0xFF); EMIT8(((A) >> 32) &0xFF); EMIT8(((A) >> 40) &0xFF); EMIT8(((A) >> 48) &0xFF); EMIT8(((A) >> 56) &0xFF);
 
 //2byte OPS
@@ -120,6 +122,7 @@ either expressed or implied, of the FreeBSD Project.
 #define ADDQ_I32(R)			EMIT8(OPSIZE_64); EMIT8(0x81); EMIT8(REGADDR(0,R)) //+imed
 
 #define CMPQ(R1,R2)			EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x38)); EMIT8(REGADDR(R1,R2))
+#define SUBQ(R1,R2)			EMIT8(OPSIZE_64); EMIT8(OP_64_W(0x28)); EMIT8(REGADDR(R1,R2))
 
 #define JMP_64		EMIT(0xFF); EMIT8(REGADDR(4,0));
 #define CALL_64		EMIT(0xFF);	EMIT8(REGADDR(2,RBP));
@@ -129,6 +132,7 @@ either expressed or implied, of the FreeBSD Project.
 #define POPQ(R)		EMIT8(0x58 | R)
 #define RET			EMIT8(0xC3)
 #define JL_8		EMIT8(0x7C)					//Relative
+#define JB_32		EMIT8(0x0F); EMIT8(0x82)	//Relative
 #define JL_32		EMIT8(0x0F); EMIT8(0x8C)	//Relative
 #define JLE_32		EMIT8(0x0F); EMIT8(0x8E)	//Relative
 #define JG_32		EMIT8(0x0F); EMIT8(0x8F)	//Relative
@@ -137,6 +141,7 @@ either expressed or implied, of the FreeBSD Project.
 #define JNE_32		EMIT8(0x0F); EMIT8(0x85)	//Relative
 #define JMP_REL_32	EMIT8(0xE9);				//Relative
 #define CALL_REL_32	EMIT8(0xE8);				//Relative
+#define INT3		EMIT8(0xCC);
 
 static int gen_init(void *output, int *rip)
 {
@@ -161,9 +166,9 @@ static int gen_readVar(int v, int ix, int reg, void *output, int *rip)
 	else { MOVQ_R8(reg,RAX); EMIT8(ix*8); }	// movq ix*8(%rax), %reg
 
 
-	printf("movq -8(%%rbp), %%rax\n");
-	if (v != 0) printf("addq $%d, %%rax\n",v);
-	printf("movq %d(%%rax), %%%d\n",ix*8,reg);
+	//printf("movq -8(%%rbp), %%rax\n");
+	//if (v != 0) printf("addq $%d, %%rax\n",v);
+	//printf("movq %d(%%rax), %%%d\n",ix*8,reg);
 
 	return 0;
 }
@@ -175,9 +180,9 @@ static int gen_writeVar(int v, int ix, int reg, void *output, int *rip)
 	if (ix == 0) { MOVQ_W(reg,RAX); }
 	else { MOVQ_W8(reg,RAX); EMIT8(ix*8); }	// movq %reg, ix*8(%rax)
 
-	printf("movq -8(%%rbp), %%rax\n");
-	if (v != 0) printf("addq $%d, %%rax\n",v);
-	printf("movq %%%d, %d(%%rax)\n",reg,ix*8);
+	//printf("movq -8(%%rbp), %%rax\n");
+	//if (v != 0) printf("addq $%d, %%rax\n",v);
+	//printf("movq %%%d, %d(%%rax)\n",reg,ix*8);
 
 	return 0;
 }
@@ -193,7 +198,7 @@ static int gen_add_vvv(int a, int b, int c, void *output, int *rip)
 	gen_readVar(b,2,RCX,output,rip);
 	gen_readVar(c,2,RAX,output,rip);
 	ADDQ(RAX,RCX);
-	printf("add %%rax, %%rcx\n");
+	//printf("add %%rax, %%rcx\n");
 	gen_writeVar(a,2,RCX,output,rip);
 	//MOVQ_W8(RCX,RAX); EMIT8(a+16);
 
@@ -229,13 +234,13 @@ static int gen_copy_vc(int a, NID_t *b, void *output, int *rip)
 	a = a * sizeof(NID_t);
 
 	MOVQ_I64(RCX); EMIT64(bp[0]);
-	printf("movq $%llu, %%rcx\n", bp[0]);
+	//printf("movq $%llu, %%rcx\n", bp[0]);
 	gen_writeVar(a,0,RCX,output,rip);
 	MOVQ_I64(RCX); EMIT64(bp[1]);
-	printf("movq $%llu, %%rcx\n", bp[1]);
+	//printf("movq $%llu, %%rcx\n", bp[1]);
 	gen_writeVar(a,1,RCX,output,rip);
 	MOVQ_I64(RCX); EMIT64(bp[2]);
-	printf("movq $%llu, %%rcx\n", bp[2]);
+	//printf("movq $%llu, %%rcx\n", bp[2]);
 	gen_writeVar(a,2,RCX,output,rip);
 
 	return 0;
@@ -251,7 +256,7 @@ static int gen_inc_v(int a, void *output, int *rip)
 
 	gen_readVar(a,2,RCX,output,rip);
 	LEAQ_8(RCX,RCX); EMIT8(1);
-	printf("leaq 1(%%rcx), %%rcx\n");
+	//printf("leaq 1(%%rcx), %%rcx\n");
 	gen_writeVar(a,2,RCX,output,rip);
 
 	return 0;
@@ -266,9 +271,9 @@ static int gen_ret_v(int a, void *output, int *rip)
 	POPQ(RBP);
 	RET;
 
-	printf("movq $%d, %%rax\n", a);
-	printf("popq %%rbp\n");
-	printf("ret\n");
+	//printf("movq $%d, %%rax\n", a);
+	//printf("popq %%rbp\n");
+	//printf("ret\n");
 
 	return 0;
 }
@@ -285,13 +290,14 @@ static int gen_jlt_vv(unsigned int *iptable, int a, int b, int off, void *output
 	gen_readVar(b,2,RCX,output,rip);
 	gen_readVar(a,2,RAX,output,rip);
 	CMPQ(RCX,RAX);
-	printf("cmpq %%rax,%%rcx\n");
+	//INT3;
+	//printf("cmpq %%rcx,%%rdx\n");
 	//Do we have the correct instruction pointer.
 	if (iptable[off] != 0xFFFFFFFF)
 	{
-		int roff = iptable[off]-*rip + 6;
+		int roff = iptable[off] - (*rip) - 6;
 		JL_32; EMIT32(roff);
-		printf("jl %d\n",roff);
+		//printf("jl %d\n",roff);
 	}
 	else
 	{

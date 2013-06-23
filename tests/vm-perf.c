@@ -52,7 +52,7 @@ int generate_benchmark1()
 	int loop;
 
 	dsb_nid_op(VM_CPY(1,0),&code[ip++]);	//cpy $count 100000
-	dsb_iton(100000,&code[ip++]);
+	dsb_iton(10000,&code[ip++]);
 	dsb_nid_op(VM_CPY(2,0),&code[ip++]);	//cpy $i 0
 	dsb_iton(0,&code[ip++]);
 	dsb_nid_op(VM_CPY(3,0),&code[ip++]);	//cpy $sum 0
@@ -79,7 +79,7 @@ int generate_benchmark2()
 	return ip;
 }
 
-/*static long long getTicks()
+static long long getTicks()
 {
 	#ifdef UNIX
 	unsigned long long ticks;
@@ -94,15 +94,15 @@ int generate_benchmark2()
 	QueryPerformanceCounter(&tks);
 	return (((unsigned long long)tks.HighPart << 32) + (unsigned long long)tks.LowPart);
 	#endif
-}*/
+}
 
 
 int main(int argc, char *argv[])
 {
 	HARC_t harc;
-	//long long ticks;
-	//double secs;
-	//int i;
+	long long ticks;
+	double secs;
+	int i;
 	int (*output)(void *);
 	int size;
 	NID_t vars[16];
@@ -112,9 +112,9 @@ int main(int argc, char *argv[])
 
 	size = generate_benchmark1();
 
-	/*ticks = getTicks();
+	ticks = getTicks();
 
-	for (i=0; i<1000; i++)
+	for (i=0; i<10000; i++)
 	{
 		if (dsb_vm_interpret(code,100, 0, &harc.h) != -1)
 		{
@@ -125,23 +125,27 @@ int main(int argc, char *argv[])
 	ticks = getTicks() - ticks;
 
 	secs = (double)ticks / 1000000.0;
-	printf("Benchmark 1: %fs or %.2f kop/s\n",(float)secs,300004000.0 / (float)secs / 100000.0);*/
+	printf("Benchmark 1: %fs or %.2f kop/s\n",(float)secs,30004000.0 / (float)secs / 100000.0);
 
-	dsb_vm_interpret(code,100, 0, &harc.h);
+	//dsb_vm_interpret(code,100, 0, &harc.h);
 	printf("Interp Res = %llu\n",harc.h.ll);
 
 	//size = generate_benchmark2();
 	//Now compile the code
 	dsb_vm_arch_compile(code,size,(void**)&output);
 
-	//Init the vars
-	dsb_iton(50,&vars[0]);
-	dsb_iton(60,&vars[1]);
+	ticks = getTicks();
 
-	printf("OUTPUT = %016llX\n",(unsigned long long)output);
+	for (i=0; i<10000; i++)
+	{
+		//Now run the code!!!!!!!!!!
+		size = output(&vars);
+	}
 
-	//Now run the code!!!!!!!!!!
-	size = output(&vars);
+	ticks = getTicks() - ticks;
+
+	secs = (double)ticks / 1000000.0;
+	printf("Benchmark 1 JIT: %fs or %.2f kop/s\n",(float)secs,30004000.0 / (float)secs / 100000.0);
 
 	printf("JIT Result = %llu\n",vars[size].ll);
 
