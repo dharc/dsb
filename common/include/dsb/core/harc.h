@@ -49,6 +49,7 @@ typedef struct Dependency Dependency_t;
 #define HARC_VOLATILE	2	///< A volatile HARC, destroyed asap
 #define HARC_LOCK		4	///< Thread lock.
 #define HARC_EXTERNAL	8	///< Observed externally so always evaluate.
+#define HARC_VMDEF		16	///< Definition is VM code.
 
 /**
  * Hyperarc structure. A hyperarc consists of two tail nodes and one head
@@ -61,17 +62,11 @@ struct HARC
 	NID_t t1;		///< Tail 1. Should always be greater than or equal to tail 2.
 	NID_t t2;		///< Tail 2. Should always be less than or equal to tail 1.
 	NID_t def;		///< Definition. Identifies the structure to use as the definition.
-	int e;			///< Evaluator. Which definition evaluator should be used for this HARC.
 	Dependency_t *deps;		///< List of dependants.
 
 	//The following are volatile and do not need to be saved.
 	NID_t h;		///< Head. Cached value that results from evaluating the definition.
 	int flags;		///< Status flags (HARC_ definitions).
-	void *data;		///< Internal (optional) state used by evaluator.
-
-	#ifndef STRIP_HARC_META
-	NID_t meta;		///< Meta data for this hyperarc.
-	#endif
 };
 
 typedef struct HARC HARC_t;

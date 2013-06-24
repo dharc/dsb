@@ -81,13 +81,11 @@ void test_event_packunpack()
 	dsb_iton(66,&source.d1);
 	dsb_iton(77,&source.d2);
 	dsb_iton(88,&source.def);
-	source.eval = 1;
 
-	CHECK(dsb_event_pack(&source,buffer,200) == 44);
-	CHECK(dsb_event_unpack(buffer, &result) == 44);
+	CHECK(dsb_event_pack(&source,buffer,200) == 40);
+	CHECK(dsb_event_unpack(buffer, &result) == 40);
 
 	CHECK(result.type == EVENT_DEFINE);
-	CHECK(result.eval == 1);
 	CHECK(result.def.ll == 88);
 
 	//----- DEP -----

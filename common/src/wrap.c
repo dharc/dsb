@@ -138,8 +138,7 @@ int dsb_getnzi(const NID_t *d1, const char *d2, int *r)
 int dsb_getdef(
 		const NID_t *d1,
 		const NID_t *d2,
-		NID_t *def,
-		int *eval
+		NID_t *def
 		)
 {
 	struct Event evt;
@@ -150,7 +149,6 @@ int dsb_getdef(
 	evt.type = EVENT_GETDEF;
 	evt.res = def;
 	res = dsb_send(&evt,0);
-	*eval = 0;
 	return res;
 }
 
@@ -227,7 +225,7 @@ int dsb_dictzz(const char *d, const char *n)
 
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
-	return dsb_define(d1,d2,v,0);
+	return dsb_define(d1,d2,v);
 }
 
 int dsb_setnzz(const NID_t *d1, const char *d2, const char *v)
@@ -277,15 +275,13 @@ int dsb_setnin(const NID_t *d1, int d2, const NID_t *v)
 int dsb_define(
 		const struct NID *d1,
 		const struct NID *d2,
-		const struct NID *def,
-		int eval
+		const struct NID *def
 		)
 {
 	struct Event *evt = dsb_event_allocate();
 	evt->d1 = *d1;
 	evt->d2 = *d2;
 	evt->def = *def;
-	evt->eval = eval;
 	evt->flags = EVTFLAG_FREE;
 	evt->type = EVENT_DEFINE;
 	return dsb_send(evt,0);

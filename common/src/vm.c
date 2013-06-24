@@ -188,7 +188,7 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 							n1 = (varno == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno-1];
 							n2 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
 							n3 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
-							dsb_define(n1,n2,n3,0);
+							dsb_define(n1,n2,n3);
 							break;
 
 		case VMOP_DEP:		varno = VMGET_A(op);

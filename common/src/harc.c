@@ -7,9 +7,9 @@ HARC_t *dsb_harc(const NID_t *t1, const NID_t *t2, HARC_t *harc)
 	harc->t1 = *t1;
 	harc->t2 = *t2;
 	harc->deps = 0;
-	harc->e = 0;
 	dsb_nid_null(&harc->def);
-	harc->flags = HARC_OUTOFDATE;
+	harc->h = harc->def;
+	harc->flags = 0;
 	return harc;
 }
 
@@ -27,7 +27,7 @@ int dsb_harc_serialize(FILE *fd, const HARC_t *harc)
 	dsb_nid_toRawStr(&harc->t2, buf2, 100);
 	dsb_nid_toRawStr(&harc->def, buf3, 100);
 
-	fprintf(fd, "%s,%s,%s,%d\n",buf1,buf2,buf3,harc->e);
+	fprintf(fd, "%s,%s,%s,%d,\n",buf1,buf2,buf3,harc->flags);
 
 	return 0;
 }
@@ -41,7 +41,7 @@ int dsb_harc_deserialize(FILE *fd, HARC_t *harc)
 	char buf2[100];
 	char buf3[100];
 
-	if (fscanf(fd, "%[^,],%[^,],%[^,],%d\n",buf1,buf2,buf3,&harc->e) != 4)
+	if (fscanf(fd, "%[^,],%[^,],%[^,],%d,\n",buf1,buf2,buf3,&harc->flags) != 4)
 	{
 		//End of file or invalid input.
 		return -1;

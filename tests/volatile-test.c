@@ -58,7 +58,6 @@ void test_vol_getset()
 	//Generate DEFINE event.
 	dsb_event(EVENT_DEFINE,&a,&b,&evt);
 	dsb_nid(NID_INTEGER,55,&(evt.def));
-	evt.eval = 0; //No evaluator
 
 	//Send DEFINE event.
 	CHECK(dsb_route(&evt) == 0);
@@ -121,7 +120,6 @@ void test_vol_region()
 	dsb_nid(NID_INTEGER,66,&(evt.def));
 	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&(evt.d1b));
 	dsb_nid(NID_INTEGER,50,&(evt.d2b));
-	evt.eval = 0; //No evaluator
 	evt.flags |= EVTFLAG_MULT;
 
 	//Send DEFINE event.

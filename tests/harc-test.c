@@ -77,11 +77,10 @@ void test_harc_get()
 
 	//Initialise the hyperarc
 	dsb_harc(&(evt.d1),&(evt.d2),&harc);
-	dsb_iton(55,&(harc.def));
+	dsb_iton(55,&(harc.h));
 
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK((harc.flags & HARC_OUTOFDATE) == 0);
 	CHECK(harc.h.ll == 55);
 
 	DONE;
@@ -111,8 +110,8 @@ void test_harc_define()
 
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK((harc.flags & HARC_OUTOFDATE) != 0);
-	CHECK(harc.def.ll == 66);
+	CHECK((harc.flags & HARC_OUTOFDATE) == 0);
+	CHECK(harc.h.ll == 66);
 	CHECK(lastevt.type == EVENT_NOTIFY);
 	CHECK(lastevt.d1.ll == 8);
 	CHECK(lastevt.d2.ll == 9);
@@ -187,18 +186,12 @@ extern struct Module *dsb_evaluators_module();
 int main(int argc, char *argv[])
 {
 	dsb_event_init();
-	dsb_eval_init();
-
-	//Load the evaluators module
-	dsb_module_register("evaluators",dsb_evaluators_module());
-	dsb_module_load("evaluators",0);
 
 	dsb_test(test_harc_get);
 	dsb_test(test_harc_define);
 	dsb_test(test_harc_notify);
 	dsb_test(test_harc_dep);
 
-	dsb_eval_final();
 	dsb_event_final();
 	return 0;
 }

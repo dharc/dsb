@@ -42,7 +42,6 @@ int dsb_clone_shallow(const NID_t *src, const NID_t *dest)
 	struct DSBIterator it;
 	const NID_t *curkey;
 	NID_t def;
-	int eval;
 
 	dsb_iterator_begin(&it,src);
 	curkey = dsb_iterator_next(&it);
@@ -50,8 +49,8 @@ int dsb_clone_shallow(const NID_t *src, const NID_t *dest)
 	while (curkey != 0)
 	{
 		//TODO Fix eval problem... remove need for eval!
-		dsb_getdef(src,curkey,&def,&eval);
-		dsb_define(dest,curkey,&def,0);
+		dsb_getdef(src,curkey,&def);
+		dsb_define(dest,curkey,&def);
 		//Now add dictionary
 		dsb_dict(dest,curkey);
 		curkey = dsb_iterator_next(&it);

@@ -34,10 +34,11 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/core/harc.h"
 #include "dsb/core/nid.h"
+#include "dsb/core/vm.h"
 #include "dsb/errors.h"
 #include "dsb/core/event.h"
-#include "dsb/evaluator.h"
 #include "dsb/core/dependency.h"
+#include "dsb/patterns/pattern.h"
 #include "dsb/wrap.h"
 #include <malloc.h>
 
@@ -63,7 +64,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						if ((harc->flags & HARC_OUTOFDATE) != 0)
 						{
 							//Get evaluator and use to get result.
-							ret = dsb_eval_call(harc);
+							ret = dsb_vm_call(&harc->def,harc,&harc->h);
 							if (ret != SUCCESS)
 							{
 								return ret;
@@ -83,9 +84,19 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						event->flags |= EVTFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
-	case EVENT_DEFINE:	harc->e = event->eval;
-						harc->def = event->def;
-						harc->flags |= HARC_OUTOFDATE;
+	case EVENT_DEFINE:	harc->def = event->def;
+
+						if (dsb_pattern_isA(&event->def,DSB_PATTERN_BYTECODE) == 1)
+						{
+							//If definition then will need evaluating
+							harc->flags |= HARC_OUTOFDATE | HARC_VMDEF;
+						}
+						else
+						{
+							//If not definition then its a constant.
+							harc->h = harc->def;
+							harc->flags &= ~(HARC_OUTOFDATE | HARC_VMDEF);
+						}
 
 						//Generate NOTIFY events to mark others as out-of-date.
 						dep = harc->deps;

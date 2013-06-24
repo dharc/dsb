@@ -38,7 +38,6 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/router.h"
 #include "dsb/names.h"
 #include "dsb/common.h"
-#include "dsb/evaluator.h"
 #include "dsb/globals.h"
 #include "dsb/net_protocol.h"
 #include "dsb/config.h"
@@ -170,7 +169,6 @@ int main(int argc, char *argv[])
 
 	//Initialise the common parts
 	dsb_common_init();
-	dsb_eval_init();
 	//dsb_proc_init();
 	dsb_route_init();
 	dsb_proc_init();
@@ -178,7 +176,6 @@ int main(int argc, char *argv[])
 	//Register the internal modules
 	dsb_module_register("volatile",dsb_volatile_module());
 	dsb_module_register("persistent",dsb_persistent_module());
-	dsb_module_register("evaluators",dsb_evaluators_module());
 	dsb_module_register("net",dsb_network_module());
 
 	//These must exist or all else fails completely.
@@ -186,7 +183,6 @@ int main(int argc, char *argv[])
 	dsb_module_load("persistent",&PRoot);
 
 	//Effectively required so will load
-	dsb_module_load("evaluators",&Root);
 	dsb_module_load("net",&Root);
 
 	//Make sure names map is up to date.
@@ -211,7 +207,6 @@ int main(int argc, char *argv[])
 	printf("Terminating...\n");
 
 	dsb_proc_final();
-	dsb_eval_final();
 	dsb_common_final();
 
 	return 0;

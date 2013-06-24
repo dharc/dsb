@@ -87,7 +87,6 @@ static struct PerHARCEntry *per_createentry(const struct NID *a, const struct NI
 	res->harc.t2 = *b;
 	dsb_nid_null(&res->harc.h);
 	dsb_nid_null(&res->harc.def);
-	res->harc.e = 0;
 	res->harc.deps = 0;
 	res->flags = 0;
 
@@ -181,8 +180,16 @@ static int per_load_file(const char *filename)
 	{
 		pharc = per_getharc(&harc.t1,&harc.t2,1);
 		pharc->def = harc.def;
-		pharc->e = harc.e;
-		pharc->flags = HARC_OUTOFDATE;
+		pharc->flags = harc.flags;
+
+		if ((harc.flags & HARC_VMDEF) != 0)
+		{
+			pharc->flags |= HARC_OUTOFDATE;
+		}
+		else
+		{
+			pharc->h = pharc->def;
+		}
 	}
 
 	fclose(fd);

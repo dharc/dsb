@@ -95,7 +95,7 @@ struct Event
 	struct {
 	NID_t def;			///< Definition
 	union {
-	int eval;			///< Evaluator to use.
+	//int eval;			///< Evaluator to use.
 	int resid;			///< Result ID to match on network
 	};
 	};

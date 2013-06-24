@@ -99,8 +99,7 @@ int dsb_setnzn(const NID_t *d1, const char *d2, const NID_t *v);
 int dsb_define(
 		const NID_t *d1,
 		const NID_t *d2,
-		const NID_t *def,
-		int eval
+		const NID_t *def
 		);
 
 int dsb_defineM(
@@ -108,15 +107,13 @@ int dsb_defineM(
 		const NID_t *d1b,
 		const NID_t *d2a,
 		const NID_t *d2b,
-		const NID_t *def,
-		int eval
+		const NID_t *def
 		);
 
 int dsb_getdef(
 		const NID_t *d1,
 		const NID_t *d2,
-		NID_t *def,
-		int *eval
+		NID_t *def
 		);
 
 int dsb_notify(const NID_t *d1, const NID_t *d2);
