@@ -187,7 +187,9 @@ int dsb_vm_interpret(NID_t *code, int maxip, const HARC_t *harc, NID_t *res);
 
 int dsb_vm_interpret_ctx(struct VMContext *ctx);
 
-//int dsb_vm_cfunc(const char *name, CFUNC_t func);
+typedef int (*XFUNC_t)(NID_t *Res, const NID_t *params);
+
+int dsb_vm_xfunc(const char *name, XFUNC_t func, int params);
 
 /**
  * JIT Compile bytecode into native machine code. The output pointer is of type
