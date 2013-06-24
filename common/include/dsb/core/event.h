@@ -52,6 +52,7 @@ enum EventType
 	EVENT_DEFINE=0x000,	//!< Define a HARC
 	EVENT_DELETE,   	//!< Delete a HARC
 	EVENT_NOTIFY,		//!< Notify HARC that it is out-of-date.
+	EVENT_AGENT,		//!< Mark as being an agent.
 
 	EVENT_GET=0x100,	//!< Get the head of a HARC
 	EVENT_ALLOCATE,		//!< Allocate a new NID

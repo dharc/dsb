@@ -182,7 +182,7 @@ static int per_load_file(const char *filename)
 		pharc->def = harc.def;
 		pharc->flags = harc.flags;
 
-		if ((harc.flags & HARC_VMDEF) != 0)
+		if ((harc.flags & HARC_SCRIPT) != 0)
 		{
 			pharc->flags |= HARC_OUTOFDATE;
 		}

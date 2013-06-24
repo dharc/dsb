@@ -61,7 +61,6 @@ enum NIDType
 	NID_REAL,			///< A node corresponding to a real number.
 	NID_CHARACTER,		///< A node corresponding to a unicode character.
 	NID_LABEL,			///< Nodes used as labels.
-	NID_OPERATOR,		///< Definition operators.
 	NID_VMOP,
 	//---- Integer Operations -----
 	NID_INTADD,   //!< NID_INTADD

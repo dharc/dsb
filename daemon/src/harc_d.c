@@ -89,13 +89,13 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						if (dsb_pattern_isA(&event->def,DSB_PATTERN_BYTECODE) == 1)
 						{
 							//If definition then will need evaluating
-							harc->flags |= HARC_OUTOFDATE | HARC_VMDEF;
+							harc->flags |= HARC_OUTOFDATE | HARC_SCRIPT;
 						}
 						else
 						{
 							//If not definition then its a constant.
 							harc->h = harc->def;
-							harc->flags &= ~(HARC_OUTOFDATE | HARC_VMDEF);
+							harc->flags &= ~(HARC_OUTOFDATE | HARC_SCRIPT);
 						}
 
 						//Generate NOTIFY events to mark others as out-of-date.
@@ -120,7 +120,8 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						event->flags |= EVTFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
-	case EVENT_NOTIFY:	harc->flags |= HARC_OUTOFDATE;
+	case EVENT_NOTIFY:
+						harc->flags |= HARC_OUTOFDATE;
 
 						//Generate NOTIFY events to mark others as out-of-date.
 						dep = harc->deps;

@@ -1,4 +1,9 @@
-/* 
+/*
+ * agent.h
+ *
+ *  Created on: 24 Jun 2013
+ *      Author: nick
+
 Copyright (c) 2013, dharc ltd.
 All rights reserved.
 
@@ -27,55 +32,18 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-/** @file harc.h */
+#ifndef AGENT_H_
+#define AGENT_H_
 
-#ifndef _HARC_H_
-#define _HARC_H_
+int dsb_agent_init();
+int dsb_agent_final();
 
-#include "dsb/core/nid.h"
-#include "dsb/config.h"
-
-#include <stdio.h>
-
-typedef struct Event Event_t;
-typedef struct Dependency Dependency_t;
-
-/**
- * @addtogroup Hyperarc
- * @{
+/*
+ * Add a script as an agent. This will cause the script to be executed
+ * immediately and then whenever any of its dependencies change.
+ * Returns an agent handle unique to this instance.
  */
+int dsb_agent_register(const NID_t *agent, const NID_t *data);
 
-#define HARC_OUTOFDATE	1	///< This hyperarc needs a re-evaluation of its def
-#define HARC_VOLATILE	2	///< A volatile HARC, destroyed asap
-#define HARC_LOCK		4	///< Thread lock.
-#define HARC_AGENT		8	///< Delayed execution as agent code.
-#define HARC_SCRIPT		16	///< Definition is VM code or C function.
 
-/**
- * Hyperarc structure. A hyperarc consists of two tail nodes and one head
- * node. There may be a definition to describe how the head node is to be
- * calculated. The evaluator selects how this definition is to be
- * interpreted and processed to generate the head node.
- */
-struct HARC
-{
-	NID_t t1;		///< Tail 1. Should always be greater than or equal to tail 2.
-	NID_t t2;		///< Tail 2. Should always be less than or equal to tail 1.
-	NID_t def;		///< Definition. Identifies the structure to use as the definition.
-	Dependency_t *deps;		///< List of dependants.
-
-	//The following are volatile and do not need to be saved.
-	NID_t h;		///< Head. Cached value that results from evaluating the definition.
-	int flags;		///< Status flags (HARC_ definitions).
-};
-
-typedef struct HARC HARC_t;
-
-HARC_t *dsb_harc(const NID_t *t1, const NID_t *t2, HARC_t *harc);
-
-int dsb_harc_deserialize(FILE *fd, HARC_t *harc);
-int dsb_harc_serialize(FILE *fd, const HARC_t *harc);
-
-/** @} */
-
-#endif
+#endif /* AGENT_H_ */
