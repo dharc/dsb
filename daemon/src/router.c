@@ -94,7 +94,7 @@ int dsb_route(struct Event *evt)
 		case NID_PERSISTENT:	handler = localpersist[0]; break;
 		case NID_COMMON:
 		case NID_VOLATILE:		handler = localvolatile[0]; break;
-		case NID_AGENT:			dsb_agent_trigger((unsigned int)evt->d1.ll); break;
+		case NID_AGENT:			dsb_agent_trigger((unsigned int)evt->d1.ll); return 0;
 
 		default: return DSB_ERROR(WARN_NOROUTE,0);
 		}
