@@ -70,11 +70,11 @@ int dsb_nid_init()
 	dsb_nid_local(1,&PRoot);
 	dsb_nid_null(&Null);
 
-	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&True);
-	dsb_nid(NID_SPECIAL,SPECIAL_FALSE,&False);
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE,&Size);
-	dsb_nid(NID_SPECIAL,SPECIAL_NAMES,&Names);
-	dsb_nid(NID_SPECIAL,SPECIAL_KEYS,&Keys);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&True);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_FALSE,&False);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_SIZE,&Size);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_NAMES,&Names);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_KEYS,&Keys);
 
 	return SUCCESS;
 }
@@ -89,7 +89,7 @@ int dsb_nid_pack(const NID_t *n, char *buf, int max)
 	*buf = n->header;
 	buf++;
 
-	if (n->hasMac == 0)
+	if (n->header == NID_COMMON)
 	{
 		*buf = n->r2;
 		buf++;
@@ -125,7 +125,7 @@ int dsb_nid_unpack(const char *buf, NID_t *n)
 	n->header = *buf;
 	buf++;
 
-	if (n->hasMac == 0)
+	if (n->header == NID_COMMON)
 	{
 		n->r2 = *buf;
 		buf++;
@@ -178,7 +178,7 @@ int dsb_nid_free(const struct NID *nid)
 
 int dsb_nid_eq(const NID_t *n1, const NID_t *n2)
 {
-	if (n1->hasMac == 1)
+	if (n1->header > 0)
 	{
 		return ((n1->header == n2->header) && (n1->n == n2->n) && (memcmp(n1->mac,n2->mac,6) == 0));
 	}
@@ -201,23 +201,28 @@ int dsb_nid_geq(const NID_t *n1, const NID_t *n2)
 int dsb_nid_op(unsigned long long op, NID_t *n)
 {
 	n->header = 0;
-	n->t = NID_VMOP;
+	n->t = NID_TYPE_VMOP;
 	n->ll = op;
 	return 0;
 }
 
 int dsb_nid_isLocal(const NID_t *n)
 {
-	if (n->hasMac == 0) return 1;
+	if (n->header == NID_COMMON) return 1;
 	if (memcmp(n->mac,macaddr,6) == 0) return 1;
 	return 0;
 }
 
 int dsb_nid_local(int persistent, NID_t *n)
 {
-	n->persist = persistent;
-	n->hasMac = 1;
-	n->r1 = 0;
+	if (persistent == 1)
+	{
+		n->header = NID_PERSISTENT;
+	}
+	else
+	{
+		n->header = NID_VOLATILE;
+	}
 	memcpy(n->mac,macaddr,6);
 	n->mac[6] = 0;
 	n->n = 0;
@@ -227,13 +232,13 @@ int dsb_nid_local(int persistent, NID_t *n)
 void dsb_iton(int i, struct NID *n)
 {
 	n->header = 0;
-	n->t = NID_INTEGER;
+	n->t = NID_TYPE_INTEGER;
 	n->ll = i;
 }
 
 int dsb_ntoi(const struct NID *n)
 {
-	if ((n->header == 0) && (n->t == NID_INTEGER))
+	if ((n->header == 0) && (n->t == NID_TYPE_INTEGER))
 	{
 		return n->ll;
 	}
@@ -246,13 +251,13 @@ int dsb_ntoi(const struct NID *n)
 void dsb_cton(char chr, NID_t *n)
 {
 	n->header = 0;
-	n->t = NID_CHARACTER;
+	n->t = NID_TYPE_CHARACTER;
 	n->chr = chr;
 }
 
 char dsb_ntoc(const NID_t *n)
 {
-	if ((n->header == 0) && (n->t == NID_CHARACTER))
+	if ((n->header == 0) && (n->t == NID_TYPE_CHARACTER))
 	{
 		return n->chr;
 	}
@@ -295,7 +300,7 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 		nid->header = readHex(str[i],str[i+1]);
 		i += 3;
 
-		if (nid->hasMac == 1)
+		if (nid->header > 0)
 		{
 			//Replace a * with local mac
 			if (str[i] == '*')
@@ -366,7 +371,7 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 		{
 			nid->header = 0;
 			nid->dbl = atof(str);
-			nid->t = NID_REAL;
+			nid->t = NID_TYPE_REAL;
 			return SUCCESS;
 		}
 		else
@@ -389,7 +394,7 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 			}
 			if (neg == 1) num = -num;
 			nid->header = 0;
-			nid->t = NID_INTEGER;
+			nid->t = NID_TYPE_INTEGER;
 			nid->ll = num;
 			return SUCCESS;
 		}
@@ -405,17 +410,17 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 {
 	if (nid->header == 0)
 	{
-		if (nid->t == NID_INTEGER)
+		if (nid->t == NID_TYPE_INTEGER)
 		{
 			sprintf(str, "%d", (unsigned int)nid->ll);
 			return SUCCESS;
 		}
-		else if (nid->t == NID_REAL)
+		else if (nid->t == NID_TYPE_REAL)
 		{
 			sprintf(str, "%0.4f", (float)nid->dbl);
 			return SUCCESS;
 		}
-		else if (nid->t == NID_CHARACTER)
+		else if (nid->t == NID_TYPE_CHARACTER)
 		{
 			str[0] = '\'';
 			str[1] = nid->chr;
@@ -427,7 +432,7 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 
 	if (dsb_names_revlookup(nid,str,len) == 0) return SUCCESS;
 
-	if (nid->hasMac == 1)
+	if (nid->header > 0)
 	{
 		if (dsb_nid_isLocal(nid) == 1)
 		{
@@ -449,17 +454,17 @@ int dsb_nid_pretty(const NID_t *nid, char *str, int len)
 {
 	if (nid->header == 0)
 	{
-		if (nid->t == NID_INTEGER)
+		if (nid->t == NID_TYPE_INTEGER)
 		{
 			sprintf(str, "%d", (unsigned int)nid->ll);
 			return SUCCESS;
 		}
-		else if (nid->t == NID_REAL)
+		else if (nid->t == NID_TYPE_REAL)
 		{
 			sprintf(str, "%0.4f", (float)nid->dbl);
 			return SUCCESS;
 		}
-		else if (nid->t == NID_CHARACTER)
+		else if (nid->t == NID_TYPE_CHARACTER)
 		{
 			str[0] = '\'';
 			str[1] = nid->chr;
@@ -471,7 +476,7 @@ int dsb_nid_pretty(const NID_t *nid, char *str, int len)
 
 	if (dsb_names_revlookup(nid,str,len) == 0) return SUCCESS;
 
-	if (nid->hasMac == 1)
+	if (nid->header > 0)
 	{
 		strcpy(str,"<object>");
 	}
@@ -484,7 +489,7 @@ int dsb_nid_pretty(const NID_t *nid, char *str, int len)
 
 int dsb_nid_toRawStr(const struct NID *nid, char *str, int len)
 {
-	if (nid->hasMac == 1)
+	if (nid->header > 0)
 	{
 		if (dsb_nid_isLocal(nid) == 1)
 		{

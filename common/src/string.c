@@ -47,7 +47,7 @@ int dsb_string_cton(const NID_t *dest, const char *str)
 	int i;
 	int len = strlen(str);
 
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_SIZE, &attr);
 	dsb_iton(len,&val);
 	dsb_set(dest, &attr,&val);
 
@@ -69,7 +69,7 @@ int dsb_string_ntoc(char *dest, int len, const NID_t *str)
 	int i;
 	int len2;
 
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_SIZE, &attr);
 	dsb_get(str,&attr,&val);
 	len2 = dsb_ntoi(&val);
 

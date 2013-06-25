@@ -41,47 +41,40 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/patterns/array.h"
 #include "dsb/globals.h"
 #include <malloc.h>
+#include <stdarg.h>
 
 //#ifdef X86_64
 #include "arch/vm_x86_64.c"
 //#endif
 
-int dsb_vm_call(const NID_t *func, const HARC_t *harc, NID_t *res)
+int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...)
 {
-	int maxip;	//End of instructions.
-	NID_t *code = malloc(sizeof(NID_t)*1000);
+	va_list args;
+	struct VMContext ctx;
+	int i;
 
+	va_start(args,pn);
+
+	//TODO DO A JIT LOOKUP HERE
+	ctx.code = malloc(sizeof(NID_t)*1000);
 	//Read in the code
-	maxip = dsb_array_read(func, code, 1000);
+	ctx.codesize = dsb_array_read(func, ctx.code, 1000);
+	//TODO DO A JIT COMPILE HERE
+
+	for (i=0; i<pn; i++)
+	{
+		ctx.vars[i] = *va_arg(args,NID_t*);
+	}
 
 	//Run the interpreter.
-	dsb_vm_interpret(code,maxip,harc,res);
+	dsb_vm_interpret(&ctx);
 
-	free(code);
+	free(ctx.code);
 
 	return SUCCESS;
 }
 
-int dsb_vm_interpret(NID_t *code, int maxip, const HARC_t *harc, NID_t *res)
-{
-	struct VMContext ctx;
-	ctx.ip = 0;
-	ctx.timeout = 10000000;
-	ctx.code = code;
-	ctx.codesize = maxip;
-	ctx.result = res;
-
-	if (harc != 0)
-	{
-		ctx.vars[0] = harc->t1;
-		ctx.vars[1] = harc->t2;
-		ctx.vars[2] = harc->h;
-	}
-
-	return dsb_vm_interpret_ctx(&ctx);
-}
-
-int dsb_vm_interpret_ctx(struct VMContext *ctx)
+int dsb_vm_interpret(struct VMContext *ctx)
 {
 	unsigned long long op;
 	unsigned int varno;
@@ -97,7 +90,7 @@ int dsb_vm_interpret_ctx(struct VMContext *ctx)
 	while ((ctx->ip < ctx->codesize) && (ctx->timeout-- > 0))
 	{
 		//Not a valid instruction.
-		if (ctx->code[ctx->ip].t != NID_VMOP)	return DSB_ERROR(ERR_VMINVALIP,0);
+		if (ctx->code[ctx->ip].t != NID_TYPE_VMOP)	return DSB_ERROR(ERR_VMINVALIP,0);
 		op = ctx->code[ctx->ip].ll;
 
 		//Switch on operation type.

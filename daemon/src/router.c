@@ -37,6 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/core/event.h"
 #include "dsb/errors.h"
 #include "dsb/core/harc.h"
+#include "dsb/core/agent.h"
 
 static int (*localvolatile[16])(struct Event *);
 static int (*localpersist[16])(struct Event *);
@@ -88,13 +89,14 @@ int dsb_route(struct Event *evt)
 	}
 	else
 	{
-		if (evt->d1.persist == 1)
+		switch(evt->d1.header)
 		{
-			handler = localpersist[0];
-		}
-		else
-		{
-			handler = localvolatile[0];
+		case NID_PERSISTENT:	handler = localpersist[0]; break;
+		case NID_COMMON:
+		case NID_VOLATILE:		handler = localvolatile[0]; break;
+		case NID_AGENT:			dsb_agent_trigger((unsigned int)evt->d1.ll); break;
+
+		default: return DSB_ERROR(WARN_NOROUTE,0);
 		}
 	}
 

@@ -64,7 +64,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						if ((harc->flags & HARC_OUTOFDATE) != 0)
 						{
 							//Get evaluator and use to get result.
-							ret = dsb_vm_call(&harc->def,harc,&harc->h);
+							ret = dsb_vm_call(&harc->h, &harc->def, 3, &harc->t1, &harc->t2, &harc->h);
 							if (ret != SUCCESS)
 							{
 								return ret;

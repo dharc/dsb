@@ -46,7 +46,7 @@ int dsb_array_write(const NID_t *src, int size, const NID_t *dest)
 	int i;
 
 	//Set the size attribute
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_SIZE, &attr);
 	dsb_iton(size,&val);
 	dsb_set(dest, &attr,&val);
 
@@ -67,7 +67,7 @@ int dsb_array_read(const NID_t *src, NID_t *dest, int max)
 	int i;
 	int len2;
 
-	dsb_nid(NID_SPECIAL,SPECIAL_SIZE, &attr);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_SIZE, &attr);
 	dsb_get(src,&attr,&val);
 	len2 = dsb_ntoi(&val);
 

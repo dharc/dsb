@@ -91,7 +91,7 @@ int dsb_getnii(const NID_t *d1, int d2, int *r)
 
 	dsb_iton(d2,&n2);
 	ret = dsb_get(d1,&n2,&r1);
-	if (r1.header != 0 || r1.t != NID_INTEGER) return ERR_NOTINTEGER;
+	if (r1.header != 0 || r1.t != NID_TYPE_INTEGER) return ERR_NOTINTEGER;
 	*r = dsb_ntoi(&r1);
 	return ret;
 }
@@ -102,7 +102,7 @@ int dsb_getnni(const NID_t *d1, const NID_t *d2, int *r)
 	int ret;
 
 	ret = dsb_get(d1,d2,&r1);
-	if (r1.header != 0 || r1.t != NID_INTEGER) return ERR_NOTINTEGER;
+	if (r1.header != 0 || r1.t != NID_TYPE_INTEGER) return ERR_NOTINTEGER;
 	*r = dsb_ntoi(&r1);
 	return ret;
 }
@@ -130,7 +130,7 @@ int dsb_getnzi(const NID_t *d1, const char *d2, int *r)
 
 	dsb_nid_fromStr(d2,&n2);
 	ret = dsb_get(d1,&n2,&r1);
-	if (r1.header != 0 || r1.t != NID_INTEGER) return ERR_NOTINTEGER;
+	if (r1.header != 0 || r1.t != NID_TYPE_INTEGER) return ERR_NOTINTEGER;
 	*r = dsb_ntoi(&r1);
 	return ret;
 }
@@ -185,7 +185,7 @@ int dsb_dict(const NID_t *d, const NID_t *n)
 
 	//Don't add integers to the dictionary...
 	//These are iterated as arrays already!
-	if (n->header == 0 && n->t == NID_INTEGER) return 0;
+	if (n->header == 0 && n->t == NID_TYPE_INTEGER) return 0;
 
 	dsb_get(d,&Keys,&dict);
 

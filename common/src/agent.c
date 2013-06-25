@@ -1,7 +1,7 @@
 /*
- * router-test.c
+ * agent.c
  *
- *  Created on: 29 Apr 2013
+ *  Created on: 25 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,50 +32,47 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/test.h"
-#include "dsb/router.h"
-#include "dsb/core/event.h"
+#include "dsb/core/agent.h"
+#include "dsb/core/vm.h"
 #include "dsb/core/nid.h"
+#include <stdio.h>
 
-int math_handler1_called = 0;
+#define MAX_AGENTS	1000
 
-int dsb_send(struct Event *evt)
+struct AgentEntry
 {
-	return 0;
+	int active;
+	struct VMContext ctx;
+	NID_t script;
+};
+
+static struct AgentEntry agents[MAX_AGENTS];
+
+int dsb_agent_start(const NID_t *agent, int pn, ...)
+{
+	int handle = 0;
+	for (handle=0; handle < MAX_AGENTS; handle++)
+	{
+		if (agents[handle].active == 0)
+		{
+			agents[handle].active = 1;
+			agents[handle].script = *agent;
+
+			//TODO Call Agent.
+
+			return handle;
+		}
+	}
+
+	return -1;
 }
 
-int math_handler1(struct Event *evt)
+int dsb_agent_trigger(unsigned int id)
 {
-	CHECK(evt->d1.ll == 55);
-	math_handler1_called = 1;
-	return 0;
-}
-
-void test_router_simple()
-{
-	struct Event evt;
-
-	evt.type = EVENT_GET;
-	dsb_iton(55,&evt.d1);
-	dsb_nid_null(&evt.d2);
-
-	CHECK(dsb_route_init() == 0);
-
-	CHECK(dsb_route_map(0,0,math_handler1) == 0);
-	CHECK(dsb_route(&evt) == 0);
-	CHECK(math_handler1_called == 1);
-
-	evt.d1.t = NID_TYPE_REAL;
-	CHECK(dsb_route(&evt) == 0);
-
-	CHECK(dsb_route_final() == 0);
-
-	DONE;
-}
-
-int main(int argc, char *argv[])
-{
-	dsb_test(test_router_simple);
+	if (agents[id].active == 1)
+	{
+		//TODO Call Agent.
+	}
 	return 0;
 }
 

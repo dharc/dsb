@@ -35,6 +35,13 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef AGENT_H_
 #define AGENT_H_
 
+typedef struct NID NID_t;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int dsb_agent_init();
 int dsb_agent_final();
 
@@ -43,7 +50,12 @@ int dsb_agent_final();
  * immediately and then whenever any of its dependencies change.
  * Returns an agent handle unique to this instance.
  */
-int dsb_agent_register(const NID_t *agent, const NID_t *data);
+int dsb_agent_start(const NID_t *agent, int pn, ...);
 
+int dsb_agent_trigger(unsigned int id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* AGENT_H_ */

@@ -18,7 +18,7 @@ void test_nid_iton()
 	dsb_iton(6767,&n);
 	CHECK(dsb_ntoi(&n) == 6767);
 	CHECK(n.header == 0);
-	CHECK(n.t == NID_INTEGER);
+	CHECK(n.t == NID_TYPE_INTEGER);
 	CHECK(n.ll == 6767);
 
 	DONE;
@@ -31,7 +31,7 @@ void test_nid_cton()
 	dsb_cton('a',&n);
 	CHECK(dsb_ntoc(&n) == 'a');
 	CHECK(n.header == 0);
-	CHECK(n.t == NID_CHARACTER);
+	CHECK(n.t == NID_TYPE_CHARACTER);
 	CHECK(n.chr == 'a');
 
 	DONE;
@@ -66,8 +66,8 @@ void test_nid_eq()
 	NID_t a;
 	NID_t b;
 
-	a.header = 8;
-	b.header = 8;
+	a.header = 0;
+	b.header = 0;
 	a.t = 89;
 	b.t = 89;
 	a.ll = 4545;
@@ -185,11 +185,11 @@ void test_nid_fromstr()
 
 	CHECK(dsb_nid_fromStr("55",&t) == 0);
 	CHECK(t.ll == 55);
-	CHECK(t.t == NID_INTEGER);
+	CHECK(t.t == NID_TYPE_INTEGER);
 
 	CHECK(dsb_nid_fromStr("66\n",&t) == 0);
 	CHECK(t.ll == 66);
-	CHECK(t.t == NID_INTEGER);
+	CHECK(t.t == NID_TYPE_INTEGER);
 
 	CHECK(dsb_nid_fromStr("[00:0001:000000000000014d]",&t) == 0);
 	CHECK(t.ll == 333);
@@ -197,8 +197,7 @@ void test_nid_fromstr()
 	CHECK(t.t == 1);
 
 	CHECK(dsb_nid_fromStr("[03:55:66:77:88:99:00:0000000444]", &t) == 0);
-	CHECK(t.hasMac == 1);
-	CHECK(t.persist == 1);
+	CHECK(t.header == NID_PERSISTENT);
 	CHECK(t.mac[0] == 0x55);
 	CHECK(t.mac[4] == 0x99);
 	CHECK(t.n == 0x444);
@@ -221,12 +220,12 @@ void test_nid_toStr()
 	NID_t t;
 
 	t.header = 0;
-	t.t = NID_INTEGER;
+	t.t = NID_TYPE_INTEGER;
 	t.ll = 4545;
 	CHECK(dsb_nid_toStr(&t,buf,100) == 0);
 	CHECK(strcmp(buf,"4545") == 0);
 
-	t.t = NID_REAL;
+	t.t = NID_TYPE_REAL;
 	t.dbl = 34.78;
 	CHECK(dsb_nid_toStr(&t,buf,100) == 0);
 	CHECK(strcmp(buf,"34.7800") == 0);
@@ -236,9 +235,7 @@ void test_nid_toStr()
 	CHECK(dsb_nid_toStr(&t,buf,100) == 0);
 	CHECK(strcmp(buf,"[00:002d:000000000000004e]") == 0);
 
-	t.hasMac = 1;
-	t.persist = 1;
-	t.r1 = 0;
+	t.header = NID_PERSISTENT;
 	t.mac[0] = 0xaa;
 	t.mac[1] = 0;
 	t.mac[2] = 0;

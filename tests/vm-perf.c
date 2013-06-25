@@ -104,19 +104,21 @@ int main(int argc, char *argv[])
 	double secs;
 	int i;
 	int (*output)(void *);
-	int size;
-	NID_t vars[16];
+	struct VMContext ctx;
+	ctx.code = code;
+	ctx.codesize = 100;
+	ctx.result = &harc.h;
 
 	dsb_nid_init();
 	dsb_event_init();
 
-	size = generate_benchmark1();
+	ctx.codesize = generate_benchmark1();
 
 	ticks = getTicks();
 
 	for (i=0; i<10000; i++)
 	{
-		if (dsb_vm_interpret(code,100, 0, &harc.h) != -1)
+		if (dsb_vm_interpret(&ctx) != -1)
 		{
 			printf("Error\n");
 		}
@@ -132,14 +134,14 @@ int main(int argc, char *argv[])
 
 	//size = generate_benchmark2();
 	//Now compile the code
-	dsb_vm_arch_compile(code,size,(void**)&output);
+	dsb_vm_arch_compile(code,ctx.codesize,(void**)&output);
 
 	ticks = getTicks();
 
 	for (i=0; i<10000; i++)
 	{
 		//Now run the code!!!!!!!!!!
-		size = output(&vars);
+		ctx.codesize = output(&ctx.vars);
 	}
 
 	ticks = getTicks() - ticks;
@@ -147,7 +149,7 @@ int main(int argc, char *argv[])
 	secs = (double)ticks / 1000000.0;
 	printf("Benchmark 1 JIT: %fs or %.2f kop/s\n",(float)secs,30004000.0 / (float)secs / 100000.0);
 
-	printf("JIT Result = %llu\n",vars[size].ll);
+	printf("JIT Result = %llu\n",ctx.vars[ctx.codesize].ll);
 
 	dsb_event_final();
 	dsb_nid_final();

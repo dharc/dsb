@@ -52,12 +52,12 @@ void test_vol_getset()
 	NID_t res;
 
 	//Create tail NIDs
-	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&a);
-	dsb_nid(NID_INTEGER,1,&b);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&a);
+	dsb_nid(NID_TYPE_INTEGER,1,&b);
 
 	//Generate DEFINE event.
 	dsb_event(EVENT_DEFINE,&a,&b,&evt);
-	dsb_nid(NID_INTEGER,55,&(evt.def));
+	dsb_nid(NID_TYPE_INTEGER,55,&(evt.def));
 
 	//Send DEFINE event.
 	CHECK(dsb_route(&evt) == 0);
@@ -71,7 +71,7 @@ void test_vol_getset()
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(res.t == NID_INTEGER);
+	CHECK(res.t == NID_TYPE_INTEGER);
 	CHECK(res.ll == 55);
 
 	DONE;
@@ -112,14 +112,14 @@ void test_vol_region()
 	NID_t res;
 
 	//Create tail NIDs
-	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&a);
-	dsb_nid(NID_INTEGER,2,&b);
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&a);
+	dsb_nid(NID_TYPE_INTEGER,2,&b);
 
 	//Generate DEFINE event.
 	dsb_event(EVENT_DEFINE,&a,&b,&evt);
-	dsb_nid(NID_INTEGER,66,&(evt.def));
-	dsb_nid(NID_SPECIAL,SPECIAL_TRUE,&(evt.d1b));
-	dsb_nid(NID_INTEGER,50,&(evt.d2b));
+	dsb_nid(NID_TYPE_INTEGER,66,&(evt.def));
+	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&(evt.d1b));
+	dsb_nid(NID_TYPE_INTEGER,50,&(evt.d2b));
 	evt.flags |= EVTFLAG_MULT;
 
 	//Send DEFINE event.
@@ -134,7 +134,7 @@ void test_vol_region()
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(res.t == NID_INTEGER);
+	CHECK(res.t == NID_TYPE_INTEGER);
 	CHECK(res.ll == 66);
 
 	//Generate GET event;
@@ -147,7 +147,7 @@ void test_vol_region()
 
 	//Check result of GET.
 	CHECK((evt.flags & EVTFLAG_DONE) != 0);
-	CHECK(res.t == NID_INTEGER);
+	CHECK(res.t == NID_TYPE_INTEGER);
 	CHECK(res.ll == 66);
 	DONE;
 }

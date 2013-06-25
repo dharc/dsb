@@ -50,11 +50,11 @@ int dsb_pattern_isA(const NID_t *n, int t)
 	switch (t)
 	{
 	case DSB_PATTERN_NUMBER:	return (dsb_pattern_isA(n,DSB_PATTERN_INTEGER) || dsb_pattern_isA(n,DSB_PATTERN_REAL));
-	case DSB_PATTERN_INTEGER:	return (n->header == 0 && n->t == NID_INTEGER);
-	case DSB_PATTERN_REAL:		return (n->header == 0 && n->t == NID_REAL);
-	case DSB_PATTERN_CHARACTER:	return (n->header == 0 && n->t == NID_CHARACTER);
-	case DSB_PATTERN_OPERATOR:	return (n->header == 0 && n->t == NID_VMOP);
-	case DSB_PATTERN_BOOLEAN:	return (n->header == 0 && n->t == NID_SPECIAL && (n->ll == SPECIAL_TRUE || n->ll == SPECIAL_FALSE));
+	case DSB_PATTERN_INTEGER:	return (n->header == 0 && n->t == NID_TYPE_INTEGER);
+	case DSB_PATTERN_REAL:		return (n->header == 0 && n->t == NID_TYPE_REAL);
+	case DSB_PATTERN_CHARACTER:	return (n->header == 0 && n->t == NID_TYPE_CHARACTER);
+	case DSB_PATTERN_OPERATOR:	return (n->header == 0 && n->t == NID_TYPE_VMOP);
+	case DSB_PATTERN_BOOLEAN:	return (n->header == 0 && n->t == NID_TYPE_SPECIAL && (n->ll == SPECIAL_TRUE || n->ll == SPECIAL_FALSE));
 	case DSB_PATTERN_NULL:		return (dsb_nid_eq(n,&Null));
 	case DSB_PATTERN_OBJECT:	return (n->header != 0);
 

@@ -56,25 +56,20 @@ extern "C"
  */
 enum NIDType
 {
-	NID_SPECIAL=0,		///< Special internal nodes such as true and false.
-	NID_INTEGER,		///< A node corresponding to an integer.
-	NID_REAL,			///< A node corresponding to a real number.
-	NID_CHARACTER,		///< A node corresponding to a unicode character.
-	NID_LABEL,			///< Nodes used as labels.
-	NID_VMOP,
-	//---- Integer Operations -----
-	NID_INTADD,   //!< NID_INTADD
-	NID_INTSUB,   //!< NID_INTSUB
-	NID_INTDIV,   //!< NID_INTDIV
-	NID_INTMUL,   //!< NID_INTMUL
-	NID_INTBITAND,//!< NID_INTBITAND
-	NID_INTBITNOT,//!< NID_INTBITNOT
-	NID_INTBITOR, //!< NID_INTBITOR
-	NID_INTSHIFTL,//!< NID_INTSHIFTL
-	NID_INTSHIFTR,//!< NID_INTSHIFTR
+	NID_TYPE_SPECIAL=0,		///< Special internal nodes such as true and false.
+	NID_TYPE_INTEGER,		///< A node corresponding to an integer.
+	NID_TYPE_REAL,			///< A node corresponding to a real number.
+	NID_TYPE_CHARACTER,		///< A node corresponding to a unicode character.
+	NID_TYPE_LABEL,			///< Nodes used as labels.
+	NID_TYPE_VMOP,
 
-	NID_USER=1000 //!< NID_USER
+	NID_TYPE_USER=1000 //!< NID_USER
 };
+
+#define NID_COMMON		0x00	//No serial number
+#define NID_VOLATILE	0x01
+#define NID_PERSISTENT	0x03
+#define NID_AGENT		0x02
 
 /**
  * Node IDentifier.
@@ -92,17 +87,7 @@ enum NIDType
  */
 struct NID
 {
-	//NID Header
-	union
-	{
-		struct
-		{
-			unsigned int hasMac : 1;	///< Has a MAC address component.
-			unsigned int persist : 1;	///< Is persistent.
-			unsigned int r1 : 6;		///< Reserved
-		};
-		unsigned char header;
-	};
+	unsigned char header;
 
 	union
 	{

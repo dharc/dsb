@@ -602,7 +602,7 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 
 	for (i=0; i<size; i++)
 	{
-		if (src[i].header == 0 && src[i].t == NID_VMOP)
+		if (src[i].header == 0 && src[i].t == NID_TYPE_VMOP)
 		{
 			op = VMGET_OP(src[i].ll);
 			//varA = VMGET_A(src[i].ll);

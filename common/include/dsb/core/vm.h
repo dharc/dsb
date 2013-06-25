@@ -163,29 +163,16 @@ struct VMContext
 
 /**
  * Call a VM function stored at a particular node. Loads the node as an array
- * and then interprets the array as DSB byte code.
- * @param func An array structure in the graph at this node.
- * @param params An array of parameters
- * @param pn Number of parameters
- * @param res Location to put the result.
- * @return SUCCESS.
- */
-int dsb_vm_call(const NID_t *func, const HARC_t *harc, NID_t *res);
-
-/**
- * Interpret a NID array as VM code. Instead of getting the code from the graph
- * it directly uses an array of the code. This is used by dsb_vm_call.
- * @see dsb_vm_call
- * @param code Array of NIDs containing the code.
- * @param maxip Size of the code array.
- * @param params An array of parameters.
+ * and then interprets the array as DSB byte code. Can take a variable number
+ * of parameters.
+ * @param res Location to put result.
+ * @param func VM Bytecode object.
  * @param pn Number of parameters.
- * @param res Location to put the result.
  * @return SUCCESS.
  */
-int dsb_vm_interpret(NID_t *code, int maxip, const HARC_t *harc, NID_t *res);
+int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...);
 
-int dsb_vm_interpret_ctx(struct VMContext *ctx);
+int dsb_vm_interpret(struct VMContext *ctx);
 
 typedef int (*XFUNC_t)(NID_t *Res, const NID_t *params);
 

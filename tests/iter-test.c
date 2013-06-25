@@ -54,7 +54,7 @@ int dsb_send(struct Event *evt)
 		//The dictionary itself.
 		else if (evt->d1.ll == 44)
 		{
-			if (evt->d2.t == NID_SPECIAL)
+			if (evt->d2.t == NID_TYPE_SPECIAL)
 			{
 				if (evt->d2.ll == SPECIAL_SIZE)
 				{
