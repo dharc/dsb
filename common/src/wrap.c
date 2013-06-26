@@ -40,7 +40,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/globals.h"
 
 //Needs to be implemented elsewhere.
-extern int __declspec(dllimport) dsb_send(struct Event *,int);
+extern int dsb_send(struct Event *,int);
 
 int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r)
 {
