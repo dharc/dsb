@@ -16,13 +16,21 @@ set(CMAKE_C_FLAGS "-Wall -Werror")
 set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG -g -Wall -Werror")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
+IF(WIN32)
+set(DSBCOMMONLIBS wsock32)
+ENDIF(WIN32)
+
+IF(UNIX)
+set(DSBCOMMONLIBS dl pthread)
+ENDIF(UNIX)
+
 set(COMMONSOURCE common/src/agent.c common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c common/src/net.c common/src/net_protocol.c common/src/string.c common/src/array.c common/src/vm.c common/src/assembler.c common/src/names.c common/src/iterator.c common/src/pattern.c common/src/clone.c)
 set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/modules/net/netmod.c daemon/modules/net/handler.c daemon/modules/volatile/volatile.c daemon/src/harc_d.c daemon/modules/persistent/persistent.c)
 
 configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/dsb/config.h )
 
 add_library(dsbcommon SHARED ${COMMONSOURCE})
-target_link_libraries(dsbcommon dl pthread)
+target_link_libraries(dsbcommon ${DSBCOMMONLIBS})
 
 add_executable(dsbd ${DSBDSOURCE})
 target_link_libraries(dsbd dsbcommon dl)

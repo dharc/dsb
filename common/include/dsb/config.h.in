@@ -42,7 +42,7 @@ either expressed or implied, of the FreeBSD Project.
 #define VERSION_PATCH @dsb_VERSION_PATCH@
 
 #cmakedefine UNIX
-#cmakedefine WIN32
+//#cmakedefine WIN32
 
 #define INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
 #define BINDIR "@CMAKE_INSTALL_PREFIX@/bin"

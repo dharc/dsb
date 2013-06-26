@@ -44,6 +44,7 @@ either expressed or implied, of the FreeBSD Project.
 
 #include <string.h>
 #include <malloc.h>
+#include <stdio.h>
 
 #define MAX_NAME_SIZE	50
 #define NAME_HASH_SIZE	200

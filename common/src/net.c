@@ -97,10 +97,10 @@ int dsb_net_init()
 {
 	//Initialise windows sockets
 	#ifdef WIN32
-	WSAData wsaData;
+	struct WSAData wsaData;
 	if (WSAStartup(MAKEWORD(1,1), &wsaData) != 0) {
 		//ERROR
-		DSB_ERROR(ERR_NETCONNECT,url);
+		DSB_ERROR(ERR_NETCONNECT,"Windows Sockets");
 		return ERR_NET;
 	}
 	#endif
@@ -226,7 +226,7 @@ static int set_descriptors()
 	//Set the file descriptors for each client
 	for (i=0; i<MAX_CONNECTIONS; i++) {
 		#ifdef WIN32
-		if (connections[i] != INVALID_SOCKET) {
+		if ((connections[i] != 0) && (connections[i]->sockfd != INVALID_SOCKET)) {
 		#else
 		if ((connections[i] != 0) && (connections[i]->sockfd >= 0)) {
 		#endif
@@ -378,7 +378,7 @@ int dsb_net_poll(unsigned int ms)
 	//Also check each clients socket to see if any messages or errors are waiting
 	for (i=0; i<MAX_CONNECTIONS; i++) {
 		#ifdef WIN32
-		if (connections[i] != INVALID_SOCKET) {
+		if ((connections[i] != 0) && (connections[i]->sockfd >= 0)) {
 		#else
 		if ((connections[i] != 0) && (connections[i]->sockfd >= 0)) {
 		#endif
@@ -434,7 +434,7 @@ int dsb_net_send(void *s, int msgtype, void *msg, int size)
 	header->size = size;
 
 	//TODO check for errors.
-	send(sock->sockfd, header, size+sizeof(struct DSBNetHeader),0);
+	send(sock->sockfd, (const char*)header, size+sizeof(struct DSBNetHeader),0);
 	free(header); //Release original buffer (see dsb_net_buffer).
 	return SUCCESS;
 }
@@ -468,7 +468,11 @@ int dsb_net_disconnect(void *sock)
 	{
 		if (connections[i] == sock)
 		{
+			#ifdef WIN32
+			closesocket(connections[i]->sockfd);
+			#else
 			close(connections[i]->sockfd);
+			#endif
 			free(connections[i]);
 			connections[i] = 0;
 			break;

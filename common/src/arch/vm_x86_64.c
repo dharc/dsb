@@ -40,8 +40,11 @@ either expressed or implied, of the FreeBSD Project.
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
-#include <sys/mman.h>
 #include <string.h>
+
+#ifdef UNIX
+#include <sys/mman.h>
+#endif
 
 #define MOD_INDIRECT 0x00
 #define MOD_DISP8 0x40
@@ -329,7 +332,12 @@ int dsb_vm_arch_compile(NID_t *code, int size, void **output)
 	}
 
 	//Allocate executable memory. Use munmap(addr,len) to free. Note, allocates pages
+	#ifdef UNIX
 	*output = mmap(0,1000,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANON,-1,0);
+	#else
+	//TODO mmap for windows.
+	*output = 0;
+	#endif
 
 	if (output == 0) return DSB_ERROR(ERR_NOEXECMEM,0);
 

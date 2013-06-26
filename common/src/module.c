@@ -44,6 +44,10 @@ either expressed or implied, of the FreeBSD Project.
 #include <sys/time.h>
 #endif
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #define MAX_MODULE_NAME			50
 #define MAX_INTERNAL_MODULES	20
 #define MAX_LOADED_MODULES		30
@@ -159,6 +163,9 @@ int dsb_module_load(const char *name, const struct NID *base)
 	#ifdef UNIX
 	sprintf(fname,"lib%s.so",name);
 	handle = dlopen(fname,RTLD_NOW);
+	#else
+	sprintf(fname,"%s.dll",name);
+	handle = LoadLibrary(fname);
 	#endif
 
 	if (handle == 0)
@@ -170,6 +177,8 @@ int dsb_module_load(const char *name, const struct NID *base)
 
 	#ifdef UNIX
 	init = dlsym(handle,"dsb_module_info");
+	#else
+	init = (void*)GetProcAddress(handle, "dsb_module_info");
 	#endif
 
 	if (init == 0)
