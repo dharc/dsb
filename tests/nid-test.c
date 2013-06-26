@@ -83,8 +83,8 @@ void test_nid_eq()
 	b.t = 89;
 	CHECK(dsb_nid_eq(&a,&b) == 0);
 
-	dsb_nid_local(0,&a);
-	dsb_nid_local(0,&b);
+	dsb_nid_local(NID_VOLATILE,&a);
+	dsb_nid_local(NID_VOLATILE,&b);
 	a.n = 5;
 	b.n = 5;
 	CHECK(dsb_nid_eq(&a,&b) == 1);

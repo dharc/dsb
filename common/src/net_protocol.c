@@ -172,8 +172,8 @@ int dsb_net_send_base(void *sock)
 	NID_t root;
 	NID_t proot;
 
-	dsb_nid_local(0,&root);
-	dsb_nid_local(1,&proot);
+	dsb_nid_local(NID_VOLATILE,&root);
+	dsb_nid_local(NID_PERSISTENT,&proot);
 
 	count = dsb_nid_pack(&root,buf,100);
 	count += dsb_nid_pack(&proot,&buf[count],100);

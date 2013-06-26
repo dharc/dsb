@@ -84,25 +84,15 @@ void test_agent_start()
 
 static int startxvar;
 
-void myagent1(void *data)
+void myagent1(const NID_t *me, void *data)
 {
 	NID_t tmpint;
-	NID_t tmpagent;
 	int *myint = (int*)data;
 	*myint = 55;
 
-	tmpagent.header = NID_AGENT;
-	tmpagent.mac[0] = 0;
-	tmpagent.mac[1] = 0;
-	tmpagent.mac[2] = 0;
-	tmpagent.mac[3] = 0;
-	tmpagent.mac[4] = 0;
-	tmpagent.mac[5] = 1;
-	tmpagent.n = 1;
-
 	dsb_iton(1,&tmpint);
 
-	dsb_dependency(&Root,&tmpint,&tmpagent,&tmpagent);
+	dsb_dependency(&Root,&tmpint,me,me);
 }
 
 void test_agent_startx()

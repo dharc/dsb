@@ -179,7 +179,7 @@ int dsb_nid_isLocal(const NID_t *n);
  * @param n NID to fill with local base.
  * @return SUCCESS
  */
-int dsb_nid_local(int persistent, NID_t *n);
+int dsb_nid_local(int head, NID_t *n);
 
 /**
  * Convert a NID to a string.

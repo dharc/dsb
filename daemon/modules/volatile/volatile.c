@@ -307,7 +307,7 @@ int vol_handler(Event_t *evt)
 {
 	if (evt->type == EVENT_ALLOCATE)
 	{
-		dsb_nid_local(0,evt->res);
+		dsb_nid_local(NID_VOLATILE,evt->res);
 		//TODO Put a mutex on this
 		evt->res->n = lastallocated++;
 		evt->flags |= EVTFLAG_DONE;

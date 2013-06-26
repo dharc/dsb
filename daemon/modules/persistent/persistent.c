@@ -136,7 +136,7 @@ static int per_handler(Event_t *evt)
 {
 	if (evt->type == EVENT_ALLOCATE)
 	{
-		dsb_nid_local(1,evt->res);
+		dsb_nid_local(NID_PERSISTENT,evt->res);
 		//TODO Put a mutex on this
 		evt->res->n = lastallocated++;
 		evt->flags |= EVTFLAG_DONE;

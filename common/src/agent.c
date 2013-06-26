@@ -46,7 +46,7 @@ struct AgentEntry
 	int active;
 	struct VMContext ctx;
 	NID_t script;
-	void (*cfunc)(void *);
+	void (*cfunc)(const NID_t *, void *);
 	void *data;
 };
 
@@ -90,19 +90,23 @@ int dsb_agent_start(const NID_t *agent, int pn, ...)
 	return -1;
 }
 
-int dsb_agent_startx(void (*func)(void*),void *data)
+int dsb_agent_startx(void (*func)(const NID_t *, void*),void *data)
 {
 	int handle = 0;
 	for (handle=0; handle < MAX_AGENTS; handle++)
 	{
 		if (agents[handle].active == 0)
 		{
+			NID_t me;
 			agents[handle].cfunc = func;
 			agents[handle].data = data;
 			agents[handle].active = 1;
 
+			dsb_nid_local(NID_AGENT, &me);
+			me.n = handle;
+
 			//Initial call.
-			agents[handle].cfunc(data);
+			agents[handle].cfunc(&me, data);
 
 			return handle;
 		}
@@ -126,7 +130,10 @@ int dsb_agent_trigger(unsigned int id)
 		}
 		else
 		{
-			agents[id].cfunc(agents[id].data);
+			NID_t me;
+			dsb_nid_local(NID_AGENT, &me);
+			me.n = id;
+			agents[id].cfunc(&me,agents[id].data);
 		}
 	}
 	return 0;

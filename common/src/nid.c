@@ -66,8 +66,8 @@ int dsb_nid_init()
 	printf("Serial: %s\n",serial);
 
 	//Initialise global NIDs.
-	dsb_nid_local(0,&Root);
-	dsb_nid_local(1,&PRoot);
+	dsb_nid_local(NID_VOLATILE,&Root);
+	dsb_nid_local(NID_PERSISTENT,&PRoot);
 	dsb_nid_null(&Null);
 
 	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&True);
@@ -213,16 +213,9 @@ int dsb_nid_isLocal(const NID_t *n)
 	return 0;
 }
 
-int dsb_nid_local(int persistent, NID_t *n)
+int dsb_nid_local(int head, NID_t *n)
 {
-	if (persistent == 1)
-	{
-		n->header = NID_PERSISTENT;
-	}
-	else
-	{
-		n->header = NID_VOLATILE;
-	}
+	n->header = head;
 	memcpy(n->mac,macaddr,6);
 	n->mac[6] = 0;
 	n->n = 0;

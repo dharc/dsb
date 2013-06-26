@@ -82,8 +82,8 @@ void test_vol_allocate()
 	struct Event evt;
 	NID_t res;
 	evt.res = &res;
-	dsb_nid_local(0,&evt.d1);
-	dsb_nid_local(0,&evt.d2);
+	dsb_nid_local(NID_VOLATILE,&evt.d1);
+	dsb_nid_local(NID_VOLATILE,&evt.d2);
 	evt.type = EVENT_ALLOCATE;
 
 	//Send ALLOCATE event.
