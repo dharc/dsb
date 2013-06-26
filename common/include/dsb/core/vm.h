@@ -161,6 +161,8 @@ struct VMContext
 	NID_t vars[16];			///< Registers.
 };
 
+int dsb_vm_context(struct VMContext *ctx, const NID_t *func);
+
 /**
  * Call a VM function stored at a particular node. Loads the node as an array
  * and then interprets the array as DSB byte code. Can take a variable number

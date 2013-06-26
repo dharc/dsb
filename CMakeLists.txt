@@ -48,6 +48,9 @@ target_link_libraries(module-test dsbcommon dl)
 add_executable(volatile-test tests/volatile-test.c daemon/src/router.c daemon/src/harc_d.c daemon/modules/volatile/volatile.c)
 target_link_libraries(volatile-test dsbcommon dl)
 
+add_executable(agent-test tests/agent-test.c daemon/src/router.c daemon/src/harc_d.c daemon/modules/volatile/volatile.c)
+target_link_libraries(agent-test dsbcommon dl)
+
 add_executable(proc-test tests/proc-test.c daemon/src/processor.c daemon/src/router.c)
 target_link_libraries(proc-test dsbcommon)
 

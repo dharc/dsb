@@ -510,7 +510,7 @@ int dsb_assemble_compile(struct AsmContext *ctx, const char *source)
 	return 0;
 }
 
-int dsb_assemble(const char *source, NID_t *output, int max)
+int dsb_assemble_array(const char *source, NID_t *output, int max)
 {
 	struct AsmContext ctx;
 	ctx.output = output;
@@ -527,6 +527,16 @@ int dsb_assemble(const char *source, NID_t *output, int max)
 
 	free(ctx.labels);
 	return ctx.ip;
+}
+
+int dsb_assemble(const char *source, const NID_t *output)
+{
+	NID_t *array = malloc(sizeof(NID_t)*1000);
+	int ret;
+
+	ret = dsb_assemble_array(source,array,1000);
+	dsb_array_write(array,ret,output);
+	return ret;
 }
 
 int dsb_assemble_labels(struct VMLabel *labels, const char *source)

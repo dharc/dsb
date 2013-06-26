@@ -272,6 +272,16 @@ int dsb_setnin(const NID_t *d1, int d2, const NID_t *v)
 	return dsb_set(d1,&n2,v);
 }
 
+int dsb_setnii(const NID_t *d1, int d2, int v)
+{
+	NID_t n2;
+	NID_t nv;
+
+	dsb_iton(d2,&n2);
+	dsb_iton(v,&nv);
+	return dsb_set(d1,&n2,&nv);
+}
+
 int dsb_define(
 		const struct NID *d1,
 		const struct NID *d2,

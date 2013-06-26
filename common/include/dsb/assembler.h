@@ -69,7 +69,9 @@ struct AsmContext
  * @param max Size of the output array.
  * @return SUCCESS or assembly error.
  */
-int dsb_assemble(const char *source, NID_t *output, int max);
+int dsb_assemble(const char *source, const NID_t *output);
+
+int dsb_assemble_array(const char *source, NID_t *output, int max);
 
 int dsb_assemble_line(struct AsmContext *ctx, const char *line);
 

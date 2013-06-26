@@ -52,6 +52,8 @@ int dsb_agent_final();
  */
 int dsb_agent_start(const NID_t *agent, int pn, ...);
 
+int dsb_agent_startx(void (*func)(void *), void *data);
+
 int dsb_agent_trigger(unsigned int id);
 
 #ifdef __cplusplus

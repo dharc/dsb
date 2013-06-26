@@ -47,6 +47,19 @@ either expressed or implied, of the FreeBSD Project.
 #include "arch/vm_x86_64.c"
 //#endif
 
+int dsb_vm_context(struct VMContext *ctx, const NID_t *func)
+{
+	ctx->timeout = 10000;
+	ctx->ip = 0;
+	//TODO DO A JIT LOOKUP HERE
+	ctx->code = malloc(sizeof(NID_t)*1000);
+	//Read in the code
+	ctx->codesize = dsb_array_read(func, ctx->code, 1000);
+	//TODO DO A JIT COMPILE HERE
+
+	return 0;
+}
+
 int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...)
 {
 	va_list args;
@@ -55,11 +68,8 @@ int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...)
 
 	va_start(args,pn);
 
-	//TODO DO A JIT LOOKUP HERE
-	ctx.code = malloc(sizeof(NID_t)*1000);
-	//Read in the code
-	ctx.codesize = dsb_array_read(func, ctx.code, 1000);
-	//TODO DO A JIT COMPILE HERE
+	dsb_vm_context(&ctx, func);
+	ctx.result = res;
 
 	for (i=0; i<pn; i++)
 	{
