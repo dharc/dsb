@@ -76,6 +76,8 @@ int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...)
 		ctx.vars[i] = *va_arg(args,NID_t*);
 	}
 
+	va_end(args);
+
 	//Run the interpreter.
 	dsb_vm_interpret(&ctx);
 
@@ -183,6 +185,15 @@ int dsb_vm_interpret(struct VMContext *ctx)
 							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
 							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
 							dsb_get(n1,n2,&ctx->vars[varno-1]);
+							break;
+
+		case VMOP_GETD:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							varno3 = VMGET_C(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
+							dsb_get(n1,n2,&ctx->vars[varno-1]);
+							dsb_dependency(n1,n2,&ctx->vars[0],&ctx->vars[1]);
 							break;
 
 		case VMOP_DEF:		varno = VMGET_A(op);

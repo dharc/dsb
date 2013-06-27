@@ -63,12 +63,17 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 	case EVENT_GET:		//Out of date so evaluate definition
 						if ((harc->flags & HARC_OUTOFDATE) != 0)
 						{
+							char buf[100];
+
 							//Get evaluator and use to get result.
 							ret = dsb_vm_call(&harc->h, &harc->def, 3, &harc->t1, &harc->t2, &harc->h);
 							if (ret != SUCCESS)
 							{
 								return ret;
 							}
+
+							dsb_nid_toStr(&harc->h,buf,100);
+							printf("Changed = %s\n",buf);
 
 							//No longer out-of-date
 							harc->flags &= ~HARC_OUTOFDATE;

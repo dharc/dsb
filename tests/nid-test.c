@@ -191,8 +191,8 @@ void test_nid_fromstr()
 	CHECK(t.ll == 66);
 	CHECK(t.t == NID_TYPE_INTEGER);
 
-	CHECK(dsb_nid_fromStr("[00:0001:000000000000014d]",&t) == 0);
-	CHECK(t.ll == 333);
+	CHECK(dsb_nid_fromStr("[00:0001:3434343434343434]",&t) == 0);
+	CHECK(t.ll == 0x3434343434343434);
 	CHECK(t.header == 0);
 	CHECK(t.t == 1);
 

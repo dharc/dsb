@@ -53,6 +53,7 @@ typedef struct HARC HARC_t;
 #define VMOP_DEP		0x00030000	///< Add dependency on a,b. DEP event.
 #define VMOP_NEW		0x00040000
 #define VMOP_DEL		0x00050000
+#define VMOP_GETD		0x00060000	///< Get and add dependency
 //Jumps
 #define VMOP_JMP		0x01010000	///< Jump a
 #define VMOP_JEQ		0x01020000	///< Jump a when b == c.

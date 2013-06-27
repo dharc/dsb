@@ -108,18 +108,24 @@ static int vm_assemble_lookup(struct AsmContext *ctx, const char *line, int *off
 
 	*off = 0;
 
+	len = 0;
+	while (line[len] != ' ' && line[len] != '\n' && line[len] != 0) len++;
+
 	for (i=0; i<MAX_LABELS; i++)
 	{
-		len = strlen(ctx->labels[i].label);
+		//len = strlen(ctx->labels[i].label);
 		if (strncmp(ctx->labels[i].label,line,len) == 0)
 		{
-			*off = ctx->labels[i].lip;
-			if (line[len] == '+' || line[len] == '-')
+			if (ctx->labels[i].label[len] == 0)
 			{
-				assemble_off(ctx, &line[len], &len, &dum);
-				*off += len;
+				*off = ctx->labels[i].lip;
+				if (line[len] == '+' || line[len] == '-')
+				{
+					assemble_off(ctx, &line[len], &len, &dum);
+					*off += len;
+				}
+				break;
 			}
-			break;
 		}
 	}
 	return len;
@@ -369,7 +375,7 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 	if (assemble_eol(&line[i], &i) == 0)
 	{
 		char errbuf[100];
-		sprintf(errbuf,"%5s :%d",&line[i],ctx->line);
+		sprintf(errbuf,":%d",ctx->line);
 		ctx->error = 1;
 		return DSB_ERROR(ERR_ASMTOOMANY,errbuf);
 	}
@@ -406,6 +412,7 @@ static struct AsmToken asmops[] = {
 		ASMOP(jge,VMOP_JGE,1,0,2),
 
 		ASMOP(get,VMOP_GET,0,1,2),
+		ASMOP(getd,VMOP_GETD,0,1,2),
 		ASMOP(def,VMOP_DEF,0,0,3),
 		ASMOP(dep,VMOP_DEP,0,0,4),
 		ASMOP(new,VMOP_NEW,0,1,1),
@@ -430,6 +437,8 @@ static struct AsmToken asmops[] = {
 		ASMOP(clr,VMOP_CLR,0,1,0),
 		ASMOP(int,VMOP_INT,0,1,1),
 		ASMOP(flt,VMOP_FLT,0,1,1),
+
+		//ASMOP(call,VMOP_CALL,0,1,1),	//Variable params...
 
 		//TODO high level ops.
 		{"null",0,0,0,0}
@@ -499,7 +508,30 @@ int dsb_assemble_compile(struct AsmContext *ctx, const char *source)
 	//For every line
 	while(1)
 	{
-		dsb_assemble_line(ctx,source);
+		//Do we have a control command
+		if (source[0] == '.')
+		{
+			//Controls are .begin, .end, .const
+			if (strncmp(source,".begin",6) == 0)
+			{
+				//This requires a recursive assemble.
+
+			}
+			else if (strncmp(source,".end",4) == 0)
+			{
+				//Finish assembly, return
+				return 0;
+			}
+			else if (strncmp(source,".const",6) == 0)
+			{
+				//Add a constant to context for future substitution.
+			}
+		}
+		else
+		{
+			dsb_assemble_line(ctx,source);
+		}
+
 		//Move to next line if there is one.
 		source = strchr(source,'\n');
 		if (source == 0) break;

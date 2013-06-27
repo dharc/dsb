@@ -349,7 +349,7 @@ int dsb_nid_fromStr(const char *str, struct NID *nid)
 			for (j=0; j<8; j++)
 			{
 				if (str[i] == 0 || str[i+1] == 0) return ERR_NIDSTR;
-				a |= readHex(str[i],str[i+1]) << ((7-j) * 8);
+				a |= (long long)readHex(str[i],str[i+1]) << ((7-j) * 8);
 				i += 2;
 			}
 
@@ -405,7 +405,7 @@ int dsb_nid_toStr(const struct NID *nid, char *str, int len)
 	{
 		if (nid->t == NID_TYPE_INTEGER)
 		{
-			sprintf(str, "%d", (unsigned int)nid->ll);
+			sprintf(str, "%llu", nid->ll);
 			return SUCCESS;
 		}
 		else if (nid->t == NID_TYPE_REAL)
@@ -495,7 +495,7 @@ int dsb_nid_toRawStr(const struct NID *nid, char *str, int len)
 	}
 	else
 	{
-		sprintf(str,"[%02x:%04x:%08x%08x]",nid->header,nid->t,nid->b,nid->a);
+		sprintf(str,"[%02x:%04x:%016llx]",nid->header,nid->t,nid->ll);
 	}
 	return SUCCESS;
 }
