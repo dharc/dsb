@@ -54,9 +54,10 @@ struct AsmToken
 	int ls;		//Number of labels (0 or 1)
 	int vs;		//Number of required variables
 	int nvs;	//Number of required var/nids
+	int varia;	//Does it support variadic parameters.
 };
 
-#define ASMOP(A,B,C,D,E)	{#A, B, C, D, E}
+#define ASMOP(A,B,C,D,E,F)	{#A, B, C, D, E, F}
 
 //TODO DONT USE GLOBAL VARIABLE FOR THIS
 static int varid;
@@ -257,6 +258,9 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 	NID_t n2;
 	NID_t n3;
 	NID_t n4;
+	NID_t variad;
+	NID_t varnid[8];
+	int varnum[8];
 
 	//Parse required labels
 	if (tok->ls > 0)
@@ -371,6 +375,26 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 		}
 	}
 
+	//Now check for variable parameters.
+	if (tok->varia == 1)
+	{
+		int curvar = 0;
+
+		//Init to 0.
+		dsb_iton(0,&variad);
+
+		//While not end of line
+		while (assemble_eol(&line[i],&i) == 0)
+		{
+			varnum[curvar] = assemble_nidvar(ctx, &line[i], &varnid[curvar], &i);
+			variad.ll |= (long long)varnum[curvar] << ((7-curvar) * 8);
+			curvar++;
+		}
+
+		//Save count into the primary ops offset bits.
+		off = curvar;
+	}
+
 	//Should be end of line now.
 	if (assemble_eol(&line[i], &i) == 0)
 	{
@@ -398,47 +422,61 @@ static int assemble_op(struct AsmToken *tok, struct AsmContext *ctx, const char 
 		if (varD == 0 && tok->nvs >= 4) ctx->output[ctx->ip++] = n4;
 	}
 
+	//If variable params then dump any constant ones into output
+	if (tok->varia == 1)
+	{
+		ctx->output[ctx->ip++] = variad;
+		if (off >= 1 && varnum[0] == 0) ctx->output[ctx->ip++] = varnid[0];
+		if (off >= 2 && varnum[1] == 0) ctx->output[ctx->ip++] = varnid[1];
+		if (off >= 3 && varnum[2] == 0) ctx->output[ctx->ip++] = varnid[2];
+		if (off >= 4 && varnum[3] == 0) ctx->output[ctx->ip++] = varnid[3];
+		if (off >= 5 && varnum[4] == 0) ctx->output[ctx->ip++] = varnid[4];
+		if (off >= 6 && varnum[5] == 0) ctx->output[ctx->ip++] = varnid[5];
+		if (off >= 7 && varnum[6] == 0) ctx->output[ctx->ip++] = varnid[6];
+		if (off >= 8 && varnum[7] == 0) ctx->output[ctx->ip++] = varnid[7];
+	}
+
 	return 0;
 }
 
 static struct AsmToken asmops[] = {
 		//Name, OP, LS, VS, NVS
-		ASMOP(jmp,VMOP_JMP,1,0,0),
-		ASMOP(jeq,VMOP_JEQ,1,0,2),
-		ASMOP(jne,VMOP_JNE,1,0,2),
-		ASMOP(jlt,VMOP_JLT,1,0,2),
-		ASMOP(jgt,VMOP_JGT,1,0,2),
-		ASMOP(jle,VMOP_JLE,1,0,2),
-		ASMOP(jge,VMOP_JGE,1,0,2),
+		ASMOP(jmp,VMOP_JMP,1,0,0,0),
+		ASMOP(jeq,VMOP_JEQ,1,0,2,0),
+		ASMOP(jne,VMOP_JNE,1,0,2,0),
+		ASMOP(jlt,VMOP_JLT,1,0,2,0),
+		ASMOP(jgt,VMOP_JGT,1,0,2,0),
+		ASMOP(jle,VMOP_JLE,1,0,2,0),
+		ASMOP(jge,VMOP_JGE,1,0,2,0),
 
-		ASMOP(get,VMOP_GET,0,1,2),
-		ASMOP(getd,VMOP_GETD,0,1,2),
-		ASMOP(def,VMOP_DEF,0,0,3),
-		ASMOP(dep,VMOP_DEP,0,0,4),
-		ASMOP(new,VMOP_NEW,0,1,1),
-		ASMOP(del,VMOP_DEL,0,0,2),
+		ASMOP(get,VMOP_GET,0,1,2,0),
+		ASMOP(getd,VMOP_GETD,0,1,2,0),
+		ASMOP(def,VMOP_DEF,0,0,3,0),
+		ASMOP(dep,VMOP_DEP,0,0,4,0),
+		ASMOP(new,VMOP_NEW,0,1,1,0),
+		ASMOP(del,VMOP_DEL,0,0,2,0),
 
-		ASMOP(cpy,VMOP_CPY,0,1,1),
-		ASMOP(ret,VMOP_RET,0,0,1),
+		ASMOP(cpy,VMOP_CPY,0,1,1,0),
+		ASMOP(ret,VMOP_RET,0,0,1,0),
 		//ASMOP(const),
 
-		ASMOP(inc,VMOP_INC,0,1,0),
-		ASMOP(dec,VMOP_DEC,0,1,0),
-		ASMOP(add,VMOP_ADD,0,1,2),
-		ASMOP(sub,VMOP_SUB,0,1,2),
-		ASMOP(mul,VMOP_MUL,0,1,2),
-		ASMOP(div,VMOP_DIV,0,1,2),
-		ASMOP(and,VMOP_AND,0,1,2),
-		ASMOP(or,VMOP_OR,0,1,2),
-		ASMOP(xor,VMOP_XOR,0,1,2),
-		ASMOP(neg,VMOP_NEG,0,1,2),
-		ASMOP(shl,VMOP_SHL,0,1,2),
-		ASMOP(shr,VMOP_SHR,0,1,2),
-		ASMOP(clr,VMOP_CLR,0,1,0),
-		ASMOP(int,VMOP_INT,0,1,1),
-		ASMOP(flt,VMOP_FLT,0,1,1),
+		ASMOP(inc,VMOP_INC,0,1,0,0),
+		ASMOP(dec,VMOP_DEC,0,1,0,0),
+		ASMOP(add,VMOP_ADD,0,1,2,0),
+		ASMOP(sub,VMOP_SUB,0,1,2,0),
+		ASMOP(mul,VMOP_MUL,0,1,2,0),
+		ASMOP(div,VMOP_DIV,0,1,2,0),
+		ASMOP(and,VMOP_AND,0,1,2,0),
+		ASMOP(or,VMOP_OR,0,1,2,0),
+		ASMOP(xor,VMOP_XOR,0,1,2,0),
+		ASMOP(neg,VMOP_NEG,0,1,2,0),
+		ASMOP(shl,VMOP_SHL,0,1,2,0),
+		ASMOP(shr,VMOP_SHR,0,1,2,0),
+		ASMOP(clr,VMOP_CLR,0,1,0,0),
+		ASMOP(int,VMOP_INT,0,1,1,0),
+		ASMOP(flt,VMOP_FLT,0,1,1,0),
 
-		//ASMOP(call,VMOP_CALL,0,1,1),	//Variable params...
+		ASMOP(call,VMOP_CALL,0,1,1,1),	//Variable params...
 
 		//TODO high level ops.
 		{"null",0,0,0,0}
@@ -658,8 +696,42 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 			{
 				if (op == asmops[j].op)
 				{
+					int a = (int)VMGET_A(src[i].ll);
+					int b = (int)VMGET_B(src[i].ll);
+					int c = (int)VMGET_C(src[i].ll);
+					int d = (int)VMGET_D(src[i].ll);
+					//int off = (int)VMGET_LABEL(src[i].ll);
 					//DECODE OP
-					sprintf(output,"%s\n",asmops[j].name);
+					if (asmops[j].ls > 0)
+					{
+
+					}
+					else
+					{
+						if (asmops[j].vs == 1)
+						{
+							switch(asmops[j].nvs)
+							{
+							case 0:		sprintf(output, "%s $%d\n",asmops[j].name,a-1); break;
+							case 1:		sprintf(output, "%s $%d $%d\n",asmops[j].name,a-1,b-1); break;
+							case 2:		sprintf(output, "%s $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1); break;
+							case 3:		sprintf(output, "%s $%d $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1,d-1); break;
+							default: break;
+							}
+						}
+						else
+						{
+							switch(asmops[j].nvs)
+							{
+							case 0:		sprintf(output, "%s\n",asmops[j].name); break;
+							case 1:		sprintf(output, "%s $%d\n",asmops[j].name,a-1); break;
+							case 2:		sprintf(output, "%s $%d $%d\n",asmops[j].name,a-1,b-1); break;
+							case 3:		sprintf(output, "%s $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1); break;
+							case 4:		sprintf(output, "%s $%d $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1,d-1); break;
+							default: break;
+							}
+						}
+					}
 					break;
 				}
 				j++;

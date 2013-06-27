@@ -306,6 +306,30 @@ int dsb_vm_interpret(struct VMContext *ctx)
 							ctx->vars[varno-1] = Null;
 							break;
 
+		case VMOP_CALL:		varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							n2 = &ctx->code[++ctx->ip];
+							{
+								int i;
+								int parno;
+								struct VMContext nctx;
+								dsb_vm_context(&nctx, n1);
+								nctx.result = &ctx->vars[varno-1];
+
+								//Extract and set parameters from vars or constants.
+								for (i=0; i<VMGET_LABEL(op); i++)
+								{
+									parno = (n2->ll >> ((7-i) * 8)) & 0xFF;
+									nctx.vars[i] = (parno == 0) ? ctx->code[++ctx->ip] : ctx->vars[parno-1];
+								}
+
+								//Run the interpreter.
+								dsb_vm_interpret(&nctx);
+								free(nctx.code);
+							}
+							break;
+
 		default: 			{
 								char buf[100];
 								sprintf(buf, "op = %08x",(unsigned int)VMGET_OP(op));

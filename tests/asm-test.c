@@ -459,6 +459,31 @@ void test_asm_xor()
 	DONE;
 }
 
+void test_asm_call()
+{
+	NID_t code[100];
+
+	CHECK(dsb_assemble_array("call $r $f 0 1 2 3 4 5 6 7", code, 50) == 10);
+	CHECK(code[0].ll == VM_CALL(4,5,8));
+	CHECK(code[1].ll == 0);
+	CHECK(code[2].ll == 0);
+	CHECK(code[3].ll == 1);
+	CHECK(code[4].ll == 2);
+	CHECK(code[5].ll == 3);
+	CHECK(code[6].ll == 4);
+	CHECK(code[7].ll == 5);
+	CHECK(code[8].ll == 6);
+	CHECK(code[9].ll == 7);
+
+	CHECK(dsb_assemble_array("call $r $f 0 1 $g", code, 50) == 4);
+	CHECK(code[0].ll == VM_CALL(4,5,3));
+	CHECK(code[1].ll == 0x0000060000000000);
+	CHECK(code[2].ll == 0);
+	CHECK(code[3].ll == 1);
+
+	DONE;
+}
+
 int main(int argc, char *argv[])
 {
 	dsb_nid_init();
@@ -489,6 +514,8 @@ int main(int argc, char *argv[])
 	dsb_test(test_asm_and);
 	dsb_test(test_asm_or);
 	dsb_test(test_asm_xor);
+
+	dsb_test(test_asm_call);
 
 	dsb_event_final();
 	dsb_nid_final();

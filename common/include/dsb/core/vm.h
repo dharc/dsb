@@ -87,6 +87,10 @@ typedef struct HARC HARC_t;
 #define VMOP_PATHD		0x05020000
 #define VMOP_JISA		0x05030000
 #define VMOP_JISNT		0x05040000
+//Calling
+#define VMOP_CALL		0x06010000
+#define VMOP_CALLX		0x06020000
+#define VMOP_AGENT		0x06030000
 
 //Generate op codes with mem info
 #define VMOP0(O)			((unsigned long long)(O) << 32)
@@ -135,6 +139,8 @@ typedef struct HARC HARC_t;
 #define VM_SHL(A,B,C)		VMOP3(VMOP_SHL,A,B,C)
 #define VM_SHR(A,B,C)		VMOP3(VMOP_SHR,A,B,C)
 #define VM_CLR(A)			VMOP1(VMOP_CLR,A)
+
+#define VM_CALL(A,B,N)		VMOPL2(VMOP_CALL,N,A,B)
 
 //Extract variable numbers
 #define VMGET_A(A)			(((A) >> 24) & 0xFF)
