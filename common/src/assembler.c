@@ -672,7 +672,11 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 {
 	int i;
 	int j;
-	//char buf[100];
+	int pc;
+	char bufa[100];
+	char bufb[100];
+	char bufc[100];
+	char bufd[100];
 	//int varA;
 	//int varB;
 	//int varC;
@@ -700,36 +704,74 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 					int b = (int)VMGET_B(src[i].ll);
 					int c = (int)VMGET_C(src[i].ll);
 					int d = (int)VMGET_D(src[i].ll);
-					//int off = (int)VMGET_LABEL(src[i].ll);
-					//DECODE OP
-					if (asmops[j].ls > 0)
-					{
+					int off = (int)VMGET_LABEL(src[i].ll);
 
-					}
-					else
+					pc = asmops[j].nvs + asmops[j].vs;
+					if (pc > 0)
 					{
-						if (asmops[j].vs == 1)
+						if (a == 0)
 						{
-							switch(asmops[j].nvs)
-							{
-							case 0:		sprintf(output, "%s $%d\n",asmops[j].name,a-1); break;
-							case 1:		sprintf(output, "%s $%d $%d\n",asmops[j].name,a-1,b-1); break;
-							case 2:		sprintf(output, "%s $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1); break;
-							case 3:		sprintf(output, "%s $%d $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1,d-1); break;
-							default: break;
-							}
+							dsb_nid_toStr(&src[++i],bufa,100);
 						}
 						else
 						{
-							switch(asmops[j].nvs)
-							{
-							case 0:		sprintf(output, "%s\n",asmops[j].name); break;
-							case 1:		sprintf(output, "%s $%d\n",asmops[j].name,a-1); break;
-							case 2:		sprintf(output, "%s $%d $%d\n",asmops[j].name,a-1,b-1); break;
-							case 3:		sprintf(output, "%s $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1); break;
-							case 4:		sprintf(output, "%s $%d $%d $%d $%d\n",asmops[j].name,a-1,b-1,c-1,d-1); break;
-							default: break;
-							}
+							sprintf(bufa,"$%d",a-1);
+						}
+					}
+					if (pc > 1)
+					{
+						if (b == 0)
+						{
+							dsb_nid_toStr(&src[++i],bufb,100);
+						}
+						else
+						{
+							sprintf(bufb,"$%d",b-1);
+						}
+					}
+					if (pc > 2)
+					{
+						if (c == 0)
+						{
+							dsb_nid_toStr(&src[++i],bufc,100);
+						}
+						else
+						{
+							sprintf(bufc,"$%d",c-1);
+						}
+					}
+					if (pc > 3)
+					{
+						if (d == 0)
+						{
+							dsb_nid_toStr(&src[++i],bufd,100);
+						}
+						else
+						{
+							sprintf(bufd,"$%d",d-1);
+						}
+					}
+
+					if (asmops[j].ls > 0)
+					{
+						switch(pc)
+						{
+						case 0: sprintf(output,"%s %d\n",asmops[j].name,off); break;
+						case 1: sprintf(output,"%s %d %s\n",asmops[j].name,off,bufa); break;
+						case 2: sprintf(output,"%s %d %s %s\n",asmops[j].name,off,bufa,bufb); break;
+						case 3: sprintf(output,"%s %d %s %s %s\n",asmops[j].name,off,bufa,bufb,bufc); break;
+						case 4: sprintf(output,"%s %d %s %s %s %s\n",asmops[j].name,off,bufa,bufb,bufc,bufd); break;
+						}
+					}
+					else
+					{
+						switch(pc)
+						{
+						case 0: sprintf(output,"%s\n",asmops[j].name); break;
+						case 1: sprintf(output,"%s %s\n",asmops[j].name,bufa); break;
+						case 2: sprintf(output,"%s %s %s\n",asmops[j].name,bufa,bufb); break;
+						case 3: sprintf(output,"%s %s %s %s\n",asmops[j].name,bufa,bufb,bufc); break;
+						case 4: sprintf(output,"%s %s %s %s %s\n",asmops[j].name,bufa,bufb,bufc,bufd); break;
 						}
 					}
 					break;
