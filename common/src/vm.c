@@ -47,6 +47,26 @@ either expressed or implied, of the FreeBSD Project.
 #include "arch/vm_x86_64.c"
 //#endif
 
+#define MAX_XFUNCS	1000
+
+static XFUNC_t xfuncs[MAX_XFUNCS];
+
+int dsb_vm_xfunc(unsigned int id, const char *name, XFUNC_t func)
+{
+	if (id >= MAX_XFUNCS)
+	{
+		return DSB_ERROR(ERR_VMXFUNCID,name);
+	}
+
+	if (xfuncs[id] != 0)
+	{
+		return DSB_ERROR(ERR_VMXFUNCEXIST,name);
+	}
+
+	xfuncs[id] = func;
+	return SUCCESS;
+}
+
 int dsb_vm_context(struct VMContext *ctx, const NID_t *func)
 {
 	ctx->timeout = 10000;
@@ -56,6 +76,11 @@ int dsb_vm_context(struct VMContext *ctx, const NID_t *func)
 	//Read in the code
 	ctx->codesize = dsb_array_read(func, ctx->code, 1000);
 	//TODO DO A JIT COMPILE HERE
+
+	if (ctx->codesize == 0)
+	{
+		return DSB_ERROR(ERR_VMNOCODE,0);
+	}
 
 	return 0;
 }
@@ -306,16 +331,60 @@ int dsb_vm_interpret(struct VMContext *ctx)
 							ctx->vars[varno-1] = Null;
 							break;
 
+		case VMOP_CALLX:	varno = VMGET_A(op);
+							varno2 = VMGET_B(op);
+							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
+							{
+								int xfuncid = dsb_ntoi(n1);
+								XFUNC_t func;
+								NID_t vars[8];
+								int parno;
+								int i;
+
+								if (xfuncid < 0 || xfuncid > MAX_XFUNCS)
+								{
+									DSB_ERROR(ERR_VMXFUNCID,0);
+									break;
+								}
+
+								func = xfuncs[xfuncid];
+								if (func == 0)
+								{
+									printf("Xfuncid: %d", xfuncid);
+									DSB_ERROR(ERR_VMXFUNCNONE,0);
+									break;
+								}
+
+								if (VMGET_LABEL(op) > 0)
+								{
+									n2 = &ctx->code[++ctx->ip];
+								}
+
+								//Extract and set parameters from vars or constants.
+								for (i=0; i<VMGET_LABEL(op); i++)
+								{
+									parno = (n2->ll >> ((7-i) * 8)) & 0xFF;
+									vars[i] = (parno == 0) ? ctx->code[++ctx->ip] : ctx->vars[parno-1];
+								}
+
+								func(&ctx->vars[varno-1],i,vars);
+							}
+							break;
+
 		case VMOP_CALL:		varno = VMGET_A(op);
 							varno2 = VMGET_B(op);
 							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
-							n2 = &ctx->code[++ctx->ip];
 							{
 								int i;
 								int parno;
 								struct VMContext nctx;
 								dsb_vm_context(&nctx, n1);
 								nctx.result = &ctx->vars[varno-1];
+
+								if (VMGET_LABEL(op) > 0)
+								{
+									n2 = &ctx->code[++ctx->ip];
+								}
 
 								//Extract and set parameters from vars or constants.
 								for (i=0; i<VMGET_LABEL(op); i++)

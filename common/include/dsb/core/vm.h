@@ -141,6 +141,7 @@ typedef struct HARC HARC_t;
 #define VM_CLR(A)			VMOP1(VMOP_CLR,A)
 
 #define VM_CALL(A,B,N)		VMOPL2(VMOP_CALL,N,A,B)
+#define VM_CALLX(A,B,N)		VMOPL2(VMOP_CALLX,N,A,B)
 
 //Extract variable numbers
 #define VMGET_A(A)			(((A) >> 24) & 0xFF)
@@ -183,9 +184,17 @@ int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...);
 
 int dsb_vm_interpret(struct VMContext *ctx);
 
-typedef int (*XFUNC_t)(NID_t *Res, const NID_t *params);
+typedef int (*XFUNC_t)(NID_t *Res, int pcount, const NID_t *params);
 
-int dsb_vm_xfunc(const char *name, XFUNC_t func, int params);
+/**
+ * Register an external (C) function that can be called by the VM using
+ * the callx instruction.
+ * @param id A constant unique ID for this xfunc.
+ * @param name Name of function.
+ * @param func C Function Pointer.
+ * @return SUCCESS
+ */
+int dsb_vm_xfunc(unsigned int id, const char *name, XFUNC_t func);
 
 /**
  * JIT Compile bytecode into native machine code. The output pointer is of type

@@ -79,6 +79,11 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 		buf += dsb_nid_pack(&(e->def),buf,max);
 		break;
 	//---------------------------------------------------------------------
+	case EVENT_SET:
+		//*((int*)buf) = e->eval;
+		buf += dsb_nid_pack(&(e->def),buf,max);
+		break;
+	//---------------------------------------------------------------------
 	case EVENT_DEP:
 		buf += dsb_nid_pack(&(e->dep1),buf,max);
 		buf += dsb_nid_pack(&(e->dep2),buf,max);
@@ -121,6 +126,11 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEFINE:
+		//e->eval = *((int*)buf);
+		buf += dsb_nid_unpack(buf,&(e->def));
+		break;
+	//---------------------------------------------------------------------
+	case EVENT_SET:
 		//e->eval = *((int*)buf);
 		buf += dsb_nid_unpack(buf,&(e->def));
 		break;
@@ -208,6 +218,9 @@ int dsb_event_pretty(const Event_t *evt, char *buf, int len)
 							break;
 	case EVENT_DEFINE:		dsb_nid_toStr(&evt->def,def,100);
 							sprintf(buf,"DEFINE - %s,%s = %s",d1,d2,def);
+							break;
+	case EVENT_SET:			dsb_nid_toStr(&evt->def,def,100);
+							sprintf(buf,"SET - %s,%s = %s",d1,d2,def);
 							break;
 	case EVENT_DEP:			dsb_nid_toStr(&evt->dep1,dep1,100);
 							dsb_nid_toStr(&evt->dep2,dep2,100);

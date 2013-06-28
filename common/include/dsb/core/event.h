@@ -50,6 +50,7 @@ extern "C"
 enum EventType
 {
 	EVENT_DEFINE=0x000,	//!< Define a HARC
+	EVENT_SET,			//!< Set a HARC head to a constant.
 	EVENT_DELETE,   	//!< Delete a HARC
 	EVENT_NOTIFY,		//!< Notify HARC that it is out-of-date.
 	EVENT_AGENT,		//!< Mark as being an agent.

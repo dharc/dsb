@@ -477,6 +477,7 @@ static struct AsmToken asmops[] = {
 		ASMOP(flt,VMOP_FLT,0,1,1,0),
 
 		ASMOP(call,VMOP_CALL,0,1,1,1),	//Variable params...
+		ASMOP(callx,VMOP_CALLX,0,1,1,1),
 
 		//TODO high level ops.
 		{"null",0,0,0,0}
@@ -549,16 +550,13 @@ int dsb_assemble_compile(struct AsmContext *ctx, const char *source)
 		//Do we have a control command
 		if (source[0] == '.')
 		{
-			//Controls are .begin, .end, .const
-			if (strncmp(source,".begin",6) == 0)
+			if (strncmp(source,".param",6) == 0)
 			{
-				//This requires a recursive assemble.
-
-			}
-			else if (strncmp(source,".end",4) == 0)
-			{
-				//Finish assembly, return
-				return 0;
+				//Increment varid to reserve space
+				varid++;
+				sprintf(ctx->labels[varid-1].label,"%d",varid-1);
+				ctx->labels[varid-1].lip = varid;
+				ctx->labels[varid-1].mode = 1;
 			}
 			else if (strncmp(source,".const",6) == 0)
 			{
@@ -612,58 +610,13 @@ int dsb_assemble(const char *source, const NID_t *output)
 int dsb_assemble_labels(struct VMLabel *labels, const char *source)
 {
 	int i;
-	varid = 3;
+	varid = 0;
 
 	for (i=0; i<MAX_LABELS; i++)
 	{
 		labels[i].lip = -1;
 		labels[i].mode = 0;
 	}
-
-	//Initialise the built-in variables
-	strcpy(labels[0].label,"t1");
-	labels[0].lip = 1;
-	labels[0].mode = 1;
-	strcpy(labels[1].label,"t2");
-	labels[1].lip = 2;
-	labels[1].mode = 1;
-	strcpy(labels[2].label,"h");
-	labels[2].lip = 3;
-	labels[2].mode = 1;
-
-	//For every line
-	/*while(1)
-	{
-		i = 0;
-
-		//Remove white space
-		while (source[i] == ' ' || source[i] == '\t') i++;
-
-		//Blank line
-		if (source[i] == 0) break;
-
-		//Is the line a label
-		if (source[i] == ':')
-		{
-			//Add the label
-			vm_assemble_addlabel(labels,&source[i+1],&ip, 0);
-		}
-		else
-		{
-			//Is the line an instruction
-			if (source[i] != '\n' && source[i] != '#' && source[i] != 0)
-			{
-				//Needs to figure out number of constant params.
-				//Number of words not starting with $
-				ip++;
-			}
-		}
-
-		//Move to next line if there is one.
-		source = strchr(source,'\n');
-		if (source == 0) break;
-		source++;
-	}*/
 
 	return SUCCESS;
 }
@@ -677,11 +630,6 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 	char bufb[100];
 	char bufc[100];
 	char bufd[100];
-	//int varA;
-	//int varB;
-	//int varC;
-	//int varD;
-	//int off;
 	int op;
 
 	for (i=0; i<size; i++)
@@ -689,11 +637,6 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 		if (src[i].header == 0 && src[i].t == NID_TYPE_VMOP)
 		{
 			op = VMGET_OP(src[i].ll);
-			//varA = VMGET_A(src[i].ll);
-			//varB = VMGET_A(src[i].ll);
-			//varC = VMGET_A(src[i].ll);
-			//varD = VMGET_A(src[i].ll);
-			//off = VMGET_LABEL(src[i].ll);
 
 			j = 0;
 			while (asmops[j].op != 0)
@@ -767,13 +710,37 @@ int dsb_disassemble(const NID_t *src, int size, char *output, int max)
 					{
 						switch(pc)
 						{
-						case 0: sprintf(output,"%s\n",asmops[j].name); break;
-						case 1: sprintf(output,"%s %s\n",asmops[j].name,bufa); break;
-						case 2: sprintf(output,"%s %s %s\n",asmops[j].name,bufa,bufb); break;
-						case 3: sprintf(output,"%s %s %s %s\n",asmops[j].name,bufa,bufb,bufc); break;
-						case 4: sprintf(output,"%s %s %s %s %s\n",asmops[j].name,bufa,bufb,bufc,bufd); break;
+						case 0: sprintf(output,"%s",asmops[j].name); break;
+						case 1: sprintf(output,"%s %s",asmops[j].name,bufa); break;
+						case 2: sprintf(output,"%s %s %s",asmops[j].name,bufa,bufb); break;
+						case 3: sprintf(output,"%s %s %s %s",asmops[j].name,bufa,bufb,bufc); break;
+						case 4: sprintf(output,"%s %s %s %s %s",asmops[j].name,bufa,bufb,bufc,bufd); break;
 						}
 					}
+
+					//Deal with variable parameters.
+					if (asmops[j].varia == 1)
+					{
+						int count = off;
+						NID_t varbyte = src[++i];
+						int k;
+
+						for (k=0; k<count; k++)
+						{
+							a = (varbyte.ll >> ((7-k) * 8)) & 0xFF;
+							if (a == 0)
+							{
+								dsb_nid_toStr(&src[++i],bufa,100);
+							}
+							else
+							{
+								sprintf(bufa,"$%d",a-1);
+							}
+							sprintf(output,"%s %s",output,bufa);
+						}
+					}
+
+					sprintf(output,"%s\n",output);
 					break;
 				}
 				j++;

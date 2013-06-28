@@ -180,15 +180,12 @@ static int per_load_file(const char *filename)
 	{
 		pharc = per_getharc(&harc.t1,&harc.t2,1);
 		pharc->def = harc.def;
+		pharc->h = harc.h;
 		pharc->flags = harc.flags;
 
 		if ((harc.flags & HARC_SCRIPT) != 0)
 		{
 			pharc->flags |= HARC_OUTOFDATE;
-		}
-		else
-		{
-			pharc->h = pharc->def;
 		}
 	}
 

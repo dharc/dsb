@@ -225,7 +225,13 @@ int dsb_dictzz(const char *d, const char *n)
 
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
-	return dsb_define(d1,d2,v);
+	struct Event *evt = dsb_event_allocate();
+	evt->d1 = *d1;
+	evt->d2 = *d2;
+	evt->def = *v;
+	evt->flags = EVTFLAG_FREE;
+	evt->type = EVENT_SET;
+	return dsb_send(evt,0);
 }
 
 int dsb_setnzz(const NID_t *d1, const char *d2, const char *v)
@@ -244,6 +250,16 @@ int dsb_setnzn(const NID_t *d1, const char *d2, const NID_t *v)
 
 	dsb_nid_fromStr(d2,&n1);
 	return dsb_set(d1,&n1,v);
+}
+
+int dsb_setnzi(const NID_t *d1, const char *d2, int v)
+{
+	NID_t n1;
+	NID_t nv;
+
+	dsb_iton(v,&nv);
+	dsb_nid_fromStr(d2,&n1);
+	return dsb_set(d1,&n1,&nv);
 }
 
 int dsb_setzzz(const char *d1, const char *d2, const char *v)

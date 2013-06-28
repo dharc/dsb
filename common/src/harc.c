@@ -25,7 +25,15 @@ int dsb_harc_serialize(FILE *fd, const HARC_t *harc)
 
 	dsb_nid_toRawStr(&harc->t1, buf1, 100);
 	dsb_nid_toRawStr(&harc->t2, buf2, 100);
-	dsb_nid_toRawStr(&harc->def, buf3, 100);
+
+	if ((harc->flags & HARC_SCRIPT) != 0)
+	{
+		dsb_nid_toRawStr(&harc->def, buf3, 100);
+	}
+	else
+	{
+		dsb_nid_toRawStr(&harc->h, buf3, 100);
+	}
 
 	fprintf(fd, "%s,%s,%s,%d,\n",buf1,buf2,buf3,harc->flags);
 
@@ -49,7 +57,16 @@ int dsb_harc_deserialize(FILE *fd, HARC_t *harc)
 
 	DSB_ERROR(dsb_nid_fromStr(buf1,&harc->t1),0);
 	DSB_ERROR(dsb_nid_fromStr(buf2,&harc->t2),0);
-	DSB_ERROR(dsb_nid_fromStr(buf3,&harc->def),0);
+
+	if ((harc->flags & HARC_SCRIPT) != 0)
+	{
+		DSB_ERROR(dsb_nid_fromStr(buf3,&harc->def),0);
+	}
+	else
+	{
+		DSB_ERROR(dsb_nid_fromStr(buf3,&harc->h),0);
+		dsb_nid_null(&harc->def);
+	}
 
 	return 0;
 }

@@ -125,6 +125,9 @@ void make_system()
 {
 	NID_t sys;
 	NID_t tmp;
+	NID_t xfuncobj;
+	NID_t dbgobj;
+
 	dsb_new(&Root,&sys);
 	dsb_setnzn(&Root,"system",&sys);
 	dsb_dictnz(&Root,"system");
@@ -155,6 +158,19 @@ void make_system()
 	dsb_dictnz(&tmp,"net");
 	dsb_setnzn(&tmp,"log",&False);
 	dsb_dictnz(&tmp,"log");
+
+
+	//XFUNCS
+	dsb_getnzn(&Root,"system",&xfuncobj);
+	dsb_new(&Root,&tmp);
+	dsb_setnzn(&xfuncobj,"xfuncs",&tmp);
+	dsb_dictnz(&xfuncobj,"xfuncs");
+	xfuncobj = tmp;
+	dsb_new(&Root,&dbgobj);
+	dsb_setnzn(&xfuncobj,"debug",&dbgobj);
+	dsb_dictnz(&xfuncobj,"debug");
+	dsb_setnzi(&dbgobj,"log",XFUNC_LOG);
+	dsb_dictnz(&dbgobj,"log");
 }
 
 //Internally compiled modules.

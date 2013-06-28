@@ -1,7 +1,7 @@
 /*
- * dsb.c
+ * xfunc.c
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 28 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,39 +32,44 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/common.h"
+#include "dsb/core/vm.h"
+#include "dsb/xfunc.h"
+#include "dsb/core/nid.h"
+#include "dsb/wrap.h"
+#include "dsb/globals.h"
+#include "dsb/errors.h"
 
-int dsb_common_init()
+#include <string.h>
+
+static int xfunc_log(NID_t *Res, int pcount, const NID_t *params)
 {
-	int ret;
-	ret = dsb_nid_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_event_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_net_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_module_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_names_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_xfunc_init();
-	return ret;
+	char buf[1000];
+	char *cur = buf;
+	int i;
+
+	for (i=0; i<pcount; i++)
+	{
+		dsb_nid_toStr(&params[i],cur,100);
+		cur += strlen(cur);
+		cur[0] = ',';
+		cur[1] = ' ';
+		cur[2] = 0;
+		cur += 2;
+	}
+
+	DSB_ERROR(INFO_XLOG,buf);
+
+	return 0;
 }
 
-int dsb_common_final()
+int dsb_xfunc_init()
 {
-	int ret;
-	ret = dsb_xfunc_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_names_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_module_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_net_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_event_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_nid_final();
-	return ret;
+	XFUNC(XFUNC_LOG,xfunc_log);
+	return 0;
+}
+
+int dsb_xfunc_final()
+{
+	return 0;
 }
 

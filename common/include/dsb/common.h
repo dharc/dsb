@@ -42,6 +42,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net.h"
 #include "dsb/core/module.h"
 #include "dsb/names.h"
+#include "dsb/xfunc.h"
 
 #ifdef __cplusplus
 extern "C"

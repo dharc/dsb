@@ -79,10 +79,15 @@ const char *dsb_log_str(int err)
 	case ERR_ASMUNKOP:			return "Assembler: Unknown operation";
 
 	case ERR_VMINVALIP:			return "VM: Unknown instruction";
+	case ERR_VMXFUNCID:			return "VM: Xfunc ID invalid";
+	case ERR_VMXFUNCEXIST:		return "VM: Xfunc already exists";
+	case ERR_VMXFUNCNONE:		return "VM: Missing xfunc, cannot callx";
+	case ERR_VMNOCODE:				return "VM: No code in object";
 
 	case INFO_NETACCEPT:		return "New connection.";
 	case INFO_NETLISTEN:		return "Net Listening";
 	case INFO_NETDISCONNECT:	return "Client disconnected";
+	case INFO_XLOG:					return "XLOG: ";
 
 	case WARN_NOROUTE:			return "No known route for event";
 

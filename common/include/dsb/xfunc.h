@@ -1,7 +1,7 @@
 /*
- * dsb.c
+ * xfunc.h
  *
- *  Created on: 30 Apr 2013
+ *  Created on: 28 Jun 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,39 +32,14 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#include "dsb/common.h"
+#ifndef XFUNC_H_
+#define XFUNC_H_
 
-int dsb_common_init()
-{
-	int ret;
-	ret = dsb_nid_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_event_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_net_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_module_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_names_init();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_xfunc_init();
-	return ret;
-}
+#define XFUNC(A,B)	dsb_vm_xfunc(A,#B,B)
 
-int dsb_common_final()
-{
-	int ret;
-	ret = dsb_xfunc_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_names_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_module_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_net_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_event_final();
-	if (ret != SUCCESS) return ret;
-	ret = dsb_nid_final();
-	return ret;
-}
+#define XFUNC_LOG	1
 
+int dsb_xfunc_init();
+int dsb_xfunc_final();
+
+#endif /* XFUNC_H_ */

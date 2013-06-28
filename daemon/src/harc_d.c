@@ -84,7 +84,14 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 	case EVENT_GETDEF:
-						*(event->res) = harc->def;
+						if ((harc->flags & HARC_SCRIPT) != 0)
+						{
+							*(event->res) = harc->def;
+						}
+						else
+						{
+							dsb_nid_null(event->res);
+						}
 						//event->eval = harc->e;
 						event->flags |= EVTFLAG_DONE;
 						return SUCCESS;
@@ -102,6 +109,24 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 							harc->h = harc->def;
 							harc->flags &= ~(HARC_OUTOFDATE | HARC_SCRIPT);
 						}
+
+						//Generate NOTIFY events to mark others as out-of-date.
+						dep = harc->deps;
+						harc->deps = 0;
+						while (dep != 0)
+						{
+							dsb_notify(&(dep->a),&(dep->b));
+							temp = dep->next;
+							free(dep);
+							dep = temp;
+						}
+						event->flags |= EVTFLAG_DONE;
+						return SUCCESS;
+	//-------------------------------------------------------------------------
+	case EVENT_SET:		harc->h = event->def;
+						dsb_nid_null(&harc->def);
+
+						harc->flags &= ~(HARC_OUTOFDATE | HARC_SCRIPT);
 
 						//Generate NOTIFY events to mark others as out-of-date.
 						dep = harc->deps;

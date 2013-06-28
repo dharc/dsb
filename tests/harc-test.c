@@ -181,6 +181,29 @@ void test_harc_dep()
 	DONE;
 }
 
+void test_harc_set()
+{
+	Event_t evt;
+	HARC_t harc;
+
+	evt.type = EVENT_SET;
+	evt.flags = 0;
+	dsb_iton(2,&(evt.d1));
+	dsb_iton(3,&(evt.d2));
+	dsb_iton(55,&(evt.def));
+
+	dsb_harc(&(evt.d1),&(evt.d2),&harc);
+	harc.flags = 0;
+
+	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
+	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK(harc.flags == 0);
+	CHECK(harc.h.ll == 55);
+	CHECK(harc.def.ll == 0);
+
+	DONE;
+}
+
 extern struct Module *dsb_evaluators_module();
 
 int main(int argc, char *argv[])
@@ -191,6 +214,7 @@ int main(int argc, char *argv[])
 	dsb_test(test_harc_define);
 	dsb_test(test_harc_notify);
 	dsb_test(test_harc_dep);
+	dsb_test(test_harc_set);
 
 	dsb_event_final();
 	return 0;

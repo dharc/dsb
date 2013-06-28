@@ -39,6 +39,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/core/vm.h"
 #include "dsb/assembler.h"
 #include "dsb/globals.h"
+#include "dsb/xfunc.h"
 
 static NID_t evtd1;
 static NID_t evtd2;
@@ -691,6 +692,47 @@ void test_vm_clr()
 	DONE;
 }
 
+static int xfunctest;
+
+static int test_xfuncdummy(NID_t *res, int pcount, const NID_t *params)
+{
+	int i;
+
+	xfunctest = 0;
+	for (i=0; i<pcount; i++)
+	{
+		xfunctest += (int)params[i].ll;
+	}
+
+	return 0;
+}
+
+void test_vm_callx()
+{
+	struct HARC harc;
+	NID_t code[100];
+	struct VMContext ctx;
+	ctx.ip = 0;
+	ctx.timeout = 1000;
+	ctx.code = code;
+	ctx.codesize = 100;
+	ctx.result = &harc.h;
+
+	XFUNC(1,test_xfuncdummy);
+
+	dsb_nid_op(VM_CALLX(1,0,2),&code[0]);
+	dsb_iton(1,&code[1]);
+	dsb_iton(0,&code[2]);
+	dsb_iton(55,&code[3]);
+	dsb_iton(66,&code[4]);
+	dsb_nid_op(VM_RET(1),&code[5]);
+
+	CHECK(dsb_vm_interpret(&ctx) == -1);
+	CHECK(xfunctest == (55+66));
+
+	DONE;
+}
+
 int main(int argc, char *argv[])
 {
 	dsb_nid_init();
@@ -716,6 +758,8 @@ int main(int argc, char *argv[])
 	dsb_test(test_vm_inc);
 	dsb_test(test_vm_dec);
 	dsb_test(test_vm_clr);
+
+	dsb_test(test_vm_callx);
 
 	dsb_event_final();
 	dsb_nid_final();
