@@ -339,3 +339,15 @@ int dsb_dependency(
 	evt->type = EVENT_DEP;
 	return dsb_send(evt,1);
 }
+
+int dsb_dependencynznn(
+		const NID_t *d1,
+		const char *d2,
+		const NID_t *dep1,
+		const NID_t *dep2
+		)
+{
+	NID_t n1;
+	dsb_nid_fromStr(d2,&n1);
+	return dsb_dependency(d1,&n1,dep1,dep2);
+}

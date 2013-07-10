@@ -126,6 +126,13 @@ int dsb_dependency(
 		const NID_t *dep2
 		);
 
+int dsb_dependencynznn(
+		const NID_t *d1,
+		const char *d2,
+		const NID_t *dep1,
+		const NID_t *dep2
+		);
+
 int dsb_new(const NID_t *base, NID_t *n);
 
 int dsb_getmeta(const NID_t *d1, const NID_t *d2, NID_t *meta);

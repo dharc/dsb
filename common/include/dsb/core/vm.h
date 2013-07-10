@@ -54,6 +54,7 @@ typedef struct HARC HARC_t;
 #define VMOP_NEW		0x00040000
 #define VMOP_DEL		0x00050000
 #define VMOP_GETD		0x00060000	///< Get and add dependency
+#define VMOP_SET		0x00070000
 //Jumps
 #define VMOP_JMP		0x01010000	///< Jump a
 #define VMOP_JEQ		0x01020000	///< Jump a when b == c.
@@ -111,6 +112,7 @@ typedef struct HARC HARC_t;
 #define VM_DEP(A,B,C,D)		VMOP4(VMOP_DEP,A,B,C,D)
 #define VM_NEW(A,B)			VMOP2(VMOP_NEW,A,B)
 #define VM_DEL(A,B)			VMOP2(VMOP_DEL,A,B)
+#define VM_SET(A,B,C)		VMOP3(VMOP_SET,A,B,C)
 
 #define VM_JMP(L)			VMOPL0(VMOP_JMP,L)
 #define VM_JEQ(L,A,B)		VMOPL2(VMOP_JEQ,L,A,B)
