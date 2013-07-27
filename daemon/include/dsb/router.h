@@ -37,13 +37,21 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef ROUTER_H_
 #define ROUTER_H_
 
-struct Event;
-struct NID;
+#include "dsb/types.h"
 
-#define ROUTE_VOLATILE		0x0
-#define ROUTE_PERSISTENT	0x1
-#define ROUTE_REMOTE		0x2
-#define ROUTE_LOCAL			0x0
+typedef enum
+{
+	ROUTE_VOLATILE=0x0,
+	ROUTE_PERSISTENT=0x1,
+	ROUTE_REMOTE=0x2,
+	ROUTE_LOCAL=0x0,
+	ROUTE_LOCAL_VOLATILE=0x0,
+	ROUTE_LOCAL_PERSISTENT=0x1,
+	ROUTE_REMOTE_VOLATILE=0x2,
+	ROUTE_REMOTE_PERSISTENT=0x3
+} ROUTERTYPE_T;
+
+typedef int (*Router_t)(Event_t *);
 
 /**
  * @addtogroup Router
@@ -65,22 +73,22 @@ int dsb_route_final(void);
  * for that region will be routed to the handler. A region is
  * 2-dimensional and so has an x range and y range but it does not matter
  * which range is x or y and they can be flipped.
- * @param flags		Kind of handler.
+ * @param type		Kind of handler.
  * @param num		Number of that kind (should be 0 at present).
  * @param handler	Event handler for the region.
  * @return SUCCESS, ERR_ROUTE_SLOT.
  * @author Nick Pope
  */
 int dsb_route_map(
-		int flags, int num,
-		int (*handler)(struct Event *));
+		ROUTERTYPE_T type, int num,
+		Router_t handler);
 
 /**
  * Route event to correct handler. Should not be called manually.
  * @param evt The event to route.
  * @return SUCCESS, ERR_NOROUTE or ERR_ROUTE_MISSING.
  */
-int dsb_route(struct Event *evt);
+int dsb_route(Event_t *evt);
 
 /** @} */
 

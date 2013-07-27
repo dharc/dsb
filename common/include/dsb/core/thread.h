@@ -49,8 +49,12 @@ either expressed or implied, of the FreeBSD Project.
 #define LOCK(A) pthread_mutex_lock(&A)
 #define UNLOCK(A) pthread_mutex_unlock(&A)
 
+#define WAIT(A,B) pthread_cond_wait(&A,&B);
+#define BROADCAST(A) pthread_cond_broadcast(&A);
+
 #define RWLOCK(A) static pthread_rwlock_t A = PTHREAD_RWLOCK_INITIALIZER
 #define MUTEX(A) static pthread_mutex_t A = PTHREAD_MUTEX_INITIALIZER
+#define COND(A) static pthread_cond_t A = PTHREAD_COND_INITIALIZER
 #else
 #define R_LOCK(A)
 #define W_LOCK(A)

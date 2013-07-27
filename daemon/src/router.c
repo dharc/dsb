@@ -39,9 +39,12 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/core/harc.h"
 #include "dsb/core/agent.h"
 
-static int (*localvolatile[16])(struct Event *);
-static int (*localpersist[16])(struct Event *);
-static int (*remote[16])(struct Event *);
+#define MAX_ROUTERS		5
+
+//Store router handlers
+static Router_t localvolatile[MAX_ROUTERS];
+static Router_t localpersist[MAX_ROUTERS];
+static Router_t remote[MAX_ROUTERS];
 
 int dsb_route_init(void)
 {
@@ -54,17 +57,17 @@ int dsb_route_final(void)
 }
 
 int dsb_route_map(
-		int flags, int num,
-		int (*handler)(struct Event *))
+		ROUTERTYPE_T type, int num,
+		Router_t handler)
 {
-	if (flags & ROUTE_REMOTE)
+	if (type & ROUTE_REMOTE)
 	{
 		//TODO Use num later.
 		remote[0] = handler;
 	}
 	else
 	{
-		if (flags & ROUTE_PERSISTENT)
+		if (type & ROUTE_PERSISTENT)
 		{
 			localpersist[0] = handler;
 		}
@@ -77,9 +80,9 @@ int dsb_route_map(
 	return SUCCESS;
 }
 
-int dsb_route(struct Event *evt)
+int dsb_route(Event_t *evt)
 {
-	int (*handler)(struct Event *);
+	Router_t handler;
 
 	//Choose the correct handler...
 	if (dsb_nid_isLocal(&evt->d1) == 0)

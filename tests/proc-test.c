@@ -36,9 +36,9 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/processor.h"
 #include "dsb/core/event.h"
 #include "dsb/errors.h"
+#include "dsb/types.h"
 
-//extern int queue_insert(int q, Event_t *e);
-Event_t *queue_pop(int q);
+#include "../daemon/src/processor.c"
 
 void test_proc_send()
 {
@@ -47,7 +47,7 @@ void test_proc_send()
 
 	evt.type = EVENT_GET;
 	evt.err = 555;
-	CHECK(dsb_proc_send(&evt,ASYNC) == SUCCESS);
+	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
 	t = queue_pop(1);
 	CHECK(t != 0);
 	if (t != 0)
@@ -57,7 +57,7 @@ void test_proc_send()
 
 	evt.type = EVENT_DEFINE;
 	evt.err = 777;
-	CHECK(dsb_proc_send(&evt,ASYNC) == SUCCESS);
+	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
 	t = queue_pop(0);
 	CHECK(t != 0);
 	if (t != 0)
@@ -67,7 +67,7 @@ void test_proc_send()
 
 	evt.type = EVENT_DEP;
 	evt.err = 888;
-	CHECK(dsb_proc_send(&evt,ASYNC) == SUCCESS);
+	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
 	t = queue_pop(2);
 	CHECK(t != 0);
 	if (t != 0)

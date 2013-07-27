@@ -47,6 +47,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <string.h>
 
 #define QUEUE_SIZE		10000
+#define NUM_THREADS		4
 
 //TODO Need to properly support rix and wix.
 
@@ -56,33 +57,38 @@ either expressed or implied, of the FreeBSD Project.
 struct EventQueue
 {
 	Event_t **q;
-	unsigned int rix;
-	unsigned int wix;
+	unsigned int rix;	//< Current read index
+	unsigned int wix;	//< Current write index
 };
 
 MUTEX(qmtx);
-
-#define WRITE_QUEUE			0
-#define READ_QUEUE			1
-#define DEPENDENCY_QUEUE	2
+COND(qcond);
 
 static struct EventQueue queue;
 static int procisrunning;
 static void *debugsock;
 
-int queue_insert(Event_t *e)
+static void *dsb_proc_runthread(void *arg);
+
+/*
+ * Thread-safe event queue insertion.
+ */
+static int queue_insert(Event_t *e)
 {
 	LOCK(qmtx);
 
-	queue.q[queue.wix++] = e;
-	if (queue.wix >= QUEUE_SIZE) queue.wix = 0;
+	queue.q[queue.wix] = e;
+	queue.wix = (queue.wix + 1) % QUEUE_SIZE;
 
 	UNLOCK(qmtx);
 
 	return SUCCESS;
 }
 
-Event_t *queue_pop()
+/*
+ * Thread-safe event queue removal.
+ */
+static Event_t *queue_pop()
 {
 	Event_t *res = 0;
 
@@ -93,8 +99,8 @@ Event_t *queue_pop()
 
 	if (res != 0)
 	{
-		queue.q[queue.rix++] = 0;
-		if (queue.rix >= QUEUE_SIZE) queue.rix = 0;
+		queue.q[queue.rix] = 0;
+		queue.rix = (queue.rix + 1) % QUEUE_SIZE;
 	}
 
 	UNLOCK(qmtx);
@@ -124,43 +130,9 @@ int dsb_proc_debug(void *sock)
 }
 
 //Map this to local processor send implementation.
-int dsb_send(struct Event *evt, int async)
+int dsb_send(Event_t *evt, bool async)
 {
 	return dsb_proc_send(evt,async);
-}
-
-int dsb_proc_send(struct Event *evt, int async)
-{
-	int ret;
-
-	evt->flags |= EVTFLAG_SENT;
-	ret = queue_insert(evt);
-
-	//Need to block until done.
-	if (async == SYNC)
-	{
-		ret = dsb_proc_wait(evt);
-	}
-
-	return ret;
-}
-
-int dsb_proc_wait(const struct Event *evt)
-{
-	if (!(evt->flags & EVTFLAG_SENT))
-	{
-		return ERR_NOTSENT;
-	}
-	while (!(evt->flags & EVTFLAG_DONE))
-	{
-		//Process other events etc.
-		if (dsb_proc_single() == 0)
-		{
-			break;
-		}
-	}
-
-	return SUCCESS;
 }
 
 int dsb_proc_stop()
@@ -171,10 +143,11 @@ int dsb_proc_stop()
 
 extern unsigned int dbgflags;
 
-int dsb_proc_single()
+static int dsb_proc_single()
 {
 	int ret;
 	Event_t *e;
+
 	//Choose an event
 	e = queue_pop();
 	if (e == 0)
@@ -192,18 +165,21 @@ int dsb_proc_single()
 		}
 
 		//If we have a debugger connected.
-			#ifdef _DEBUG
-			if (dbgflags & DBG_EVENTS)
-			{
-				char buf[200];
-				dsb_event_pretty(e,buf,200);
-				dsb_log(DEBUG_EVENTS,buf);
-			}
-			if (debugsock != 0)
-			{
-				dsb_net_send_dbgevent(debugsock,e);
-			}
-			#endif
+		#ifdef _DEBUG
+		if (dbgflags & DBG_EVENTS)
+		{
+			char buf[200];
+			dsb_event_pretty(e,buf,200);
+			dsb_log(DEBUG_EVENTS,buf);
+		}
+		if (debugsock != 0)
+		{
+			dsb_net_send_dbgevent(debugsock,e);
+		}
+		#endif
+
+		//Mark as DONE
+		e->flags |= EVTFLAG_DONE;
 
 		if (e->flags & EVTFLAG_FREE)
 		{
@@ -213,6 +189,51 @@ int dsb_proc_single()
 	}
 }
 
+/**
+ * Wait for an event to complete.
+ * @param evt Event to wait for.
+ * @return SUCCESS or ERR_NOTSENT.
+ */
+static int dsb_proc_wait(const Event_t *evt)
+{
+	if (!(evt->flags & EVTFLAG_SENT))
+	{
+		return ERR_NOTSENT;
+	}
+	while (!(evt->flags & EVTFLAG_DONE))
+	{
+		//Process other events etc.
+		dsb_proc_single();
+	}
+
+	return SUCCESS;
+}
+
+int dsb_proc_send(Event_t *evt, bool async)
+{
+	int ret;
+
+	evt->flags |= EVTFLAG_SENT;
+	ret = queue_insert(evt);
+
+	//Need to block until done.
+	if (async == false)
+	{
+		ret = dsb_proc_wait(evt);
+	}
+	else
+	{
+		//Wake up other threads...
+		printf("Broadcasting...\n");
+		BROADCAST(qcond);
+	}
+
+	return ret;
+}
+
+/*
+ * Get accurate clock time.
+ */
 static long long getTicks()
 {
 	#ifdef UNIX
@@ -235,8 +256,20 @@ int dsb_proc_run(unsigned int maxfreq)
 	long long tick;
 	long long maxticks = maxfreq * 100000;
 	long long sleeptime;
+	pthread_t threads[NUM_THREADS];
+	int i;
 
 	procisrunning = 1;
+
+	//Make some threads now
+	for (i=0; i<NUM_THREADS; i++)
+	{
+		if (pthread_create(&threads[i],0,dsb_proc_runthread,0) != 0)
+		{
+			printf("Could not create threads!\n");
+		}
+
+	}
 
 	while(procisrunning == 1)
 	{
@@ -259,7 +292,23 @@ int dsb_proc_run(unsigned int maxfreq)
 	return SUCCESS;
 }
 
-int dsb_proc_runthread()
+static void *dsb_proc_runthread(void *arg)
 {
+	printf("Thread active!\n");
+
+	while (procisrunning)
+	{
+		while (dsb_proc_single() == 1);
+
+		printf("Thread waiting...\n");
+
+		//Wait on condition
+		LOCK(qmtx);
+		while (queue.rix == queue.wix)
+		{
+			WAIT(qcond,qmtx);
+		}
+		UNLOCK(qmtx);
+	}
 	return SUCCESS;
 }

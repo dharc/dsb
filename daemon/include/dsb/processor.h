@@ -37,10 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef PROCESSOR_H_
 #define PROCESSOR_H_
 
-struct Event;
-
-#define SYNC	0
-#define ASYNC	1
+#include "dsb/types.h"
 
 int dsb_proc_init();
 int dsb_proc_final();
@@ -53,16 +50,7 @@ int dsb_proc_debug(void *sock);
  * @param async 0 blocks and 1 returns immediately.
  * @return SUCCESS, ERR_NOROUTE or ERR_INVALIDEVENT
  */
-int dsb_proc_send(struct Event *evt, int async);
-
-/**
- * Wait for an event to complete.
- * @param evt Event to wait for.
- * @return SUCCESS or ERR_NOTSENT.
- */
-int dsb_proc_wait(const struct Event *evt);
-
-int dsb_proc_single();
+int dsb_proc_send(Event_t *evt, bool async);
 
 /**
  * Main event scheduler. Only returns when explicitly terminated.

@@ -115,6 +115,24 @@ int dsb_agent_startx(void (*func)(const NID_t *, void*),void *data)
 	return -1;
 }
 
+int dsb_agent_stop(int handle)
+{
+	if (handle < 0 || handle >= MAX_AGENTS)
+	{
+		return 0;
+	}
+
+	if (agents[handle].active == 0)
+	{
+		return 0;
+	}
+
+	agents[handle].active = 0;
+	agents[handle].cfunc = 0;
+	agents[handle].data = 0;
+	return 0;
+}
+
 int dsb_agent_trigger(unsigned int id)
 {
 	if (agents[id].active == 1)
