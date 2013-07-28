@@ -60,7 +60,7 @@ int mod_test_final()
 
 void test_module_register()
 {
-	struct Module mod;
+	Module_t mod;
 	mod.init = 0;
 	mod.final = 0;
 	mod.update = 0;
@@ -78,7 +78,7 @@ void test_module_register()
 
 void test_module_load()
 {
-	struct Module mod;
+	Module_t mod;
 	mod.init = mod_test_init;
 	mod.final = mod_test_final;
 	mod.update = 0;

@@ -68,6 +68,7 @@ static struct EventQueue queue;
 static int procisrunning;
 static void *debugsock;
 
+//Forward declarations of static functions
 static void *dsb_proc_runthread(void *arg);
 
 /*

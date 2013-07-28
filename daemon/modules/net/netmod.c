@@ -64,7 +64,7 @@ typedef int socklen_t;
 #include "dsb/router.h"
 #include <stdio.h>
 
-struct Module netmod;
+Module_t netmod;
 static int ssock = INVALID_SOCKET;
 static fd_set fdread;
 static fd_set fderror;
@@ -209,7 +209,7 @@ int net_update()
 /*
  * Module registration structure.
  */
-struct Module *dsb_network_module()
+Module_t *dsb_network_module()
 {
 	netmod.init = net_init;
 	netmod.update = net_update;

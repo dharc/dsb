@@ -37,7 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef MODULE_H_
 #define MODULE_H_
 
-struct NID;
+#include "dsb/types.h"
 
 
 #ifdef __cplusplus
@@ -55,13 +55,15 @@ extern "C"
 /**
  * Module registration structure that each module must provide.
  */
-struct Module
+typedef struct
 {
-	int (*init)(const struct NID *);
+	int (*init)(const NID_t *);
 	int (*update)();
 	int (*final)();
-	int ups;	///< Updates per second.
-};
+	int ups;					///< Updates per second.
+	const char **depends;		///< Null terminated array of required modules.
+	bool daemon;				///< Only load module in full daemon.
+} Module_t;
 
 /**
  * Used to register internal compiled modules. Will return an error if the
@@ -71,7 +73,7 @@ struct Module
  * @param Structure containing module init, update and final functions.
  * @return SUCCESS, ERR_MODEXISTS, ERR_INVALIDMOD.
  */
-int dsb_module_register(const char *name, const struct Module *);
+int dsb_module_register(const char *name, const Module_t *);
 
 /**
  * Search for and then load a named module. It will search first for internal
@@ -81,16 +83,17 @@ int dsb_module_register(const char *name, const struct Module *);
  * @param base An option base node to module configuration.
  * @return SUCCESS, ERR_NOMOD, ERR_INVALIDMOD.
  */
-int dsb_module_load(const char *name, const struct NID *base);
+int dsb_module_load(const char *name, const NID_t *base);
 
 int dsb_module_unload(const char *name);
 
 /**
- * Search for a named module and validate but do not load it.
- * @param name Name of module.
- * @return SUCCESS means module was found, ERR_NOMOD means it wasn't.
+ * Find the .so library based upon module name.
+ * @param name Module name
+ * @param lib Filled with lib name if found.
+ * @return true if found, false if not.
  */
-int dsb_module_exists(const char *name);
+bool dsb_module_probe(const char *name, char *lib);
 
 int dsb_module_updateall();
 

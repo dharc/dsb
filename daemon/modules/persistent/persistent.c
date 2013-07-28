@@ -41,7 +41,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <stdio.h>
 #include <malloc.h>
 
-struct Module permod;
+Module_t permod;
 
 #define PERFLAG_OUTOFDATE	1	//Mark entry as out-of-date.
 #define PERFLAG_VIRTUAL		2	//Mark region as not wanting caching.
@@ -251,7 +251,7 @@ int per_final()
 /*
  * Module registration structure.
  */
-struct Module *dsb_persistent_module()
+Module_t *dsb_persistent_module()
 {
 	permod.init = per_init;
 	permod.update = 0;

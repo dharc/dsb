@@ -36,21 +36,26 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "string.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <malloc.h>
 #include "dsb/config.h"
+#include "dsb/types.h"
 
 #ifdef UNIX
 #include <dlfcn.h>
 #include <sys/time.h>
+#include <unistd.h>
 #endif
 
 #ifdef WIN32
 #include <windows.h>
 #endif
 
+//TODO: ideally don't have hard coded limits.
 #define MAX_MODULE_NAME			50
 #define MAX_INTERNAL_MODULES	20
 #define MAX_LOADED_MODULES		30
+#define MAX_SEARCH_PATHS		20
 
 /*
  * Internal module registration data.
@@ -58,18 +63,51 @@ either expressed or implied, of the FreeBSD Project.
 struct ModInternal
 {
 	char name[MAX_MODULE_NAME];
-	struct Module mod;
+	Module_t mod;
 	void *handle;
 	long long nextupdate;
 };
 
 static struct ModInternal imods[MAX_INTERNAL_MODULES];
-static struct ModInternal *lmods[MAX_LOADED_MODULES] = {0};
+static struct ModInternal *lmods[MAX_LOADED_MODULES];
+static char *searchpaths[MAX_SEARCH_PATHS];
 
-unsigned int modix = 0;
+static unsigned int modix;
 
 int dsb_module_init()
 {
+	const char *envpaths = getenv("DSB_MODULE_PATH");
+	int length;
+	const char *tmp;
+	int ix = 0;
+
+	if (envpaths != 0)
+	{
+		do
+		{
+			//Split on ':'
+			tmp = strchr(envpaths,':');
+
+			length = (tmp==0) ? strlen(envpaths) : tmp-envpaths;
+			if (length == 0) break;
+
+			searchpaths[ix] = malloc(length+1);
+			strncpy(searchpaths[ix],envpaths,length);
+			searchpaths[ix][length] = 0;
+
+			envpaths = tmp+1;
+			++ix;
+
+			//Safety check
+			if (ix >= (MAX_SEARCH_PATHS-4)) break;
+	}
+	while (tmp != 0);
+	}
+
+	searchpaths[ix++] = SHAREDIR;
+	searchpaths[ix++] = "/usr/lib/dsb";
+	searchpaths[ix] = 0;
+
 	return SUCCESS;
 }
 
@@ -91,11 +129,11 @@ int dsb_module_final()
 	return SUCCESS;
 }
 
-int dsb_module_register(const char *name, const struct Module *mod)
+int dsb_module_register(const char *name, const Module_t *mod)
 {
 	//Check for problems
-	if (dsb_module_exists(name) == SUCCESS)
-		return DSB_ERROR(ERR_MODEXISTS,name);
+	//if (dsb_module_exists(name) == SUCCESS)
+	//	return DSB_ERROR(ERR_MODEXISTS,name);
 	if (strlen(name) >= MAX_MODULE_NAME)
 		return DSB_ERROR(ERR_MODNAME,name);
 	if ((mod->init == 0) || (mod->final == 0))
@@ -108,31 +146,35 @@ int dsb_module_register(const char *name, const struct Module *mod)
 	return SUCCESS;
 }
 
-int dsb_module_exists(const char *name)
+bool dsb_module_probe(const char *name, char *lib)
 {
-	int i;
+	char filename[300];
+	int i = 0;
 
-	//First scan internal registered modules.
-	for (i=0; i<modix; i++)
+	//For every search path
+	while (searchpaths[i])
 	{
-		//Do we have a name match
-		if (strcmp(name,imods[i].name) == 0)
+		//Generate filename and check if it can be read.
+		sprintf("%s/lib%s.so",searchpaths[i],name);
+		if (access(filename,R_OK) == 0)
 		{
-			return SUCCESS;
+			//Save full path to "lib".
+			strcpy(lib,filename);
+			return true;
 		}
+
+		++i;
 	}
 
-	//Now scan for external modules...
-	//TODO Scan for external modules.
-	return ERR_NOMOD;
+	return false;
 }
 
 int dsb_module_load(const char *name, const struct NID *base)
 {
 	int i,j;
 	void *handle;
-	char fname[200];
-	struct Module *(*init)(void);
+	char fname[300];
+	Module_t *(*init)(void);
 
 	//First scan internal registered modules.
 	for (i=0; i<modix; i++)
@@ -148,6 +190,8 @@ int dsb_module_load(const char *name, const struct NID *base)
 			lmods[j]->nextupdate = 0;
 			if (imods[i].mod.init != 0)
 			{
+				//TODO Load all required modules.
+
 				//Initialise the module!
 				return imods[i].mod.init(base);
 			}
@@ -159,12 +203,15 @@ int dsb_module_load(const char *name, const struct NID *base)
 	}
 
 	//Now scan for external modules...
+	if (dsb_module_probe(name,fname) == false)
+	{
+		return DSB_ERROR(ERR_NOMOD,"Not found");
+	}
+
 	//TODO Scan for external modules.
 	#ifdef UNIX
-	sprintf(fname,"lib%s.so",name);
 	handle = dlopen(fname,RTLD_NOW);
 	#else
-	sprintf(fname,"%s.dll",name);
 	handle = LoadLibrary(fname);
 	#endif
 
@@ -213,27 +260,27 @@ int dsb_module_unload(const char *name)
 {
 	int i;
 
-		//First scan internal registered modules.
-		for (i=0; i<modix; i++)
+	//First scan internal registered modules.
+	for (i=0; i<modix; i++)
+	{
+		//Do we have a name match
+		if (strcmp(name,imods[i].name) == 0)
 		{
-			//Do we have a name match
-			if (strcmp(name,imods[i].name) == 0)
+			if (imods[i].mod.final != 0)
 			{
-				if (imods[i].mod.final != 0)
-				{
-					//Initialise the module!
-					return imods[i].mod.final();
-				}
-				else
-				{
-					return DSB_ERROR(ERR_INVALIDMOD,name);
-				}
+				//Initialise the module!
+				return imods[i].mod.final();
+			}
+			else
+			{
+				return DSB_ERROR(ERR_INVALIDMOD,name);
 			}
 		}
+	}
 
-		//Now scan for external modules...
-		//TODO Scan for external modules.
-		return DSB_ERROR(ERR_NOMOD,name);
+	//Now scan for external modules...
+	//TODO Scan for external modules.
+	return DSB_ERROR(ERR_NOMOD,name);
 }
 
 static long long getTicks()

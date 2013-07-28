@@ -41,7 +41,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <stdio.h>
 #include <malloc.h>
 
-struct Module volmod;
+Module_t volmod;
 
 #define VOLFLAG_OUTOFDATE	1	//Mark entry as out-of-date.
 #define VOLFLAG_VIRTUAL		2	//Mark region as not wanting caching.
@@ -394,7 +394,7 @@ int vol_final()
 /*
  * Module registration structure.
  */
-struct Module *dsb_volatile_module()
+Module_t *dsb_volatile_module()
 {
 	volmod.init = vol_init;
 	volmod.update = 0;

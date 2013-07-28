@@ -109,7 +109,7 @@ void test_agent_startx()
 	DONE;
 }
 
-extern struct Module *dsb_volatile_module();
+extern Module_t *dsb_volatile_module();
 
 int main(int argc, char *argv[])
 {

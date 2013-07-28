@@ -174,10 +174,9 @@ void make_system()
 }
 
 //Internally compiled modules.
-extern struct Module *dsb_volatile_module();
-extern struct Module *dsb_persistent_module();
-extern struct Module *dsb_evaluators_module();
-extern struct Module *dsb_network_module();
+extern Module_t *dsb_volatile_module();
+extern Module_t *dsb_persistent_module();
+extern Module_t *dsb_network_module();
 
 int main(int argc, char *argv[])
 {
