@@ -35,6 +35,8 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef DEPENDENCY_H_
 #define DEPENDENCY_H_
 
+#include "dsb/types.h"
+
 /** @file dependency.h */
 
 /**
@@ -47,8 +49,6 @@ struct Dependency
 	NID_t b;
 	struct Dependency *next;
 };
-
-typedef struct Dependency Dependency_t;
 
 
 #endif /* DEPENDENCY_H_ */

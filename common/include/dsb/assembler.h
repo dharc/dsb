@@ -35,12 +35,12 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef ASSEMBER_H_
 #define ASSEMBER_H_
 
+#include "dsb/types.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-typedef struct NID NID_t;
 
 struct VMLabel
 {

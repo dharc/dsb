@@ -40,13 +40,12 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef WRAP_H_
 #define WRAP_H_
 
+#include "dsb/types.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-struct NID;
-typedef struct NID NID_t;
 
 /**
  * @addtogroup API

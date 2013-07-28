@@ -36,13 +36,12 @@ either expressed or implied, of the FreeBSD Project.
 #define PATTERN_H_
 
 #include "dsb/patterns/pattern_types.h"
+#include "dsb/types.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-typedef struct NID NID_t;
 
 /** @file pattern.h */
 

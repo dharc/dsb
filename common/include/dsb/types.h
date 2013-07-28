@@ -42,6 +42,8 @@ either expressed or implied, of the FreeBSD Project.
 typedef _Bool bool;
 typedef struct Event Event_t;
 typedef struct NID NID_t;
+typedef struct Dependency Dependency_t;
+typedef struct HARC HARC_t;
 
 
 #endif /* DSB_TYPES_H_ */

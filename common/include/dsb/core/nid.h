@@ -32,6 +32,8 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef _NID_H_
 #define _NID_H_
 
+#include "dsb/types.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -138,8 +140,6 @@ struct NID
 
 	//TODO Add security tag.
 };*/
-
-typedef struct NID NID_t;
 
 /**
  * Initialise the NID allocation system. Must be called before first NID is
