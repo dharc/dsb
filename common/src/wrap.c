@@ -115,6 +115,16 @@ int dsb_getnzn(const NID_t *d1, const char *d2, NID_t *r)
 	return dsb_get(d1,&n2,r);
 }
 
+int dsb_getzzn(const char *d1, const char *d2, NID_t *r)
+{
+	NID_t n1;
+	NID_t n2;
+
+	dsb_nid_fromStr(d1,&n1);
+	dsb_nid_fromStr(d2,&n2);
+	return dsb_get(&n1,&n2,r);
+}
+
 int dsb_getnin(const NID_t *d1, int d2, NID_t *r)
 {
 	NID_t n2;

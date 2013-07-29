@@ -26,7 +26,7 @@ ENDIF(UNIX)
 
 set(COMMONSOURCE common/src/xfunc.c common/src/agent.c common/src/nid.c common/src/test.c common/src/event.c common/src/errors.c common/src/common.c common/src/harc.c common/src/wrap.c common/src/module.c common/src/net.c common/src/net_protocol.c common/src/string.c common/src/array.c common/src/vm.c common/src/assembler.c common/src/names.c common/src/iterator.c common/src/pattern.c common/src/clone.c)
 set(DSBDSOURCE daemon/src/dsbd.c daemon/src/processor.c daemon/src/router.c daemon/modules/net/netmod.c daemon/modules/net/handler.c daemon/modules/volatile/volatile.c daemon/src/harc_d.c daemon/modules/persistent/persistent.c)
-set(DSBSOURCE lite/src/lite.c)
+set(DSBSOURCE lite/src/lite.c lite/src/cli.c)
 
 configure_file( ${CMAKE_SOURCE_DIR}/common/include/dsb/config.h.in ${CMAKE_BINARY_DIR}/dsb/config.h )
 

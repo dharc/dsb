@@ -70,6 +70,7 @@ int dsb_getnin(const NID_t *d1, int d2, NID_t *r);
 int dsb_getnni(const NID_t *d1, const NID_t *d2, int *r);
 int dsb_getnzn(const NID_t *d1, const char *d2, NID_t *r);
 int dsb_getnzi(const NID_t *d1, const char *d2, int *r);
+int dsb_getzzn(const char *d1, const char *d2, NID_t *r);
 
 int dsb_getA(const NID_t *d1, const NID_t *d2, NID_t *r);
 

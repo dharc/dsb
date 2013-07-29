@@ -43,9 +43,11 @@ either expressed or implied, of the FreeBSD Project.
 #include <signal.h>
 #include <string.h>
 
-static void *hostsock;
+void *hostsock;
 static bool running;
 static bool interactive;
+
+void dsb_lite_startcli();
 
 /*
  * Oops.
@@ -216,6 +218,7 @@ int main(int argc, char *argv[])
 
 	//Initialise the common parts
 	dsb_common_init();
+	hostsock = 0;
 
 	//Register required network handlers...
 	dsb_net_callback(DSBNET_ERROR,net_cb_error);
@@ -236,10 +239,11 @@ int main(int argc, char *argv[])
 	//Set signal handler
 	signal(SIGINT, sigint);
 
+	if (interactive) dsb_lite_startcli();
+
 	while (running)
 	{
 		dsb_net_poll(100);
-		//TODO: Provide optional command interface.
 	}
 
 	printf("Terminating...\n");

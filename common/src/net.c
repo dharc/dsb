@@ -360,6 +360,9 @@ int dsb_net_poll(unsigned int ms)
 		#if defined(UNIX) && !defined(NO_THREADS)
 		pthread_mutex_unlock(&net_poll_mtx);
 		#endif
+
+		usleep(ms*1000);
+
 		return SUCCESS;
 	}
 
