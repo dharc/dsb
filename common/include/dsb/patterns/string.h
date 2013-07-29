@@ -35,12 +35,12 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef STRING_H_
 #define STRING_H_
 
+#include "dsb/types.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-typedef struct NID NID_t;
 
 /**
  * Convert a C string to a DSB string. Puts the resulting DSB string into the dest object.

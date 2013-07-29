@@ -142,6 +142,7 @@ int dsb_names_add(const char *name, const NID_t *nid)
  * Note that rebuild is not threadsafe and is assumed to only be called
  * once or very rarely by a single thread.
  */
+#pragma GCC diagnostic ignored "-Wunused-value"
 int dsb_names_rebuild()
 {
 	char buf[100];
@@ -175,9 +176,7 @@ int dsb_names_rebuild()
 	//There is no names object, so make it
 	else
 	{
-#pragma GCC diagnostic ignored "-Wunused-value"
 		DSB_DEBUG(DEBUG_RESETNAMES,0);
-#pragma GCC diagnostic pop
 		dsb_new(&PRoot,&namesobj);
 
 		dsb_nid_toStr(&namesobj,buf,100);

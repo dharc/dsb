@@ -37,8 +37,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef EVALUATOR_H_
 #define EVALUATOR_H_
 
-struct HARC;
-typedef struct HARC HARC_t;
+#include "dsb/types.h"
 
 /**
  * @addtogroup Evaluators

@@ -35,7 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef NAMES_H_
 #define NAMES_H_
 
-typedef struct NID NID_t;
+#include "dsb/types.h"
 
 #ifdef __cplusplus
 extern "C"

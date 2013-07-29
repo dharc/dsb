@@ -35,7 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef CLONE_H_
 #define CLONE_H_
 
-typedef struct NID NID_t;
+#include "dsb/types.h"
 
 #ifdef __cplusplus
 extern "C"

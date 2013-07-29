@@ -34,11 +34,9 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/core/nid.h"
 #include "dsb/config.h"
+#include "dsb/types.h"
 
 #include <stdio.h>
-
-typedef struct Event Event_t;
-typedef struct Dependency Dependency_t;
 
 /**
  * @addtogroup Hyperarc
@@ -68,8 +66,6 @@ struct HARC
 	NID_t h;		///< Head. Cached value that results from evaluating the definition.
 	int flags;		///< Status flags (HARC_ definitions).
 };
-
-typedef struct HARC HARC_t;
 
 HARC_t *dsb_harc(const NID_t *t1, const NID_t *t2, HARC_t *harc);
 

@@ -241,6 +241,7 @@ static int set_descriptors()
 	return n;
 }
 
+#pragma GCC diagnostic ignored "-Wunused-value"
 static int read_messages(void *s)
 {
 	struct DSBNetConnection *sock = s;
@@ -261,9 +262,7 @@ static int read_messages(void *s)
 	//No data to process.
 	if (rc <= 0)
 	{
-#pragma GCC diagnostic ignored "-Wunused-value"
 		DSB_INFO(INFO_NETDISCONNECT,0);
-#pragma GCC diagnostic pop
 		dsb_net_disconnect(sock);
 		return SUCCESS;
 	}
@@ -340,7 +339,9 @@ static int read_messages(void *s)
 		return 0;
 	}
 }
+//#pragma GCC diagnostic pop
 
+#pragma GCC diagnostic ignored "-Wunused-value"
 int dsb_net_poll(unsigned int ms)
 {
 	int n;
@@ -391,9 +392,7 @@ int dsb_net_poll(unsigned int ms)
 				//s_conns[i]->error();
 				free(connections[i]);
 				connections[i] = 0;
-#pragma GCC diagnostic ignored "-Wunused-value"
 				DSB_INFO(INFO_NETDISCONNECT,0);
-#pragma GCC diagnostic pop
 			}
 		}
 	}
@@ -404,6 +403,7 @@ int dsb_net_poll(unsigned int ms)
 
 	return 0;
 }
+//#pragma GCC diagnostic pop
 
 int dsb_net_callback(int msgtype, int (*cb)(void*,void *))
 {

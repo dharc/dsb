@@ -35,12 +35,12 @@ either expressed or implied, of the FreeBSD Project.
 #ifndef ARRAY_H_
 #define ARRAY_H_
 
+#include "dsb/types.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-typedef struct NID NID_t;
 
 /**
  * Write a local C NID array into the DSB graph.

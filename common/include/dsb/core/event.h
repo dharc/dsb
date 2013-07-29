@@ -41,6 +41,7 @@ either expressed or implied, of the FreeBSD Project.
 
 #include "dsb/core/harc.h"
 #include "dsb/core/nid.h"
+#include "dsb/types.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -117,8 +118,6 @@ struct Event
 	//Not sent over network
 	unsigned int flags;	///< Event flags.
 };
-
-typedef struct Event Event_t;
 
 /**
  * Event Constructor.
