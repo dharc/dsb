@@ -36,9 +36,24 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/errors.h"
 #include "dsb/core/event.h"
 #include "dsb/types.h"
+#include "dsb/net.h"
+#include "dsb/net_protocol.h"
+#include "dsb/globals.h"
+#include "dsb/core/agent.h"
+#include <signal.h>
+#include <string.h>
 
 static void *hostsock;
 static bool running;
+static bool interactive;
+
+/*
+ * Oops.
+ */
+void sigint(int s)
+{
+	running = false;
+}
 
 /*
  * Send events to network.
@@ -65,6 +80,9 @@ static void log_handler(int msg, const char *str)
 	printf("INFO: %d: %s\n",msg,str);
 }
 
+/*
+ * Error notification from the server, print/handle the error message.
+ */
 static int net_cb_error(void *sock, void *data)
 {
 	int errnum;
@@ -78,7 +96,7 @@ static int net_cb_error(void *sock, void *data)
 	return 0;
 }
 
-int net_cb_base(void *sock, void *data)
+static int net_cb_base(void *sock, void *data)
 {
 	int count;
 
@@ -98,16 +116,94 @@ static int net_cb_debugevent(void *sock, void *data)
 	return 0;
 }
 
+/*
+ * Received an event from the network. Check whether we need to do
+ * anything with it, such as trigger an agent. Otherwise discard.
+ */
 static int net_cb_event(void *sock, void *data)
 {
 	Event_t evt;
 	dsb_event_unpack((const char*)data,&evt);
 
+	//If event is for a local agent then trigger it.
 	if (evt.d1.header == NID_AGENT)
 	{
 		if (dsb_nid_isLocal(&evt.d1) == 1)
 		{
 			dsb_agent_trigger((unsigned int)evt.d1.ll);
+		}
+	}
+
+	return 0;
+}
+
+static void print_help()
+{
+	printf("Usage: dsb [options]\n");
+	printf("  -c <host>     Connect to host.\n");
+	printf("  -h            Print this help message.\n");
+	printf("  -v            Display dsb version information\n");
+	printf("  -i            Interactive mode.\n");
+	printf("  -l <module>   Load module.\n");
+}
+
+static void print_version()
+{
+	printf("dsb - Version: %d.%d.%d (%s, %s)\n",
+			VERSION_MAJOR,
+			VERSION_MINOR,
+			VERSION_PATCH,
+			TARGET_NAME,
+			TARGET_PROCESSOR);
+}
+
+/*
+ * Loop over all command line arguments. See print_usage.
+ */
+static int process_args(int argc, char *argv[])
+{
+	int i;
+
+	for (i=0; i<argc; i++)
+	{
+		if (argv[i][0] == '-')
+		{
+			switch (argv[i][1])
+			{
+			case 'h':
+				print_help();
+				return 1;
+
+			case 'v':
+				print_version();
+				return 1;
+
+			case 'c':
+				hostsock = dsb_net_connect(argv[++i]);
+				break;
+
+			case 'i':
+				interactive = true;
+				break;
+
+			case 'l':
+			{
+				char modfile[300];
+				if (dsb_module_probe(argv[++i],modfile))
+				{
+					dsb_module_load(modfile,&Root);
+				}
+				else
+				{
+					DSB_ERROR(ERR_NOMOD,argv[i]);
+				}
+			}; break;
+
+			default:
+				printf("Invalid Option\n");
+				print_help();
+				break;
+			}
 		}
 	}
 
@@ -142,7 +238,7 @@ int main(int argc, char *argv[])
 
 	while (running)
 	{
-		dsb_net_poll(1000);
+		dsb_net_poll(100);
 		//TODO: Provide optional command interface.
 	}
 

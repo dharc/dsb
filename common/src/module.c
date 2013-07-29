@@ -100,8 +100,8 @@ int dsb_module_init()
 
 			//Safety check
 			if (ix >= (MAX_SEARCH_PATHS-4)) break;
-	}
-	while (tmp != 0);
+		}
+		while (tmp != 0);
 	}
 
 	searchpaths[ix++] = SHAREDIR;
@@ -155,7 +155,7 @@ bool dsb_module_probe(const char *name, char *lib)
 	while (searchpaths[i])
 	{
 		//Generate filename and check if it can be read.
-		sprintf("%s/lib%s.so",searchpaths[i],name);
+		sprintf(filename,"%s/lib%s.so",searchpaths[i],name);
 		if (access(filename,R_OK) == 0)
 		{
 			//Save full path to "lib".
