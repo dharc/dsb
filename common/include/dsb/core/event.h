@@ -48,7 +48,7 @@ extern "C"
 {
 #endif
 
-enum EventType
+typedef enum
 {
 	EVENT_DEFINE=0x000,	//!< Define a HARC
 	EVENT_SET,			//!< Set a HARC head to a constant.
@@ -62,7 +62,7 @@ enum EventType
 
 	EVENT_DEP=0x200,	//!< Add a dependency to a HARC
 	EVENT_INVALID		//!< EVENT_INVALID
-};
+} EVENTTYPE_t;
 
 enum
 {
@@ -72,20 +72,23 @@ enum
 	EVENT_NOTIFIES
 };
 
-#define EVTFLAG_NONE		0
-#define EVTFLAG_FREE		1	///< Delete event when complete
-#define EVTFLAG_DONE		2	///< Event has been processed
-#define EVTFLAG_SENT		4	///< The event has been sent.
-#define EVTFLAG_MULT		8	///< An event with a destination region.
-#define EVTFLAG_VIRT		16  ///< Virtual, do not use memory.
-#define EVTFLAG_ERRO		32	///< There was an error in processing the event.
+typedef enum
+{
+	EFLAG_NONE = 0,
+	EFLAG_FREE = 1,		///< Delete event when complete
+	EFLAG_DONE = 2,		///< Event has been processed
+	EFLAG_SENT = 4,		///< The event has been sent.
+	EFLAG_MULT = 8,		///< An event with a destination region.
+	EFLAG_VIRT = 16,	///< Virtual, do not use memory.
+	EFLAG_ERRO = 32		///< There was an error in processing the event.
+} EVENTFLAG_t;
 
 /**
  * DSB Event structure.
  */
 struct Event
 {
-	enum EventType type;
+	EVENTTYPE_t type;
 	NID_t d1;			///< Destination
 	NID_t d2;			///< Destination
 
@@ -116,7 +119,7 @@ struct Event
 	};
 
 	//Not sent over network
-	unsigned int flags;	///< Event flags.
+	EVENTFLAG_t flags;	///< Event flags.
 };
 
 /**
@@ -127,7 +130,7 @@ struct Event
  * @param[out] evt
  * @return evt
  */
-struct Event *dsb_event(enum EventType type, const struct NID *d1, const struct NID *d2, struct Event *evt);
+Event_t *dsb_event(EVENTTYPE_t type, const NID_t *d1, const NID_t *d2, Event_t *evt);
 
 /**
  * Initialise the event subsystem. Must be called before any events are
@@ -165,20 +168,20 @@ int dsb_event_unpack(const char *buf, Event_t *e);
  * Allocate an event from the event pool.
  * @return Event pointer or NULL if no spare events.
  */
-struct Event *dsb_event_allocate();
+Event_t *dsb_event_allocate();
 
 /**
  * Add the event back to the pool of available events.
  * @param evt The event previously allocated.
  */
-void dsb_event_free(struct Event *evt);
+void dsb_event_free(Event_t *evt);
 
 /**
  * Number of parameters expected for this event.
  * @param evt
  * @return Number of expected parameters.
  */
-int dsb_event_params(const struct Event *evt);
+int dsb_event_params(const Event_t *evt);
 
 int dsb_event_pretty(const Event_t *evt, char *buf, int len);
 

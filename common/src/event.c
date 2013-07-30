@@ -149,7 +149,7 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 	return (int)(buf-oldbuf);
 }
 
-struct Event *dsb_event(enum EventType type, const struct NID *d1, const struct NID *d2, struct Event *evt)
+Event_t *dsb_event(EVENTTYPE_t type, const NID_t *d1, const NID_t *d2, Event_t *evt)
 {
 	evt->type = type;
 	evt->flags = 0;
@@ -159,7 +159,7 @@ struct Event *dsb_event(enum EventType type, const struct NID *d1, const struct 
 }
 
 
-struct Event *dsb_event_allocate()
+Event_t *dsb_event_allocate()
 {
 	struct Event *res;
 

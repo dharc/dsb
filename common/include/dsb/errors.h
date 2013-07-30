@@ -67,6 +67,7 @@ enum
 	ERR_EVALID,			///< Invalid evaluator ID.
 	ERR_NOEVAL,			///< No evaluator for given ID.
 	ERR_EVALEXISTS,		///< Evaluator already registered to ID.
+
 	ERR_NETBIND,
 	ERR_NETCONNECT,		///< Could not connect to address.
 	ERR_NET,
@@ -97,6 +98,9 @@ enum
 	ERR_VMXFUNCNONE,
 	ERR_VMNOCODE,
 	ERR_NOEXECMEM,
+
+	ERR_AGENTID,
+	ERR_AGENTINIT,
 
 	ERR_PERFILESAVE,
 	ERR_PERFILELOAD,

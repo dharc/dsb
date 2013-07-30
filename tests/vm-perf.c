@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	double secs;
 	int i;
 	int (*output)(void *);
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.code = code;
 	ctx.codesize = 100;
 	ctx.result = &harc.h;

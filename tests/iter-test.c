@@ -48,7 +48,7 @@ int dsb_send(struct Event *evt)
 			if (evt->d2.ll == SPECIAL_KEYS)
 			{
 				dsb_iton(44,evt->res);
-				evt->flags |= EVTFLAG_DONE;
+				evt->flags |= EFLAG_DONE;
 			}
 		}
 		//The dictionary itself.
@@ -59,7 +59,7 @@ int dsb_send(struct Event *evt)
 				if (evt->d2.ll == SPECIAL_SIZE)
 				{
 					dsb_iton(3,evt->res);
-					evt->flags |= EVTFLAG_DONE;
+					evt->flags |= EFLAG_DONE;
 				}
 			}
 			else
@@ -71,7 +71,7 @@ int dsb_send(struct Event *evt)
 				case 2:		dsb_iton(77,evt->res); break;
 				default:	dsb_nid_null(evt->res); break;
 				}
-				evt->flags |= EVTFLAG_DONE;
+				evt->flags |= EFLAG_DONE;
 			}
 		}
 	}

@@ -56,7 +56,7 @@ int dsb_send(struct Event *evt)
 	if (evt->type == EVENT_GET)
 	{
 		dsb_iton(666,evt->res);
-		evt->flags |= EVTFLAG_DONE;
+		evt->flags |= EFLAG_DONE;
 	}
 	else if (evt->type == EVENT_DEFINE)
 	{
@@ -71,7 +71,7 @@ void test_vm_copy()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -104,7 +104,7 @@ void test_vm_get()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -128,7 +128,7 @@ void test_vm_def()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -154,7 +154,7 @@ void test_vm_jeq()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -224,7 +224,7 @@ void test_vm_jne()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -294,7 +294,7 @@ void test_vm_jle()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -364,7 +364,7 @@ void test_vm_jge()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -434,7 +434,7 @@ void test_vm_add()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -456,7 +456,7 @@ void test_vm_sub()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -478,7 +478,7 @@ void test_vm_div()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -500,7 +500,7 @@ void test_vm_mul()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -522,7 +522,7 @@ void test_vm_and()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -544,7 +544,7 @@ void test_vm_or()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -566,7 +566,7 @@ void test_vm_xor()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -588,7 +588,7 @@ void test_vm_shl()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -610,7 +610,7 @@ void test_vm_shr()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -632,7 +632,7 @@ void test_vm_inc()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -654,7 +654,7 @@ void test_vm_dec()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -676,7 +676,7 @@ void test_vm_clr()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;
@@ -711,7 +711,7 @@ void test_vm_callx()
 {
 	struct HARC harc;
 	NID_t code[100];
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	ctx.ip = 0;
 	ctx.timeout = 1000;
 	ctx.code = code;

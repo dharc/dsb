@@ -160,17 +160,26 @@ extern "C"
  * particular execution block.
  * @see dsb_vm_interpret_ctx
  */
-struct VMContext
+typedef struct
 {
 	NID_t *code;		///< NID array containing the code
-	int codesize;			///< Size of the code array.
-	int ip;					///< Instruction pointer.
-	int timeout;			///< Max instructions to execute before halt.
-	NID_t *result;			///< Any return value from script.
-	NID_t vars[16];			///< Registers.
-};
+	int codesize;		///< Size of the code array.
+	int ip;				///< Instruction pointer.
+	int timeout;		///< Max instructions to execute before halt.
+	NID_t *result;		///< Any return value from script.
+	NID_t vars[16];		///< Registers.
+} VMCONTEXT_t;
 
-int dsb_vm_context(struct VMContext *ctx, const NID_t *func);
+/**
+ * Standard form of DSB callable C functions.
+ * @param Res Return NID value of the function.
+ * @param pcount Number of parameters passed.
+ * @param params Array of passed parameters.
+ * @return SUCCESS or error code.
+ */
+typedef int (*XFUNC_t)(NID_t *Res, int pcount, const NID_t *params);
+
+int dsb_vm_context(VMCONTEXT_t *ctx, const NID_t *func);
 
 /**
  * Call a VM function stored at a particular node. Loads the node as an array
@@ -183,9 +192,7 @@ int dsb_vm_context(struct VMContext *ctx, const NID_t *func);
  */
 int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...);
 
-int dsb_vm_interpret(struct VMContext *ctx);
-
-typedef int (*XFUNC_t)(NID_t *Res, int pcount, const NID_t *params);
+int dsb_vm_interpret(VMCONTEXT_t *ctx);
 
 /**
  * Register an external (C) function that can be called by the VM using

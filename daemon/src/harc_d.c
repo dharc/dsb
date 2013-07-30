@@ -80,7 +80,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						}
 
 						*(event->res) = harc->h;
-						event->flags |= EVTFLAG_DONE;
+						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 	case EVENT_GETDEF:
@@ -93,7 +93,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 							dsb_nid_null(event->res);
 						}
 						//event->eval = harc->e;
-						event->flags |= EVTFLAG_DONE;
+						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 	case EVENT_DEFINE:	harc->def = event->def;
@@ -120,7 +120,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 							free(dep);
 							dep = temp;
 						}
-						event->flags |= EVTFLAG_DONE;
+						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 	case EVENT_SET:		harc->h = event->def;
@@ -138,7 +138,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 							free(dep);
 							dep = temp;
 						}
-						event->flags |= EVTFLAG_DONE;
+						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 	case EVENT_DEP:		//Add to list of dependents.
@@ -147,7 +147,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						dep->a = event->dep1;
 						dep->b = event->dep2;
 						harc->deps = dep;
-						event->flags |= EVTFLAG_DONE;
+						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 	case EVENT_NOTIFY:
@@ -163,7 +163,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 							free(dep);
 							dep = temp;
 						}
-						event->flags |= EVTFLAG_DONE;
+						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 

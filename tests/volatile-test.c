@@ -70,7 +70,7 @@ void test_vol_getset()
 	CHECK(dsb_route(&evt) == 0);
 
 	//Check result of GET.
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(res.t == NID_TYPE_INTEGER);
 	CHECK(res.ll == 55);
 
@@ -88,17 +88,17 @@ void test_vol_allocate()
 
 	//Send ALLOCATE event.
 	CHECK(dsb_route(&evt) == 0);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(res.n == 1);
 
 	//Send ALLOCATE event.
 	CHECK(dsb_route(&evt) == 0);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(res.n == 2);
 
 	//Send ALLOCATE event.
 	CHECK(dsb_route(&evt) == 0);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(res.n == 3);
 
 	DONE;
@@ -120,7 +120,7 @@ void test_vol_region()
 	dsb_nid(NID_TYPE_INTEGER,66,&(evt.def));
 	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&(evt.d1b));
 	dsb_nid(NID_TYPE_INTEGER,50,&(evt.d2b));
-	evt.flags |= EVTFLAG_MULT;
+	evt.flags |= EFLAG_MULT;
 
 	//Send DEFINE event.
 	CHECK(dsb_route(&evt) == 0);
@@ -133,7 +133,7 @@ void test_vol_region()
 	CHECK(dsb_route(&evt) == 0);
 
 	//Check result of GET.
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(res.t == NID_TYPE_INTEGER);
 	CHECK(res.ll == 66);
 
@@ -146,7 +146,7 @@ void test_vol_region()
 	CHECK(dsb_route(&evt) == 0);
 
 	//Check result of GET.
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(res.t == NID_TYPE_INTEGER);
 	CHECK(res.ll == 66);
 	DONE;

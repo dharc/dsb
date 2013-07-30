@@ -95,17 +95,17 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 	count = 0;
 	if ((async == 0) && ((e->type >> 8) == 0x1))
 	{
-		while (((e->flags & EVTFLAG_DONE) == 0) && count < 100)
+		while (((e->flags & EFLAG_DONE) == 0) && count < 100)
 		{
 			dsb_net_poll(10);
 			count++;
 		}
 
-		if ((e->flags & EVTFLAG_DONE) == 0)
+		if ((e->flags & EFLAG_DONE) == 0)
 		{
 			readlist[e->resid] = 0;
 			*(e->res) = Null;
-			e->flags |= EVTFLAG_DONE;
+			e->flags |= EFLAG_DONE;
 			return DSB_ERROR(ERR_NETTIMEOUT,0);
 		}
 	}
@@ -128,7 +128,7 @@ int dsb_net_cb_event(void *sock, void *data)
 		NID_t res;
 		evt->res = &res;
 		ret = dsb_send(evt,0);
-		if ((evt->flags & EVTFLAG_ERRO) == 0)
+		if ((evt->flags & EFLAG_ERRO) == 0)
 		{
 			if (ret == SUCCESS)
 			{
@@ -150,7 +150,7 @@ int dsb_net_cb_event(void *sock, void *data)
 	}
 	else
 	{
-		evt->flags |= EVTFLAG_FREE;
+		evt->flags |= EFLAG_FREE;
 		dsb_send(evt,1);
 		return count;
 	}
@@ -285,9 +285,9 @@ int dsb_net_cb_result(void *sock, void *data)
 
 	//Actually update value and mark event as complete.
 	*(evt->res) = res;
-	evt->flags |= EVTFLAG_DONE;
+	evt->flags |= EFLAG_DONE;
 
-	if (evt->flags & EVTFLAG_FREE)
+	if (evt->flags & EFLAG_FREE)
 	{
 		dsb_event_free(evt);
 	}

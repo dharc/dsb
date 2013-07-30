@@ -49,7 +49,7 @@ int dsb_send(struct Event *evt)
 		dsb_nid_local(NID_VOLATILE,evt->res);
 		evt->res->n = nidalloc++;
 	}
-	evt->flags |= EVTFLAG_DONE;
+	evt->flags |= EFLAG_DONE;
 	return 0;
 }
 

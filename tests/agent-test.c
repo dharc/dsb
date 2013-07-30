@@ -82,8 +82,6 @@ void test_agent_start()
 	DONE;
 }
 
-static int startxvar;
-
 void myagent1(const NID_t *me, void *data)
 {
 	NID_t tmpint;
@@ -93,20 +91,6 @@ void myagent1(const NID_t *me, void *data)
 	dsb_iton(1,&tmpint);
 
 	dsb_dependency(&Root,&tmpint,me,me);
-}
-
-void test_agent_startx()
-{
-	CHECK(dsb_agent_startx(myagent1,&startxvar) != -1);
-	CHECK(startxvar == 55);
-
-	startxvar = 77;
-
-	dsb_setnii(&Root,1,56);
-
-	CHECK(startxvar == 55);
-
-	DONE;
 }
 
 extern Module_t *dsb_volatile_module();
@@ -122,7 +106,6 @@ int main(int argc, char *argv[])
 	dsb_module_load("volatile",0);
 
 	dsb_test(test_agent_start);
-	dsb_test(test_agent_startx);
 
 	dsb_route_final();
 	dsb_common_final();

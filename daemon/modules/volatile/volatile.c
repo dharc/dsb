@@ -310,11 +310,11 @@ int vol_handler(Event_t *evt)
 		dsb_nid_local(NID_VOLATILE,evt->res);
 		//TODO Put a mutex on this
 		evt->res->n = lastallocated++;
-		evt->flags |= EVTFLAG_DONE;
+		evt->flags |= EFLAG_DONE;
 		return SUCCESS;
 	}
 
-	if ((evt->flags & EVTFLAG_MULT) == 0)
+	if ((evt->flags & EFLAG_MULT) == 0)
 	{
 		HARC_t *harc = vol_getharc(&(evt->d1),&(evt->d2),evt->type != EVENT_GET);
 		return dsb_harc_event(harc,evt);

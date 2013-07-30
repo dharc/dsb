@@ -80,7 +80,7 @@ void test_harc_get()
 	dsb_iton(55,&(harc.h));
 
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(harc.h.ll == 55);
 
 	DONE;
@@ -109,7 +109,7 @@ void test_harc_define()
 	harc.deps->next = 0;
 
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK((harc.flags & HARC_OUTOFDATE) == 0);
 	CHECK(harc.h.ll == 66);
 	CHECK(lastevt.type == EVENT_NOTIFY);
@@ -141,7 +141,7 @@ void test_harc_notify()
 	harc.deps->next = 0;
 
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK((harc.flags & HARC_OUTOFDATE) != 0);
 	CHECK(lastevt.type == EVENT_NOTIFY);
 	CHECK(lastevt.d1.ll == 10);
@@ -169,7 +169,7 @@ void test_harc_dep()
 	harc.flags = 0;
 
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(harc.deps != 0);
 	if (harc.deps != 0)
 	{
@@ -196,7 +196,7 @@ void test_harc_set()
 	harc.flags = 0;
 
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
-	CHECK((evt.flags & EVTFLAG_DONE) != 0);
+	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(harc.flags == 0);
 	CHECK(harc.h.ll == 55);
 	CHECK(harc.def.ll == 0);

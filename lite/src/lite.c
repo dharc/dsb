@@ -69,7 +69,7 @@ int dsb_send(Event_t * evt, bool async)
 	dsb_event_pack(evt,buf,100);
 	res = dsb_net_send_event(hostsock, evt, async);
 
-	if (((evt->type >> 8) != 0x1) && ((evt->flags & EVTFLAG_FREE) != 0))
+	if (((evt->type >> 8) != 0x1) && ((evt->flags & EFLAG_FREE) != 0))
 	{
 		dsb_event_free(evt);
 	}

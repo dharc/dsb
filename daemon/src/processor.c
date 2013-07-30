@@ -162,7 +162,7 @@ static int dsb_proc_single()
 		if (ret != SUCCESS)
 		{
 			e->err = ret;
-			e->flags |= EVTFLAG_ERRO;
+			e->flags |= EFLAG_ERRO;
 		}
 
 		//If we have a debugger connected.
@@ -180,9 +180,9 @@ static int dsb_proc_single()
 		#endif
 
 		//Mark as DONE
-		e->flags |= EVTFLAG_DONE;
+		e->flags |= EFLAG_DONE;
 
-		if (e->flags & EVTFLAG_FREE)
+		if (e->flags & EFLAG_FREE)
 		{
 			dsb_event_free(e);
 		}
@@ -197,11 +197,11 @@ static int dsb_proc_single()
  */
 static int dsb_proc_wait(const Event_t *evt)
 {
-	if (!(evt->flags & EVTFLAG_SENT))
+	if (!(evt->flags & EFLAG_SENT))
 	{
 		return ERR_NOTSENT;
 	}
-	while (!(evt->flags & EVTFLAG_DONE))
+	while (!(evt->flags & EFLAG_DONE))
 	{
 		//Process other events etc.
 		dsb_proc_single();
@@ -214,7 +214,7 @@ int dsb_proc_send(Event_t *evt, bool async)
 {
 	int ret;
 
-	evt->flags |= EVTFLAG_SENT;
+	evt->flags |= EFLAG_SENT;
 	ret = queue_insert(evt);
 
 	//Need to block until done.

@@ -49,7 +49,7 @@ either expressed or implied, of the FreeBSD Project.
 
 #define MAX_XFUNCS	1000
 
-static XFUNC_t xfuncs[MAX_XFUNCS];
+static XFUNC_t xfuncs[MAX_XFUNCS];	/// C functions callable from DSB
 
 int dsb_vm_xfunc(unsigned int id, const char *name, XFUNC_t func)
 {
@@ -67,7 +67,7 @@ int dsb_vm_xfunc(unsigned int id, const char *name, XFUNC_t func)
 	return SUCCESS;
 }
 
-int dsb_vm_context(struct VMContext *ctx, const NID_t *func)
+int dsb_vm_context(VMCONTEXT_t *ctx, const NID_t *func)
 {
 	ctx->timeout = 10000;
 	ctx->ip = 0;
@@ -88,7 +88,7 @@ int dsb_vm_context(struct VMContext *ctx, const NID_t *func)
 int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...)
 {
 	va_list args;
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	int i;
 
 	va_start(args,pn);
@@ -111,23 +111,26 @@ int dsb_vm_call(NID_t *res, const NID_t *func, int pn, ...)
 	return SUCCESS;
 }
 
-int dsb_vm_interpret(struct VMContext *ctx)
+int dsb_vm_interpret(VMCONTEXT_t *ctx)
 {
 	unsigned long long op;
 	unsigned int varno;
 	unsigned int varno2;
 	unsigned int varno3;
+	unsigned int varno4;
 	NID_t *n1;
 	NID_t *n2;
 	NID_t *n3;
 	NID_t *n4;
-	unsigned int varno4;
 
-	//Main VM loop.
+	//Main VM interpretation loop.
 	while ((ctx->ip < ctx->codesize) && (ctx->timeout-- > 0))
 	{
 		//Not a valid instruction.
-		if (ctx->code[ctx->ip].t != NID_TYPE_VMOP)	return DSB_ERROR(ERR_VMINVALIP,0);
+		if (ctx->code[ctx->ip].t != NID_TYPE_VMOP)
+		{
+			return DSB_ERROR(ERR_VMINVALIP,0);
+		}
 		op = ctx->code[ctx->ip].ll;
 
 		//Switch on operation type.
@@ -377,7 +380,7 @@ int dsb_vm_interpret(struct VMContext *ctx)
 							{
 								int i;
 								int parno;
-								struct VMContext nctx;
+								VMCONTEXT_t nctx;
 								dsb_vm_context(&nctx, n1);
 								nctx.result = &ctx->vars[varno-1];
 

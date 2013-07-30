@@ -79,6 +79,7 @@ int dsb_module_register(const char *name, const Module_t *);
  * Search for and then load a named module. It will search first for internal
  * registered modules and then the file system for the module library (.so)
  * file.
+ * @see dsb_module_probe
  * @param name Name of the module to load.
  * @param base An option base node to module configuration.
  * @return SUCCESS, ERR_NOMOD, ERR_INVALIDMOD.
@@ -88,7 +89,7 @@ int dsb_module_load(const char *name, const NID_t *base);
 int dsb_module_unload(const char *name);
 
 /**
- * Find the .so library based upon module name.
+ * Find the .so or .dll library based upon module name.
  * @param name Module name
  * @param lib Filled with lib name if found.
  * @return true if found, false if not.

@@ -35,27 +35,60 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/core/agent.h"
 #include "dsb/core/vm.h"
 #include "dsb/core/nid.h"
+#include "dsb/errors.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <malloc.h>
 
-#define MAX_AGENTS	1000
+//-----------------------------------------------------------------------------
+
+#define MAX_AGENTS			1000
+#define MAX_AGENT_PARAMS	8
+
+//-----------------------------------------------------------------------------
 
 struct AgentEntry
 {
 	int active;
-	struct VMContext ctx;
+	VMCONTEXT_t ctx;
 	NID_t script;
-	void (*cfunc)(const NID_t *, void *);
-	void *data;
 };
 
-static struct AgentEntry agents[MAX_AGENTS];
+static struct AgentEntry *agents;
+
+//-----------------------------------------------------------------------------
+
+int dsb_agent_init()
+{
+	if (agents != 0)
+	{
+		return DSB_ERROR(ERR_AGENTINIT,0);
+	}
+	agents = malloc(sizeof(struct AgentEntry) * MAX_AGENTS);
+	return 0;
+}
+
+int dsb_agent_final()
+{
+	if (agents)
+	{
+		free(agents);
+		agents = 0;
+	}
+	return 0;
+}
 
 int dsb_agent_start(const NID_t *agent, int pn, ...)
 {
-	int handle = 0;
-	for (handle=0; handle < MAX_AGENTS; handle++)
+	int handle;
+
+	if (agents == 0 || pn > MAX_AGENT_PARAMS)
+	{
+		return -1;
+	}
+
+	//Find a free agent
+	for (handle=0; handle < MAX_AGENTS; ++handle)
 	{
 		if (agents[handle].active == 0)
 		{
@@ -64,7 +97,6 @@ int dsb_agent_start(const NID_t *agent, int pn, ...)
 
 			agents[handle].active = 1;
 			agents[handle].script = *agent;
-			agents[handle].cfunc = 0;
 
 			va_start(args,pn);
 
@@ -73,7 +105,7 @@ int dsb_agent_start(const NID_t *agent, int pn, ...)
 			agents[handle].ctx.result = 0;
 
 			//Populate parameters.
-			for (i=0; i<pn; i++)
+			for (i=0; i<pn; ++i)
 			{
 				agents[handle].ctx.vars[i] = *va_arg(args,NID_t*);
 			}
@@ -90,69 +122,40 @@ int dsb_agent_start(const NID_t *agent, int pn, ...)
 	return -1;
 }
 
-int dsb_agent_startx(void (*func)(const NID_t *, void*),void *data)
-{
-	int handle = 0;
-	for (handle=0; handle < MAX_AGENTS; handle++)
-	{
-		if (agents[handle].active == 0)
-		{
-			NID_t me;
-			agents[handle].cfunc = func;
-			agents[handle].data = data;
-			agents[handle].active = 1;
-
-			dsb_nid_local(NID_AGENT, &me);
-			me.n = handle;
-
-			//Initial call.
-			agents[handle].cfunc(&me, data);
-
-			return handle;
-		}
-	}
-
-	return -1;
-}
-
 int dsb_agent_stop(int handle)
 {
 	if (handle < 0 || handle >= MAX_AGENTS)
 	{
-		return 0;
+		return DSB_ERROR(ERR_AGENTID,0);
 	}
-
-	if (agents[handle].active == 0)
+	if (agents == 0)
 	{
-		return 0;
+		return DSB_ERROR(ERR_AGENTINIT,0);
 	}
 
 	agents[handle].active = 0;
-	agents[handle].cfunc = 0;
-	agents[handle].data = 0;
 	return 0;
 }
 
 int dsb_agent_trigger(unsigned int id)
 {
+	if (id >= MAX_AGENTS)
+	{
+		return DSB_ERROR(ERR_AGENTID,0);
+	}
+	if (agents == 0)
+	{
+		return DSB_ERROR(ERR_AGENTINIT,0);
+	}
+
 	if (agents[id].active == 1)
 	{
-		if (agents[id].cfunc == 0)
-		{
-			//Reset script to start.
-			agents[id].ctx.timeout = 10000;
-			agents[id].ctx.ip = 0;
+		//Reset script to start.
+		agents[id].ctx.timeout = 10000;
+		agents[id].ctx.ip = 0;
 
-			//Run the interpreter.
-			dsb_vm_interpret(&agents[id].ctx);
-		}
-		else
-		{
-			NID_t me;
-			dsb_nid_local(NID_AGENT, &me);
-			me.n = id;
-			agents[id].cfunc(&me,agents[id].data);
-		}
+		//Run the interpreter.
+		dsb_vm_interpret(&agents[id].ctx);
 	}
 	return 0;
 }
