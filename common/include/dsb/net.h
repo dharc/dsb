@@ -91,7 +91,21 @@ int dsb_net_disconnect(void *sock);
  * @return SUCCESS.
  */
 int dsb_net_send(void *sock, int msgtype, void *msg, int size);
+
+/**
+ * Poll for network messages. Needs to be called in a loop.
+ * @param ms Time to wait for messages, can be 0.
+ * @return SUCCESS.
+ */
 int dsb_net_poll(unsigned int ms);
+
+/**
+ * Register a callback for a particular message type. The callback is called
+ * when a message of that type is received (by dsb_net_poll).
+ * @param msgtype Type of message
+ * @param cb Pointer to callback function.
+ * @return SUCCESS
+ */
 int dsb_net_callback(int msgtype, int (*cb)(void*,void *));
 
 /** @} */

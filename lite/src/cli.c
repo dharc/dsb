@@ -50,7 +50,8 @@ struct CommandHandler
 };
 
 /*
- * Connect to dsbd server
+ * Connect to dsbd server:
+ *     connect <hostname>[:port]
  */
 static void lite_cmd_connect(char **word, int c)
 {
@@ -62,6 +63,10 @@ static void lite_cmd_connect(char **word, int c)
 	hostsock = dsb_net_connect(word[1]);
 }
 
+/*
+ * Stop the client:
+ *     exit
+ */
 static void lite_cmd_exit(char **word, int c)
 {
 	sigint(0);
@@ -69,6 +74,7 @@ static void lite_cmd_exit(char **word, int c)
 
 /*
  * Send a SET event.
+ *     set <nid> <nid> <nid>
  */
 static void lite_cmd_set(char **word, int c)
 {
@@ -83,6 +89,7 @@ static void lite_cmd_set(char **word, int c)
 
 /*
  * Send a GET event.
+ *     get <nid> <nid>
  */
 static void lite_cmd_get(char **word, int c)
 {
@@ -101,6 +108,27 @@ static void lite_cmd_get(char **word, int c)
 }
 
 /*
+ * Print help messages for commands.
+ *     help [command]
+ */
+static void lite_cmd_help(char **word, int c)
+{
+	if (c == 1)
+	{
+		printf("DSB Lite CLI commands:\n");
+		printf("    connect <host>[:port]        Connect to a dsbd server\n");
+		printf("    exit                         Close this lite client\n");
+		printf("    set <t1> <t2> <h>            Modify the head node of a hyperarc\n");
+		printf("    get <t1> <t2>                Get head node of a hyperarc\n");
+		printf("    module <subcmd> [...]        See \"help module\"\n");
+	}
+	else
+	{
+
+	}
+}
+
+/*
  * Mapping of string command names to functions.
  */
 static struct CommandHandler commands[] = {
@@ -108,6 +136,7 @@ static struct CommandHandler commands[] = {
 		{"exit", lite_cmd_exit},
 		{"set", lite_cmd_set},
 		{"get", lite_cmd_get},
+		{"help", lite_cmd_help},
 		{0,0}
 };
 
@@ -177,7 +206,7 @@ static void *lite_cli(void *arg)
 		//Print prompt and get line.
 		printf("> ");
 		fflush(stdout);
-		fgets(inbuf,200,stdin);
+		if (fgets(inbuf,200,stdin) == 0) break;
 
 		//Split into array of words.
 		count = split_words(inbuf,words);
