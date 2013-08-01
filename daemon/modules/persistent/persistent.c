@@ -51,7 +51,7 @@ Module_t permod;
  */
 struct PerHARCEntry
 {
-	struct HARC harc;			//The core HARC data.
+	HARC_t harc;				//The core HARC data.
 	void *data;					//Used by the definition evaluator.
 	int flags;					//Meta details for volatile storage.
 	struct PerHARCEntry *next;	//Next entry in hash table.

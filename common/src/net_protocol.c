@@ -36,6 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net_protocol.h"
 #include "dsb/errors.h"
 #include "dsb/globals.h"
+#include "dsb/pack.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -59,6 +60,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 {
 	int ix = 0;
 	int count = 0;
+	int resid;
 	char *buffer = dsb_net_buffer(200);
 	//msg.evt = *evt;
 
@@ -70,7 +72,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 			if (readlist[ix] == 0)
 			{
 				readlist[ix] = e;
-				e->resid = ix;
+				resid = ix;
 				break;
 			}
 		}
@@ -81,18 +83,19 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 		{
 			async = 0;
 			readlist[MAX_READLIST-1] = e;
-			e->resid = MAX_READLIST-1;
+			resid = MAX_READLIST-1;
 		}
 	}
 
 	//Pack the event to a buffer.
+	PACK_INT(buffer,&resid);
 	count = dsb_event_pack(e, buffer, 100);
 
 	//Actually send the event
 	dsb_net_send(sock, DSBNET_SENDEVENT, buffer, count);
 
 	//Block if we need a response.
-	count = 0;
+	/*count = 0;
 	if ((async == 0) && ((e->type >> 8) == 0x1))
 	{
 		while (((e->flags & EFLAG_DONE) == 0) && count < 100)
@@ -103,57 +106,40 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 
 		if ((e->flags & EFLAG_DONE) == 0)
 		{
-			readlist[e->resid] = 0;
+			readlist[resid] = 0;
 			*(e->res) = Null;
 			e->flags |= EFLAG_DONE;
 			return DSB_ERROR(ERR_NETTIMEOUT,0);
 		}
-	}
+	}*/
 	return SUCCESS;
+}
+
+static void net_evt_cb(const Event_t * evt, const NID_t *res)
+{
+	dsb_net_send_result(evt->data, (int)evt->dep1.ll, res);
 }
 
 int dsb_net_cb_event(void *sock, void *data)
 {
-	int ret;
 	Event_t *evt;
-	int count;
+	int resid;
 
 	evt = dsb_event_allocate();
-	count = dsb_event_unpack(data, evt);
-	evt->flags = 0;
+	UNPACK_INT(data,&resid);
+	dsb_event_unpack(data, evt);
+	evt->flags = EFLAG_FREE;
 
-	//If READ we need to wait and send result.
+	//If READ we need to send a result.
 	if ((evt->type >> 8) == 0x1)
 	{
-		NID_t res;
-		evt->res = &res;
-		ret = dsb_send(evt,0);
-		if ((evt->flags & EFLAG_ERRO) == 0)
-		{
-			if (ret == SUCCESS)
-			{
-				dsb_net_send_result(sock, evt->resid, &res);
-			}
-			//else
-			//{
-			//	dsb_net_send_error(sock,ret,"");
-			//}
-			dsb_event_free(evt);
-			return count;
-		}
-		else
-		{
-			//dsb_net_send_error(sock,evt->err,"");
-			dsb_event_free(evt);
-			return count;
-		}
+		evt->dep1.ll = resid;
+		evt->data = sock;
+		evt->cb = net_evt_cb;
 	}
-	else
-	{
-		evt->flags |= EFLAG_FREE;
-		dsb_send(evt,1);
-		return count;
-	}
+
+	dsb_send(evt,1);
+	return 0;
 }
 
 /*int dsb_net_send_login(void *sock, const char *user, const char *pass)
@@ -284,7 +270,10 @@ int dsb_net_cb_result(void *sock, void *data)
 	readlist[resid] = 0;
 
 	//Actually update value and mark event as complete.
-	*(evt->res) = res;
+	if (evt->cb)
+	{
+		evt->cb(evt,&res);
+	}
 	evt->flags |= EFLAG_DONE;
 
 	if (evt->flags & EFLAG_FREE)

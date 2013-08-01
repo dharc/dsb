@@ -1,7 +1,7 @@
 /*
- * types.h
+ * pack.h
  *
- *  Created on: 27 Jul 2013
+ *  Created on: 1 Aug 2013
  *      Author: nick
 
 Copyright (c) 2013, dharc ltd.
@@ -32,17 +32,24 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef DSB_TYPES_H_
-#define DSB_TYPES_H_
+#ifndef PACK_H_
+#define PACK_H_
 
 
-#include <stdbool.h>
-#undef bool
+// A = Buffer, B = Source, C = size
+#define PACK(A,B,C) memcpy(A,B,C); A += C;
+#define PACK_INT(A,B) PACK(A,B,sizeof(int))
+#define PACK_SHORT(A,B) PACK(A,B,sizeof(short))
+#define PACK_LL(A,B) PACK(A,B,sizeof(long long));
+#define PACK_CHAR(A,B) *A = *B; A++;
+#define PACK_NID(A,B) A += dsb_nid_pack(B,A,1000);
 
-typedef _Bool bool;
-typedef struct Event Event_t;
-typedef struct NID NID_t;
-typedef struct Dependency Dependency_t;
+// A = Buffer, B = Destination, C = size
+#define UNPACK(A,B,C) memcpy(B,A,C); A += C;
+#define UNPACK_INT(A,B) UNPACK(A,B,sizeof(int))
+#define UNPACK_SHORT(A,B) UNPACK(A,B,sizeof(short))
+#define UNPACK_LL(A,B) UNPACK(A,B,sizeof(long long))
+#define UNPACK_CHAR(A,B) *B = *A; A++;
+#define UNPACK_NID(A,B) A += dsb_nid_unpack(A,B);
 
-
-#endif /* DSB_TYPES_H_ */
+#endif /* PACK_H_ */

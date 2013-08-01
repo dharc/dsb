@@ -202,9 +202,9 @@ int dsb_nid_local(int head, NID_t *n);
  * @param len Max length of string.
  * @return SUCCESS.
  */
-int dsb_nid_toStr(const struct NID *nid, char *str, int len);
+int dsb_nid_toStr(const NID_t *nid, char *str, int len);
 
-int dsb_nid_toRawStr(const struct NID *nid, char *str, int len);
+int dsb_nid_toRawStr(const NID_t *nid, char *str, int len);
 
 int dsb_nid_pretty(const NID_t *nid, char *str, int len);
 
@@ -214,7 +214,7 @@ int dsb_nid_pretty(const NID_t *nid, char *str, int len);
  * @param nid NID structure to fill with result.
  * @return 0 on success.
  */
-int dsb_nid_fromStr(const char *str, struct NID *nid);
+int dsb_nid_fromStr(const char *str, NID_t *nid);
 
 /**
  * NodeID Constructor.
@@ -223,14 +223,14 @@ int dsb_nid_fromStr(const char *str, struct NID *nid);
  * @param[out] nid Structure to populate.
  * @return nid.
  */
-struct NID *dsb_nid(enum NIDType type, unsigned long long ll, struct NID *nid);
+struct NID *dsb_nid(enum NIDType type, unsigned long long ll, NID_t *nid);
 
 /**
  * Make a NID from an int.
  * @param[in] i The source integer.
  * @param[out] n The destination NID to populate.
  */
-void dsb_iton(int,struct NID*);
+void dsb_iton(int, NID_t*);
 
 /**
  * Extract an int from a NID. If the NID is not of an integer type then 0
@@ -238,7 +238,7 @@ void dsb_iton(int,struct NID*);
  * @param n Source NID.
  * @return Integer converted from the NID.
  */
-int dsb_ntoi(const struct NID*);
+int dsb_ntoi(const NID_t*);
 
 void dsb_cton(char chr, NID_t *n);
 char dsb_ntoc(const NID_t *n);

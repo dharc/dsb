@@ -69,7 +69,7 @@ int dsb_send(struct Event *evt)
 
 void test_vm_copy()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -102,7 +102,7 @@ void test_vm_copy()
 
 void test_vm_get()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -126,7 +126,7 @@ void test_vm_get()
 
 void test_vm_def()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -152,7 +152,7 @@ void test_vm_def()
 
 void test_vm_jeq()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -222,7 +222,7 @@ void test_vm_jeq()
 
 void test_vm_jne()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -292,7 +292,7 @@ void test_vm_jne()
 
 void test_vm_jle()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -362,7 +362,7 @@ void test_vm_jle()
 
 void test_vm_jge()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -432,7 +432,7 @@ void test_vm_jge()
 
 void test_vm_add()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -454,7 +454,7 @@ void test_vm_add()
 
 void test_vm_sub()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -476,7 +476,7 @@ void test_vm_sub()
 
 void test_vm_div()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -498,7 +498,7 @@ void test_vm_div()
 
 void test_vm_mul()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -520,7 +520,7 @@ void test_vm_mul()
 
 void test_vm_and()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -542,7 +542,7 @@ void test_vm_and()
 
 void test_vm_or()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -564,7 +564,7 @@ void test_vm_or()
 
 void test_vm_xor()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -586,7 +586,7 @@ void test_vm_xor()
 
 void test_vm_shl()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -608,7 +608,7 @@ void test_vm_shl()
 
 void test_vm_shr()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -630,7 +630,7 @@ void test_vm_shr()
 
 void test_vm_inc()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -652,7 +652,7 @@ void test_vm_inc()
 
 void test_vm_dec()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -674,7 +674,7 @@ void test_vm_dec()
 
 void test_vm_clr()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;
@@ -709,7 +709,7 @@ static int test_xfuncdummy(NID_t *res, int pcount, const NID_t *params)
 
 void test_vm_callx()
 {
-	struct HARC harc;
+	HARC_t harc;
 	NID_t code[100];
 	VMCONTEXT_t ctx;
 	ctx.ip = 0;

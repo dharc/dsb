@@ -83,6 +83,8 @@ typedef enum
 	EFLAG_ERRO = 32		///< There was an error in processing the event.
 } EVENTFLAG_t;
 
+typedef void (*EVENTCB_T)(const Event_t *, const NID_t *);
+
 /**
  * DSB Event structure.
  */
@@ -91,30 +93,14 @@ struct Event
 	EVENTTYPE_t type;
 	NID_t d1;			///< Destination
 	NID_t d2;			///< Destination
+	EVENTCB_T cb;		///< Completion callback
+	void *data;			///< Callback data.
 
 	union {
 	NID_t value;		///< Value parameter.
-
-	NID_t *res;			///< Returned event result.
-	int err;			///< Error number, if error flag set.
-
 	struct {
-	NID_t def;			///< Definition
-	union {
-	//int eval;			///< Evaluator to use.
-	int resid;			///< Result ID to match on network
-	};
-	};
-	};
-
-	union {
-	struct {
-	NID_t d1b;			///< Second destination in multi events.
-	NID_t d2b;			///< Second destination in multi events.
-	};
-	struct {
-	NID_t dep1;		///< Dependency
-	NID_t dep2;		///< Dependency
+	NID_t dep1;			///< Dependency
+	NID_t dep2;			///< Dependency
 	};
 	};
 

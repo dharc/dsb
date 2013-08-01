@@ -1,5 +1,6 @@
 #include "dsb/core/event.h"
 #include "dsb/errors.h"
+#include "dsb/pack.h"
 #include <malloc.h>
 #include <string.h>
 
@@ -51,11 +52,9 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 {
 	char *oldbuf = buf;
 	//Pack the type and destination NIDs.
-	//*((int*)buf) = e->type;
-	memcpy(buf,&e->type,sizeof(int));
-	buf += sizeof(int);
-	buf += dsb_nid_pack(&(e->d1),buf,max);
-	buf += dsb_nid_pack(&(e->d2),buf,max);
+	PACK_INT(buf,&e->type);
+	PACK_NID(buf,&e->d1);
+	PACK_NID(buf,&e->d2);
 
 	//Pack type specific details.
 	switch (e->type)
@@ -63,30 +62,22 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 	//---------------------------------------------------------------------
 	case EVENT_GET:
 	case EVENT_GETDEF:
-		*((int*)buf) = e->resid;
-		memcpy(buf,&e->resid,sizeof(int));
-		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_ALLOCATE:
-		//*((int*)buf) = e->resid;
-		memcpy(buf,&e->resid,sizeof(int));
-		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEFINE:
-		//*((int*)buf) = e->eval;
-		buf += dsb_nid_pack(&(e->def),buf,max);
+		PACK_NID(buf,&e->value);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_SET:
-		//*((int*)buf) = e->eval;
-		buf += dsb_nid_pack(&(e->def),buf,max);
+		PACK_NID(buf,&e->value);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEP:
-		buf += dsb_nid_pack(&(e->dep1),buf,max);
-		buf += dsb_nid_pack(&(e->dep2),buf,max);
+		PACK_NID(buf,&e->dep1);
+		PACK_NID(buf,&e->dep2);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_NOTIFY:
@@ -102,11 +93,9 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 {
 	const char *oldbuf = buf;
 	//Unpack the type and destination NIDs.
-	//e->type = *((int*)buf);
-	memcpy(&e->type,buf,sizeof(int));
-	buf += sizeof(int);
-	buf += dsb_nid_unpack(buf,&(e->d1));
-	buf += dsb_nid_unpack(buf,&(e->d2));
+	UNPACK_INT(buf,&e->type);
+	UNPACK_NID(buf,&e->d1);
+	UNPACK_NID(buf,&e->d2);
 
 	//Unpack type specific details.
 	switch (e->type)
@@ -114,30 +103,22 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 	//---------------------------------------------------------------------
 	case EVENT_GET:
 	case EVENT_GETDEF:
-		//e->resid = *((int*)buf);
-		memcpy(&e->resid,buf,sizeof(int));
-		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_ALLOCATE:
-		//e->resid = *((int*)buf);
-		memcpy(&e->resid,buf,sizeof(int));
-		buf += sizeof(int);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEFINE:
-		//e->eval = *((int*)buf);
-		buf += dsb_nid_unpack(buf,&(e->def));
+		UNPACK_NID(buf,&e->value);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_SET:
-		//e->eval = *((int*)buf);
-		buf += dsb_nid_unpack(buf,&(e->def));
+		UNPACK_NID(buf,&e->value);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEP:
-		buf += dsb_nid_unpack(buf,&(e->dep1));
-		buf += dsb_nid_unpack(buf,&(e->dep2));
+		UNPACK_NID(buf,&e->dep1);
+		UNPACK_NID(buf,&e->dep2);
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_NOTIFY:
@@ -151,10 +132,19 @@ int dsb_event_unpack(const char *buf, Event_t *e)
 
 Event_t *dsb_event(EVENTTYPE_t type, const NID_t *d1, const NID_t *d2, Event_t *evt)
 {
+	if (evt == 0)
+	{
+		evt = dsb_event_allocate();
+		evt->flags = EFLAG_FREE;
+	}
+	else
+	{
+		evt->flags = 0;
+	}
 	evt->type = type;
-	evt->flags = 0;
 	evt->d1 = *d1;
 	evt->d2 = *d2;
+	evt->cb = 0;
 	return evt;
 }
 
@@ -216,10 +206,10 @@ int dsb_event_pretty(const Event_t *evt, char *buf, int len)
 	case EVENT_GETDEF:			//dsb_nid_toStr(evt->res,dep1,100);
 							sprintf(buf,"GETDEF - %s,%s",d1,d2);
 							break;
-	case EVENT_DEFINE:		dsb_nid_toStr(&evt->def,def,100);
+	case EVENT_DEFINE:		dsb_nid_toStr(&evt->value,def,100);
 							sprintf(buf,"DEFINE - %s,%s = %s",d1,d2,def);
 							break;
-	case EVENT_SET:			dsb_nid_toStr(&evt->def,def,100);
+	case EVENT_SET:			dsb_nid_toStr(&evt->value,def,100);
 							sprintf(buf,"SET - %s,%s = %s",d1,d2,def);
 							break;
 	case EVENT_DEP:			dsb_nid_toStr(&evt->dep1,dep1,100);

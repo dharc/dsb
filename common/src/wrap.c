@@ -42,15 +42,21 @@ either expressed or implied, of the FreeBSD Project.
 //Needs to be implemented elsewhere.
 extern int dsb_send(struct Event *,int);
 
+static void get_evt_cb(const Event_t *evt, const NID_t *res)
+{
+	*(NID_t*)evt->data = *res;
+}
+
 int dsb_get(const struct NID *d1, const struct NID *d2, struct NID *r)
 {
-	struct Event evt;
+	Event_t evt;
 	int res;
 	evt.d1 = *d1;
 	evt.d2 = *d2;
 	evt.flags = 0;
 	evt.type = EVENT_GET;
-	evt.res = r;
+	evt.data = r;
+	evt.cb = get_evt_cb;
 	res = dsb_send(&evt,0);
 	return res;
 }
@@ -157,7 +163,8 @@ int dsb_getdef(
 	evt.d2 = *d2;
 	evt.flags = 0;
 	evt.type = EVENT_GETDEF;
-	evt.res = def;
+	evt.data = def;
+	evt.cb = get_evt_cb;
 	res = dsb_send(&evt,0);
 	return res;
 }
@@ -170,7 +177,8 @@ int dsb_getA(const struct NID *d1, const struct NID *d2, struct NID *r)
 	evt->d2 = *d2;
 	evt->flags = EFLAG_FREE;
 	evt->type = EVENT_GET;
-	evt->res = r;
+	evt->data = r;
+	evt->cb = get_evt_cb;
 	res = dsb_send(evt,1);
 	return res;
 }
@@ -183,7 +191,8 @@ int dsb_new(const NID_t *base, NID_t *n)
 	evt.d2 = *base;
 	evt.flags = 0;
 	evt.type = EVENT_ALLOCATE;
-	evt.res = n;
+	evt.data = n;
+	evt.cb = get_evt_cb;
 	res = dsb_send(&evt,0);
 	return res;
 }
@@ -238,7 +247,7 @@ int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 	struct Event *evt = dsb_event_allocate();
 	evt->d1 = *d1;
 	evt->d2 = *d2;
-	evt->def = *v;
+	evt->value = *v;
 	evt->flags = EFLAG_FREE;
 	evt->type = EVENT_SET;
 	return dsb_send(evt,0);
@@ -317,7 +326,7 @@ int dsb_define(
 	struct Event *evt = dsb_event_allocate();
 	evt->d1 = *d1;
 	evt->d2 = *d2;
-	evt->def = *def;
+	evt->value = *def;
 	evt->flags = EFLAG_FREE;
 	evt->type = EVENT_DEFINE;
 	return dsb_send(evt,0);

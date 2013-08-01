@@ -55,7 +55,7 @@ either expressed or implied, of the FreeBSD Project.
  * calculated. The evaluator selects how this definition is to be
  * interpreted and processed to generate the head node.
  */
-struct HARC
+typedef struct
 {
 	NID_t t1;		///< Tail 1. Should always be greater than or equal to tail 2.
 	NID_t t2;		///< Tail 2. Should always be less than or equal to tail 1.
@@ -65,7 +65,7 @@ struct HARC
 	//The following are volatile and do not need to be saved.
 	NID_t h;		///< Head. Cached value that results from evaluating the definition.
 	int flags;		///< Status flags (HARC_ definitions).
-};
+} HARC_t;
 
 HARC_t *dsb_harc(const NID_t *t1, const NID_t *t2, HARC_t *harc);
 

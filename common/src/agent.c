@@ -150,11 +150,14 @@ int dsb_agent_trigger(unsigned int id)
 
 	if (agents[id].active == 1)
 	{
-		//Reset script to start.
-		agents[id].ctx.timeout = 10000;
-		agents[id].ctx.ip = 0;
+		//If already running then don't trigger again.
+		if (agents[id].ctx.ip != 0)
+		{
+			return 0;
+		}
 
 		//Run the interpreter.
+		agents[id].ctx.timeout = 10000;
 		dsb_vm_interpret(&agents[id].ctx);
 	}
 	return 0;

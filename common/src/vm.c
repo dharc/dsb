@@ -39,6 +39,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/core/specials.h"
 #include "dsb/wrap.h"
 #include "dsb/patterns/array.h"
+#include "dsb/core/event.h"
 #include "dsb/globals.h"
 #include <malloc.h>
 #include <stdarg.h>
@@ -50,6 +51,8 @@ either expressed or implied, of the FreeBSD Project.
 #define MAX_XFUNCS	1000
 
 static XFUNC_t xfuncs[MAX_XFUNCS];	/// C functions callable from DSB
+
+extern int dsb_send(struct Event *,int);
 
 int dsb_vm_xfunc(unsigned int id, const char *name, XFUNC_t func)
 {
@@ -122,6 +125,7 @@ int dsb_vm_interpret(VMCONTEXT_t *ctx)
 	NID_t *n2;
 	NID_t *n3;
 	NID_t *n4;
+	//Event_t *evt;
 
 	//Main VM interpretation loop.
 	while ((ctx->ip < ctx->codesize) && (ctx->timeout-- > 0))
@@ -213,6 +217,11 @@ int dsb_vm_interpret(VMCONTEXT_t *ctx)
 							n1 = (varno2 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno2-1];
 							n2 = (varno3 == 0) ? &ctx->code[++ctx->ip] : &ctx->vars[varno3-1];
 							dsb_get(n1,n2,&ctx->vars[varno-1]);
+							//evt = dsb_event(EVENT_GET,n1,n2,0);
+							//evt->res = &ctx->vars[varno-1];
+							//evt->flags = EFLAG_FREE;
+							//dsb_send(evt,false); //TODO: Needs to be true.
+							//return 0;
 							break;
 
 		case VMOP_GETD:		varno = VMGET_A(op);
