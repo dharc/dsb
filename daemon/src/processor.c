@@ -146,7 +146,6 @@ extern unsigned int dbgflags;
 
 static int dsb_proc_single()
 {
-	int ret;
 	Event_t *e;
 
 	//Choose an event
@@ -158,12 +157,7 @@ static int dsb_proc_single()
 	else
 	{
 		//If an event was found then route it.
-		ret = dsb_route(e);
-		if (ret != SUCCESS)
-		{
-			e->err = ret;
-			e->flags |= EFLAG_ERRO;
-		}
+		dsb_route(e);
 
 		//If we have a debugger connected.
 		#ifdef _DEBUG

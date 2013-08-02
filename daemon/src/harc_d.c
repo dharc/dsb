@@ -36,6 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/core/nid.h"
 #include "dsb/core/vm.h"
 #include "dsb/errors.h"
+#include "dsb/globals.h"
 #include "dsb/core/event.h"
 #include "dsb/core/dependency.h"
 #include "dsb/patterns/pattern.h"
@@ -52,7 +53,10 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 	{
 			if (event->type == EVENT_GET)
 			{
-				dsb_nid_null(event->res);
+				if (event->cb)
+				{
+					event->cb(event,&Null);
+				}
 			}
 		return SUCCESS;
 	}
@@ -79,26 +83,32 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 							harc->flags &= ~HARC_OUTOFDATE;
 						}
 
-						*(event->res) = harc->h;
+						if (event->cb)
+						{
+							event->cb(event,&harc->h);
+						}
 						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
 	case EVENT_GETDEF:
-						if ((harc->flags & HARC_SCRIPT) != 0)
+						if (event->cb)
 						{
-							*(event->res) = harc->def;
-						}
-						else
-						{
-							dsb_nid_null(event->res);
+							if ((harc->flags & HARC_SCRIPT) != 0)
+							{
+								event->cb(event,&harc->def);
+							}
+							else
+							{
+								event->cb(event,&Null);
+							}
 						}
 						//event->eval = harc->e;
 						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
-	case EVENT_DEFINE:	harc->def = event->def;
+	case EVENT_DEFINE:	harc->def = event->value;
 
-						if (dsb_pattern_isA(&event->def,DSB_PATTERN_BYTECODE) == 1)
+						if (dsb_pattern_isA(&event->value,DSB_PATTERN_BYTECODE) == 1)
 						{
 							//If definition then will need evaluating
 							harc->flags |= HARC_OUTOFDATE | HARC_SCRIPT;
@@ -123,7 +133,7 @@ int dsb_harc_event(HARC_t *harc, Event_t *event)
 						event->flags |= EFLAG_DONE;
 						return SUCCESS;
 	//-------------------------------------------------------------------------
-	case EVENT_SET:		harc->h = event->def;
+	case EVENT_SET:		harc->h = event->value;
 						dsb_nid_null(&harc->def);
 
 						harc->flags &= ~(HARC_OUTOFDATE | HARC_SCRIPT);

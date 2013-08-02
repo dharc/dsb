@@ -62,16 +62,21 @@ void test_harc_compare()
 
 }
 
+static int harc_test_cb_var = 0;
+static void harc_test_cb(const Event_t *evt, const NID_t *res)
+{
+	harc_test_cb_var = 1;
+}
+
 void test_harc_get()
 {
 	Event_t evt;
 	HARC_t harc;
-	NID_t res;
 
 	//Initialise an event.
 	evt.type = EVENT_GET;
 	evt.flags = 0;
-	evt.res = &res;
+	evt.cb = harc_test_cb;
 	dsb_iton(2,&(evt.d1));
 	dsb_iton(3,&(evt.d2));
 
@@ -82,6 +87,7 @@ void test_harc_get()
 	CHECK(dsb_harc_event(&harc,&evt) == SUCCESS);
 	CHECK((evt.flags & EFLAG_DONE) != 0);
 	CHECK(harc.h.ll == 55);
+	CHECK(harc_test_cb_var == 1);
 
 	DONE;
 }
@@ -96,7 +102,7 @@ void test_harc_define()
 	evt.flags = 0;
 	dsb_iton(2,&(evt.d1));
 	dsb_iton(3,&(evt.d2));
-	dsb_iton(66,&(evt.def));
+	dsb_iton(66,&(evt.value));
 
 	//Initialise the hyperarc
 	dsb_harc(&(evt.d1),&(evt.d2),&harc);
@@ -190,7 +196,7 @@ void test_harc_set()
 	evt.flags = 0;
 	dsb_iton(2,&(evt.d1));
 	dsb_iton(3,&(evt.d2));
-	dsb_iton(55,&(evt.def));
+	dsb_iton(55,&(evt.value));
 
 	dsb_harc(&(evt.d1),&(evt.d2),&harc);
 	harc.flags = 0;

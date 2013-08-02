@@ -66,7 +66,7 @@ void test_event_packunpack()
 	source.type = EVENT_GET;
 	dsb_iton(44,&source.d1);
 	dsb_iton(55,&source.d2);
-	source.resid = 30;
+	source.cb = 0;
 
 	CHECK(dsb_event_pack(&source,buffer,200) == 32);
 	CHECK(dsb_event_unpack(buffer, &result) == 32);
@@ -74,19 +74,19 @@ void test_event_packunpack()
 	CHECK(result.type == EVENT_GET);
 	CHECK(result.d1.ll == 44);
 	CHECK(result.d2.ll == 55);
-	CHECK(result.resid == 30);
+	CHECK(result.cb == 0);
 
 	//----- DEFINE -----
 	source.type = EVENT_DEFINE;
 	dsb_iton(66,&source.d1);
 	dsb_iton(77,&source.d2);
-	dsb_iton(88,&source.def);
+	dsb_iton(88,&source.value);
 
 	CHECK(dsb_event_pack(&source,buffer,200) == 40);
 	CHECK(dsb_event_unpack(buffer, &result) == 40);
 
 	CHECK(result.type == EVENT_DEFINE);
-	CHECK(result.def.ll == 88);
+	CHECK(result.value.ll == 88);
 
 	//----- DEP -----
 	source.type = EVENT_DEP;
