@@ -2,6 +2,7 @@
 #include "dsb/errors.h"
 #include "dsb/core/specials.h"
 #include "dsb/names.h"
+#include "dsb/pack.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -86,73 +87,39 @@ int dsb_nid_final()
 
 int dsb_nid_pack(const NID_t *n, char *buf, int max)
 {
-	*buf = n->header;
-	buf++;
+	PACK_CHAR(buf, &n->header);
 
 	if (n->header == NID_COMMON)
 	{
-		*buf = n->r2;
-		buf++;
-		//*((short*)buf) = n->t;
-		memcpy(buf,&n->t,sizeof(short));
-		buf += sizeof(short);
-		//*((long long*)buf) = n->ll;
-		memcpy(buf,&n->ll,sizeof(long long));
+		PACK_CHAR(buf,&n->r2);
+		PACK_SHORT(buf,&n->t);
+		PACK_LL(buf,&n->ll);
 		return 2+sizeof(short)+sizeof(long long);
 	}
 	else
 	{
-		*buf = n->mac[0];
-		buf++;
-		*buf = n->mac[1];
-		buf++;
-		*buf = n->mac[2];
-		buf++;
-		*buf = n->mac[3];
-		buf++;
-		*buf = n->mac[4];
-		buf++;
-		*buf = n->mac[5];
-		buf++;
-		//*((long long*)buf) = n->n;
-		memcpy(buf,&n->n,sizeof(int));
-		return 7+sizeof(long long);
+		PACK(buf,n->mac,6);
+		PACK_INT(buf,&n->n);
+		return 7+sizeof(int);
 	}
 }
 
 int dsb_nid_unpack(const char *buf, NID_t *n)
 {
-	n->header = *buf;
-	buf++;
+	UNPACK_CHAR(buf, &n->header);
 
 	if (n->header == NID_COMMON)
 	{
-		n->r2 = *buf;
-		buf++;
-		//n->t = *((short*)buf);
-		memcpy(&n->t,buf,sizeof(short));
-		buf += sizeof(short);
-		//n->ll = *((long long*)buf);
-		memcpy(&n->ll,buf,sizeof(long long));
+		UNPACK_CHAR(buf,&n->r2);
+		UNPACK_SHORT(buf,&n->t);
+		UNPACK_LL(buf,&n->ll);
 		return 2+sizeof(short)+sizeof(long long);
 	}
 	else
 	{
-		n->mac[0] = *buf;
-		buf++;
-		n->mac[1] = *buf;
-		buf++;
-		n->mac[2] = *buf;
-		buf++;
-		n->mac[3] = *buf;
-		buf++;
-		n->mac[4] = *buf;
-		buf++;
-		n->mac[5] = *buf;
-		buf++;
-		//n->n = *((long long*)buf);
-		memcpy(&n->n,buf,sizeof(int));
-		return 7+sizeof(long long);
+		UNPACK(buf,n->mac,6);
+		UNPACK_INT(buf,&n->n);
+		return 7+sizeof(int);
 	}
 }
 

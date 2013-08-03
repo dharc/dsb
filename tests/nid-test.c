@@ -249,6 +249,31 @@ void test_nid_toStr()
 	DONE;
 }
 
+void test_nid_pack()
+{
+	char buf[100];
+	NID_t n;
+
+	n.header = 0;
+	n.t = NID_TYPE_INTEGER;
+	n.ll = 99;
+
+	CHECK(dsb_nid_pack(&n,buf,100) == 12);
+	CHECK(buf[0] == 0);
+	CHECK(buf[2] == NID_TYPE_INTEGER);
+	CHECK(buf[4] == 99);
+
+	n.header = 1;
+	n.n = 34;
+	n.mac[0] = 78;
+
+	CHECK(dsb_nid_pack(&n,buf,100) == 11);
+	CHECK(buf[1] == 78);
+	CHECK(buf[7] == 34);
+
+	DONE;
+}
+
 int main(int argc, char *argv[])
 {
 	dsb_test(test_nid_iton);
@@ -260,5 +285,6 @@ int main(int argc, char *argv[])
 	dsb_test(test_nid_geq);
 	dsb_test(test_nid_fromstr);
 	dsb_test(test_nid_toStr);
+	dsb_test(test_nid_pack);
 	return 0;
 }
