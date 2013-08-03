@@ -87,6 +87,12 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 int dsb_event_unpack(const char *buf, Event_t *e)
 {
 	const char *oldbuf = buf;
+
+	//Initialise defaults
+	e->cb = 0;
+	e->flags = 0;
+	e->data = 0;
+
 	//Unpack the type and destination NIDs.
 	UNPACK_INT(buf,&e->type);
 	UNPACK_NID(buf,&e->d1);
