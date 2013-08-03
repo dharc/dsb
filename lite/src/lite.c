@@ -40,12 +40,15 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net_protocol.h"
 #include "dsb/globals.h"
 #include "dsb/core/agent.h"
+#include "dsb/core/thread.h"
 #include <signal.h>
 #include <string.h>
 
 void *hostsock;
 static bool running;
 static bool interactive;
+COND(netcond);
+MUTEX(netmtx);
 
 void dsb_lite_startcli();
 
@@ -69,9 +72,15 @@ int dsb_send(Event_t * evt, bool async)
 	dsb_event_pack(evt,buf,100);
 	res = dsb_net_send_event(hostsock, evt, async);
 
-	if (((evt->type >> 8) != 0x1) && ((evt->flags & EFLAG_FREE) != 0))
+	if (!async)
 	{
-		dsb_event_free(evt);
+		LOCK(netmtx);
+		while ((evt->flags & EFLAG_DONE) == 0)
+		{
+			//Block until result is received.
+			WAIT(netcond,netmtx);
+		}
+		UNLOCK(netmtx);
 	}
 
 	return res;
@@ -137,6 +146,13 @@ static int net_cb_event(void *sock, void *data)
 	}
 
 	return 0;
+}
+
+static int net_cb_result(void *sock, void *data)
+{
+	int res = dsb_net_cb_result(sock,data);
+	SIGNAL(netcond);
+	return res;
 }
 
 static void print_help()
@@ -225,6 +241,7 @@ int main(int argc, char *argv[])
 	dsb_net_callback(DSBNET_BASE,net_cb_base);
 	dsb_net_callback(DSBNET_SENDEVENT,net_cb_event);
 	dsb_net_callback(DSBNET_DEBUGEVENT,net_cb_debugevent);
+	dsb_net_callback(DSBNET_EVENTRESULT,net_cb_result);
 
 	//Make sure names map is up to date.
 	//dsb_names_rebuild();

@@ -179,7 +179,7 @@ int dsb_getA(const struct NID *d1, const struct NID *d2, struct NID *r)
 	evt->type = EVENT_GET;
 	evt->data = r;
 	evt->cb = get_evt_cb;
-	res = dsb_send(evt,1);
+	res = dsb_send(evt,true);
 	return res;
 }
 
@@ -244,12 +244,8 @@ int dsb_dictzz(const char *d, const char *n)
 
 int dsb_set(const struct NID *d1, const struct NID *d2, const struct NID *v)
 {
-	struct Event *evt = dsb_event_allocate();
-	evt->d1 = *d1;
-	evt->d2 = *d2;
+	Event_t *evt = dsb_event(EVENT_SET, d1, d2, 0);
 	evt->value = *v;
-	evt->flags = EFLAG_FREE;
-	evt->type = EVENT_SET;
 	return dsb_send(evt,0);
 }
 
@@ -323,22 +319,14 @@ int dsb_define(
 		const struct NID *def
 		)
 {
-	struct Event *evt = dsb_event_allocate();
-	evt->d1 = *d1;
-	evt->d2 = *d2;
+	Event_t *evt = dsb_event(EVENT_DEFINE, d1, d2, 0);
 	evt->value = *def;
-	evt->flags = EFLAG_FREE;
-	evt->type = EVENT_DEFINE;
 	return dsb_send(evt,0);
 }
 
 int dsb_notify(const struct NID *d1, const struct NID *d2)
 {
-	struct Event *evt = dsb_event_allocate();
-	evt->d1 = *d1;
-	evt->d2 = *d2;
-	evt->flags = EFLAG_FREE;
-	evt->type = EVENT_NOTIFY;
+	Event_t *evt = dsb_event(EVENT_NOTIFY, d1, d2, 0);
 	return dsb_send(evt,1);
 }
 
@@ -349,13 +337,9 @@ int dsb_dependency(
 		const NID_t *dep2
 		)
 {
-	struct Event *evt = dsb_event_allocate();
-	evt->d1 = *d1;
-	evt->d2 = *d2;
+	Event_t *evt = dsb_event(EVENT_DEP, d1, d2, 0);
 	evt->dep1 = *dep1;
 	evt->dep2 = *dep2;
-	evt->flags = EFLAG_FREE;
-	evt->type = EVENT_DEP;
 	return dsb_send(evt,1);
 }
 

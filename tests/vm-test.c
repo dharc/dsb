@@ -55,12 +55,17 @@ int dsb_send(struct Event *evt)
 {
 	if (evt->type == EVENT_GET)
 	{
-		dsb_iton(666,evt->res);
+		NID_t res;
+		dsb_iton(666,&res);
+		if (evt->cb)
+		{
+			evt->cb(evt,&res);
+		}
 		evt->flags |= EFLAG_DONE;
 	}
 	else if (evt->type == EVENT_DEFINE)
 	{
-		evtres = evt->def;
+		evtres = evt->value;
 		evtd1 = evt->d1;
 		evtd2 = evt->d2;
 	}

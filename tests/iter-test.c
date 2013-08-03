@@ -42,12 +42,14 @@ int dsb_send(struct Event *evt)
 {
 	if (evt->type == EVENT_GET)
 	{
+		NID_t res;
+
 		//The object with a dictionary.
 		if (evt->d1.ll == 0)
 		{
 			if (evt->d2.ll == SPECIAL_KEYS)
 			{
-				dsb_iton(44,evt->res);
+				dsb_iton(44,&res);
 				evt->flags |= EFLAG_DONE;
 			}
 		}
@@ -58,7 +60,7 @@ int dsb_send(struct Event *evt)
 			{
 				if (evt->d2.ll == SPECIAL_SIZE)
 				{
-					dsb_iton(3,evt->res);
+					dsb_iton(3, &res);
 					evt->flags |= EFLAG_DONE;
 				}
 			}
@@ -66,13 +68,18 @@ int dsb_send(struct Event *evt)
 			{
 				switch(evt->d2.ll)
 				{
-				case 0:		dsb_iton(55,evt->res); break;
-				case 1:		dsb_iton(66,evt->res); break;
-				case 2:		dsb_iton(77,evt->res); break;
-				default:	dsb_nid_null(evt->res); break;
+				case 0:		dsb_iton(55,&res); break;
+				case 1:		dsb_iton(66,&res); break;
+				case 2:		dsb_iton(77,&res); break;
+				default:	dsb_nid_null(&res); break;
 				}
 				evt->flags |= EFLAG_DONE;
 			}
+		}
+
+		if (evt->cb)
+		{
+			evt->cb(evt,&res);
 		}
 	}
 	return 0;

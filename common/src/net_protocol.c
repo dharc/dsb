@@ -62,6 +62,7 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 	int count = 0;
 	int resid;
 	char *buffer = dsb_net_buffer(200);
+	char *tbuf = buffer;
 	//msg.evt = *evt;
 
 	if ((e->type >> 8) == 0x1)
@@ -88,30 +89,16 @@ int dsb_net_send_event(void *sock, Event_t *e, int async)
 	}
 
 	//Pack the event to a buffer.
-	PACK_INT(buffer,&resid);
-	count = dsb_event_pack(e, buffer, 100);
+	PACK_INT(tbuf,&resid);
+	count = dsb_event_pack(e, tbuf, 100);
 
 	//Actually send the event
 	dsb_net_send(sock, DSBNET_SENDEVENT, buffer, count);
 
-	//Block if we need a response.
-	/*count = 0;
-	if ((async == 0) && ((e->type >> 8) == 0x1))
+	if (((e->type >> 8) != 0x1) && (e->flags & EFLAG_FREE))
 	{
-		while (((e->flags & EFLAG_DONE) == 0) && count < 100)
-		{
-			dsb_net_poll(10);
-			count++;
-		}
-
-		if ((e->flags & EFLAG_DONE) == 0)
-		{
-			readlist[resid] = 0;
-			*(e->res) = Null;
-			e->flags |= EFLAG_DONE;
-			return DSB_ERROR(ERR_NETTIMEOUT,0);
-		}
-	}*/
+		dsb_event_free(e);
+	}
 	return SUCCESS;
 }
 

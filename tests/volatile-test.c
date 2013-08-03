@@ -44,12 +44,17 @@ int dsb_send(struct Event *evt)
 	return 0;
 }
 
+static NID_t resnid;
+static void vol_cb_test(const Event_t *evt, const NID_t *res)
+{
+	resnid = *res;
+}
+
 void test_vol_getset()
 {
 	struct Event evt;
 	struct NID a;
 	struct NID b;
-	NID_t res;
 
 	//Create tail NIDs
 	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&a);
@@ -57,22 +62,22 @@ void test_vol_getset()
 
 	//Generate DEFINE event.
 	dsb_event(EVENT_DEFINE,&a,&b,&evt);
-	dsb_nid(NID_TYPE_INTEGER,55,&(evt.def));
+	dsb_nid(NID_TYPE_INTEGER,55,&(evt.value));
 
 	//Send DEFINE event.
 	CHECK(dsb_route(&evt) == 0);
 
 	//Generate GET event;
 	dsb_event(EVENT_GET,&a,&b,&evt);
-	evt.res = &res;
+	evt.cb = vol_cb_test;
 
 	//Send GET event.
 	CHECK(dsb_route(&evt) == 0);
 
 	//Check result of GET.
 	CHECK((evt.flags & EFLAG_DONE) != 0);
-	CHECK(res.t == NID_TYPE_INTEGER);
-	CHECK(res.ll == 55);
+	CHECK(resnid.t == NID_TYPE_INTEGER);
+	CHECK(resnid.ll == 55);
 
 	DONE;
 }
@@ -80,75 +85,26 @@ void test_vol_getset()
 void test_vol_allocate()
 {
 	struct Event evt;
-	NID_t res;
-	evt.res = &res;
 	dsb_nid_local(NID_VOLATILE,&evt.d1);
 	dsb_nid_local(NID_VOLATILE,&evt.d2);
 	evt.type = EVENT_ALLOCATE;
+	evt.cb = vol_cb_test;
 
 	//Send ALLOCATE event.
 	CHECK(dsb_route(&evt) == 0);
 	CHECK((evt.flags & EFLAG_DONE) != 0);
-	CHECK(res.n == 1);
+	CHECK(resnid.n == 1);
 
 	//Send ALLOCATE event.
 	CHECK(dsb_route(&evt) == 0);
 	CHECK((evt.flags & EFLAG_DONE) != 0);
-	CHECK(res.n == 2);
+	CHECK(resnid.n == 2);
 
 	//Send ALLOCATE event.
 	CHECK(dsb_route(&evt) == 0);
 	CHECK((evt.flags & EFLAG_DONE) != 0);
-	CHECK(res.n == 3);
+	CHECK(resnid.n == 3);
 
-	DONE;
-}
-
-void test_vol_region()
-{
-	struct Event evt;
-	struct NID a;
-	struct NID b;
-	NID_t res;
-
-	//Create tail NIDs
-	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&a);
-	dsb_nid(NID_TYPE_INTEGER,2,&b);
-
-	//Generate DEFINE event.
-	dsb_event(EVENT_DEFINE,&a,&b,&evt);
-	dsb_nid(NID_TYPE_INTEGER,66,&(evt.def));
-	dsb_nid(NID_TYPE_SPECIAL,SPECIAL_TRUE,&(evt.d1b));
-	dsb_nid(NID_TYPE_INTEGER,50,&(evt.d2b));
-	evt.flags |= EFLAG_MULT;
-
-	//Send DEFINE event.
-	CHECK(dsb_route(&evt) == 0);
-
-	//Generate GET event;
-	dsb_event(EVENT_GET,&a,&b,&evt);
-	evt.res = &res;
-
-	//Send GET event.
-	CHECK(dsb_route(&evt) == 0);
-
-	//Check result of GET.
-	CHECK((evt.flags & EFLAG_DONE) != 0);
-	CHECK(res.t == NID_TYPE_INTEGER);
-	CHECK(res.ll == 66);
-
-	//Generate GET event;
-	b.ll = 20;
-	dsb_event(EVENT_GET,&a,&b,&evt);
-	evt.res = &res;
-
-	//Send GET event.
-	CHECK(dsb_route(&evt) == 0);
-
-	//Check result of GET.
-	CHECK((evt.flags & EFLAG_DONE) != 0);
-	CHECK(res.t == NID_TYPE_INTEGER);
-	CHECK(res.ll == 66);
 	DONE;
 }
 

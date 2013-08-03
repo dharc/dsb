@@ -39,9 +39,11 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/net.h"
 #include "dsb/wrap.h"
 #include "dsb/core/nid.h"
+#include "dsb/core/event.h"
 
 void sigint(int s);
 extern void *hostsock;
+extern int dsb_send(Event_t * evt, bool async);
 
 struct CommandHandler
 {
@@ -61,6 +63,10 @@ static void lite_cmd_connect(char **word, int c)
 		return;
 	}
 	hostsock = dsb_net_connect(word[1]);
+	if (hostsock)
+	{
+		printf("Connected to %s\n",word[1]);
+	}
 }
 
 /*
@@ -78,13 +84,20 @@ static void lite_cmd_exit(char **word, int c)
  */
 static void lite_cmd_set(char **word, int c)
 {
+	Event_t *evt;
+	NID_t n[2];
+
 	if (c != 4)
 	{
 		printf("Set requires exactly 3 arguments.\n");
 		return;
 	}
 
-	dsb_setzzz(word[1],word[2],word[3]);
+	dsb_nid_fromStr(word[1],&n[0]);
+	dsb_nid_fromStr(word[2],&n[1]);
+	evt = dsb_event(EVENT_SET, &n[0],&n[1], 0);
+	dsb_nid_fromStr(word[3],&evt->value);
+	dsb_send(evt,true);
 }
 
 /*

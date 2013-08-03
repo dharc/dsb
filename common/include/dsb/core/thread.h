@@ -51,6 +51,7 @@ either expressed or implied, of the FreeBSD Project.
 
 #define WAIT(A,B) pthread_cond_wait(&A,&B);
 #define BROADCAST(A) pthread_cond_broadcast(&A);
+#define SIGNAL(A) pthread_cond_signal(&A);
 
 #define RWLOCK(A) static pthread_rwlock_t A = PTHREAD_RWLOCK_INITIALIZER
 #define MUTEX(A) static pthread_mutex_t A = PTHREAD_MUTEX_INITIALIZER

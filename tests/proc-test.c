@@ -46,33 +46,33 @@ void test_proc_send()
 	Event_t *t;
 
 	evt.type = EVENT_GET;
-	evt.err = 555;
+	evt.value.ll = 555;
 	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
 	t = queue_pop(1);
 	CHECK(t != 0);
 	if (t != 0)
 	{
-		CHECK(t->err == 555);
+		CHECK(t->value.ll == 555);
 	}
 
 	evt.type = EVENT_DEFINE;
-	evt.err = 777;
+	evt.value.ll = 777;
 	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
 	t = queue_pop(0);
 	CHECK(t != 0);
 	if (t != 0)
 	{
-		CHECK(t->err == 777);
+		CHECK(t->value.ll == 777);
 	}
 
 	evt.type = EVENT_DEP;
-	evt.err = 888;
+	evt.value.ll = 888;
 	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
 	t = queue_pop(2);
 	CHECK(t != 0);
 	if (t != 0)
 	{
-		CHECK(t->err == 888);
+		CHECK(t->value.ll == 888);
 	}
 
 	DONE;

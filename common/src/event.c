@@ -62,15 +62,10 @@ int dsb_event_pack(const Event_t *e, char *buf, int max)
 	//---------------------------------------------------------------------
 	case EVENT_GET:
 	case EVENT_GETDEF:
-		break;
-	//---------------------------------------------------------------------
 	case EVENT_ALLOCATE:
 		break;
 	//---------------------------------------------------------------------
 	case EVENT_DEFINE:
-		PACK_NID(buf,&e->value);
-		break;
-	//---------------------------------------------------------------------
 	case EVENT_SET:
 		PACK_NID(buf,&e->value);
 		break;

@@ -68,8 +68,8 @@ void test_event_packunpack()
 	dsb_iton(55,&source.d2);
 	source.cb = 0;
 
-	CHECK(dsb_event_pack(&source,buffer,200) == 32);
-	CHECK(dsb_event_unpack(buffer, &result) == 32);
+	CHECK(dsb_event_pack(&source,buffer,200) == 28);
+	CHECK(dsb_event_unpack(buffer, &result) == 28);
 
 	CHECK(result.type == EVENT_GET);
 	CHECK(result.d1.ll == 44);

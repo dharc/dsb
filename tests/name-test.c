@@ -46,8 +46,14 @@ int dsb_send(struct Event *evt)
 {
 	if (evt->type == EVENT_ALLOCATE)
 	{
-		dsb_nid_local(NID_VOLATILE,evt->res);
-		evt->res->n = nidalloc++;
+		NID_t res;
+		dsb_nid_local(NID_VOLATILE,&res);
+		res.n = nidalloc++;
+
+		if (evt->cb)
+		{
+			evt->cb(evt,&res);
+		}
 	}
 	evt->flags |= EFLAG_DONE;
 	return 0;
