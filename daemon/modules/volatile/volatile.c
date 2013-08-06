@@ -40,11 +40,14 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/harc_d.h"
 #include <stdio.h>
 #include <malloc.h>
+#include "dsb/core/thread.h"
 
 Module_t volmod;
 
 #define VOLFLAG_OUTOFDATE	1	//Mark entry as out-of-date.
 #define VOLFLAG_VIRTUAL		2	//Mark region as not wanting caching.
+
+RWLOCK(vlock);
 
 /*
  * An entry to record a single HARC in memory.
@@ -183,9 +186,10 @@ struct VolHARCEntry *vol_createentry(const struct NID *a, const struct NID *b)
 	res->harc.deps = 0;
 	res->flags = 0;
 
-	//TODO Make threadsafe
+	W_LOCK(vlock);
 	res->next = voltable[hash];
 	voltable[hash] = res;
+	W_UNLOCK(vlock);
 	return res;
 }
 
@@ -195,8 +199,10 @@ struct VolHARCEntry *vol_createentry(const struct NID *a, const struct NID *b)
 HARC_t *vol_getharc(const NID_t *a, const NID_t *b, int create)
 {
 	int hash = vol_hashnid(a,b);
-	//TODO Make threadsafe.
-	struct VolHARCEntry *res = voltable[hash];
+	struct VolHARCEntry *res;
+
+	R_LOCK(vlock);
+	res = voltable[hash];
 
 	//TODO Check a and b ordering.
 	while (res != 0)
@@ -209,6 +215,7 @@ HARC_t *vol_getharc(const NID_t *a, const NID_t *b, int create)
 		//Move to next entry.
 		res = res->next;
 	}
+	R_UNLOCK(vlock);
 
 	if (create != 0)
 	{

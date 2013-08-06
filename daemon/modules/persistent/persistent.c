@@ -40,11 +40,14 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/harc_d.h"
 #include <stdio.h>
 #include <malloc.h>
+#include "dsb/core/thread.h"
 
 Module_t permod;
 
 #define PERFLAG_OUTOFDATE	1	//Mark entry as out-of-date.
 #define PERFLAG_VIRTUAL		2	//Mark region as not wanting caching.
+
+RWLOCK(plock);
 
 /*
  * An entry to record a single HARC in memory.
@@ -90,9 +93,10 @@ static struct PerHARCEntry *per_createentry(const struct NID *a, const struct NI
 	res->harc.deps = 0;
 	res->flags = 0;
 
-	//TODO Make threadsafe
+	W_LOCK(plock);
 	res->next = pertable[hash];
 	pertable[hash] = res;
+	W_UNLOCK(plock);
 	return res;
 }
 
@@ -102,8 +106,10 @@ static struct PerHARCEntry *per_createentry(const struct NID *a, const struct NI
 static HARC_t *per_getharc(const NID_t *a, const NID_t *b, int create)
 {
 	int hash = per_hashnid(a,b);
-	//TODO Make threadsafe.
-	struct PerHARCEntry *res = pertable[hash];
+	struct PerHARCEntry *res;
+
+	R_LOCK(plock);
+	res = pertable[hash];
 
 	//TODO Check a and b ordering.
 	while (res != 0)
@@ -116,6 +122,7 @@ static HARC_t *per_getharc(const NID_t *a, const NID_t *b, int create)
 		//Move to next entry.
 		res = res->next;
 	}
+	R_UNLOCK(plock);
 
 	if (create != 0)
 	{

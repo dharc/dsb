@@ -43,6 +43,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/config.h"
 #include <stdio.h>
 #include <signal.h>
+#include "dsb/core/thread.h"
 
 void sigint(int s)
 {
@@ -178,9 +179,22 @@ extern Module_t *dsb_volatile_module();
 extern Module_t *dsb_persistent_module();
 extern Module_t *dsb_network_module();
 
+void *make_thread(void *arg)
+{
+	//Make sure names map is up to date.
+	dsb_names_rebuild();
+	//Build volatile system graph
+	make_system();
+	//Build boolean structure.
+	make_bool();
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
+	pthread_t initt;
 
 	//Initialise the common parts
 	dsb_common_init();
@@ -200,17 +214,12 @@ int main(int argc, char *argv[])
 	//Effectively required so will load
 	dsb_module_load("net",&Root);
 
-	//Make sure names map is up to date.
-	dsb_names_rebuild();
-
 	//Ready to process command line args.
 	ret = process_args(argc,argv);
 	if (ret != 0) return ret;
 
-	//Build volatile system graph
-	make_system();
-	//Build boolean structure.
-	make_bool();
+	//Run the DB initialise thread
+	pthread_create(&initt, 0, make_thread, 0);
 
 	//Set signal handler
 	signal(SIGINT, sigint);
