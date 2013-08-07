@@ -75,7 +75,7 @@ struct VolRegionEntry
 	int flags;			//Meta details about the region.
 };
 
-#define VOL_HASH_SIZE	1000
+#define VOL_HASH_SIZE	100000
 #define VOL_MAX_REGIONS	100
 
 //Entry and region storage
@@ -203,6 +203,7 @@ HARC_t *vol_getharc(const NID_t *a, const NID_t *b, int create)
 
 	R_LOCK(vlock);
 	res = voltable[hash];
+	R_UNLOCK(vlock);
 
 	//TODO Check a and b ordering.
 	while (res != 0)
@@ -210,13 +211,13 @@ HARC_t *vol_getharc(const NID_t *a, const NID_t *b, int create)
 		//Does this HARC entry match?
 		if ((dsb_nid_eq(a,&(res->harc.t1)) == 1) && (dsb_nid_eq(b, &(res->harc.t2)) == 1))
 		{
-			R_UNLOCK(vlock);
 			return &(res->harc);
 		}
 		//Move to next entry.
+		//R_LOCK(vlock);
 		res = res->next;
+		//R_UNLOCK(vlock);
 	}
-	R_UNLOCK(vlock);
 
 	if (create != 0)
 	{

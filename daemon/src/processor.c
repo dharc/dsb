@@ -64,6 +64,7 @@ struct EventQueue
 MUTEX(qmtx);
 RWLOCK(qlock);
 COND(qcond);
+COND(qagentcond);
 
 typedef enum
 {
@@ -154,6 +155,7 @@ int dsb_proc_stop()
 {
 	procisrunning = 0;
 	BROADCAST(qcond);
+	BROADCAST(qagentcond);
 	return SUCCESS;
 }
 
@@ -218,7 +220,7 @@ static int dsb_proc_wait(const Event_t *evt)
 		R_UNLOCK(qlock);
 
 		//printf("PROCWAIT waiting...\n");
-		BROADCAST(qcond);
+		BROADCAST(qagentcond);
 
 		//Wait whilst running, nothing to do in active queue and event isn't complete.
 		LOCK(qmtx);
@@ -242,23 +244,28 @@ int dsb_send(Event_t *evt, bool async)
 	//Insert and if queue full process and try again
 	while (procisrunning && queue_insert(QUEUE_AGENT, evt))
 	{
-		BROADCAST(qcond);
+		//TODO should really help in event processing...
+
+		//Inform agent thread that we need to do some work.
+		BROADCAST(qagentcond);
+		//Then sleep until we can add
 		LOCK(qmtx);
 		WAIT(qcond,qmtx);
 		UNLOCK(qmtx);
+		//printf("Agent queue full\n");
 	}
 
 	//Need to block until done.
 	if (async == false)
 	{
-		BROADCAST(qcond);
+		//BROADCAST(qagentcond);
 		ret = dsb_proc_wait(evt);
 	}
 	else
 	{
 		//Wake up other threads...
 		//printf("Broadcasting...\n");
-		BROADCAST(qcond);
+		BROADCAST(qagentcond);
 	}
 
 	return ret;
@@ -270,6 +277,8 @@ int dsb_sendACTIVE(Event_t *evt)
 
 	evt->flags |= EFLAG_SENT;
 	ret = queue_insert(QUEUE_ACTIVE, evt);
+
+	//TODO CHECK RETURN VALUE FOR FULL QUEUES.
 
 	BROADCAST(qcond);
 
@@ -322,7 +331,7 @@ static void *dsb_proc_runthread(void *arg)
 		R_UNLOCK(qlock);
 
 		//printf("Thread waiting...\n");
-		BROADCAST(qcond); //TODO MAKE AGENT CONDITION
+		BROADCAST(qagentcond); //TODO MAKE AGENT CONDITION
 
 		//Wait on condition
 		LOCK(qmtx);
@@ -358,10 +367,10 @@ int dsb_proc_run(unsigned int maxfreq)
 	{
 		//Wait if no agent events.
 		LOCK(qmtx);
-		while (procisrunning && (queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] == 0))
+		while (procisrunning && ((queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] == 0)))
 		{
 			//printf("Waiting for agent queue...\n");
-			WAIT(qcond,qmtx);
+			WAIT(qagentcond,qmtx);
 		}
 		UNLOCK(qmtx);
 

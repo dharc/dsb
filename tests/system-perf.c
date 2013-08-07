@@ -86,7 +86,7 @@ static void test_system_avs()
 	CHECK(b.ll == 0);
 
 	diffticks = dsb_getTicks() - startticks;
-	printf(" small count -- %f avs/s\n", (float)AVS_COUNT_SMALL / ((float)diffticks / (float)TICKS_PER_SECOND));
+	printf(" small count -- %d avs/s\n", (int)((float)AVS_COUNT_SMALL / ((float)diffticks / (float)TICKS_PER_SECOND)));
 
 	for (i=100; i<200; i++)
 	{
@@ -112,7 +112,7 @@ static void test_system_avs()
 	CHECK(b.ll == 0);
 
 	diffticks = dsb_getTicks() - startticks;
-	printf(" large count -- %f avs/s\n", (float)AVS_COUNT_LARGE / ((float)diffticks / (float)TICKS_PER_SECOND));
+	printf(" large count -- %d avs/s\n", (int)((float)AVS_COUNT_LARGE / ((float)diffticks / (float)TICKS_PER_SECOND)));
 
 	for (i=100; i<200; i++)
 	{
