@@ -213,14 +213,6 @@ static int dsb_proc_active()
 	BROADCAST(qagentcond);
 	UNLOCK(qmtx);
 
-	//Wait whilst running, nothing to do in active queue and event isn't complete.
-	LOCK(qmtx);
-	while (procisrunning && queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0)
-	{
-		WAIT(qcond,qmtx);
-	}
-	UNLOCK(qmtx);
-
 	return SUCCESS;
 }
 
@@ -237,7 +229,15 @@ static int dsb_proc_wait(const Event_t *evt)
 	}
 	while (procisrunning && !(evt->flags & EFLAG_DONE))
 	{
+		//printf("Waiting for event\n");
 		dsb_proc_active();
+
+		//Wait whilst running, nothing to do in active queue and event isn't complete.
+		LOCK(qmtx);
+		//while (procisrunning && !(evt->flags & EFLAG_DONE) && queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] == 0)
+		//	WAIT(qcond,qmtx);
+		BROADCAST(qagentcond);
+		UNLOCK(qmtx);
 	}
 
 	return SUCCESS;
@@ -245,24 +245,18 @@ static int dsb_proc_wait(const Event_t *evt)
 
 int dsb_send(Event_t *evt, bool async)
 {
-	int ret;
+	int ret = 0;
 
 	evt->flags |= EFLAG_SENT;
 	//Insert and if queue full process and try again
 	while (procisrunning && queue_insert(QUEUE_AGENT, evt))
 	{
-		//TODO should really help in event processing...
-
-		//Inform agent thread that we need to do some work.
+		//printf("QUEUE FULL... processing\n");
+		dsb_proc_active();
 		LOCK(qmtx);
-		BROADCAST(qagentcond);
+		while (procisrunning && queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0)
+			WAIT(qcond,qmtx);
 		UNLOCK(qmtx);
-
-		//Then sleep until we can add
-		LOCK(qmtx);
-		WAIT(qcond,qmtx);
-		UNLOCK(qmtx);
-		//printf("Agent queue full\n");
 	}
 
 	//Need to block until done.
@@ -339,7 +333,12 @@ static void *dsb_proc_runthread(void *arg)
 
 	while (procisrunning)
 	{
+		//printf("Thread active\n");
 		dsb_proc_active();
+		LOCK(qmtx);
+		while (procisrunning && queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0)
+			WAIT(qcond,qmtx);
+		UNLOCK(qmtx);
 	}
 	return SUCCESS;
 }
@@ -378,6 +377,7 @@ int dsb_proc_run(unsigned int maxfreq)
 		move_active();
 		W_UNLOCK(qlock);
 
+		//Wake up active threads
 		LOCK(qmtx);
 		BROADCAST(qcond);
 		UNLOCK(qmtx);
