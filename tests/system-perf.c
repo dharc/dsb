@@ -70,31 +70,6 @@ static void test_system_avs()
 	//Dummy sync read to make sure system is ready.
 	dsb_getnni(&True,&True,&i);
 
-	startticks = dsb_getTicks();
-
-	for (i=0; i<AVS_COUNT_SMALL; i++)
-	{
-		Event_t *e;
-		dsb_iton(i,&a);
-		e = dsb_event(EVENT_SET,&a,&a,0);
-		dsb_iton(i*2,&e->value);
-		dsb_send(e,true);
-	}
-
-	dsb_iton(0,&a);
-	dsb_get(&a,&a,&b);
-	CHECK(b.ll == 0);
-
-	diffticks = dsb_getTicks() - startticks;
-	printf(" small count -- %d avs/s\n", (int)((float)AVS_COUNT_SMALL / ((float)diffticks / (float)TICKS_PER_SECOND)));
-
-	for (i=100; i<200; i++)
-	{
-		dsb_iton(i,&a);
-		dsb_get(&a,&a,&b);
-		CHECK(b.ll == 2*i);
-	}
-
 	//----- NOW DO A LARGE NUMBER
 	startticks = dsb_getTicks();
 
@@ -120,6 +95,34 @@ static void test_system_avs()
 		dsb_get(&a,&a,&b);
 		CHECK(b.ll == 2*i);
 	}
+
+	//----- Now repeat for a smaller number
+	startticks = dsb_getTicks();
+
+	for (i=0; i<AVS_COUNT_SMALL; i++)
+	{
+		Event_t *e;
+		dsb_iton(i,&a);
+		e = dsb_event(EVENT_SET,&a,&a,0);
+		dsb_iton(i*2,&e->value);
+		dsb_send(e,true);
+	}
+
+	dsb_iton(0,&a);
+	dsb_get(&a,&a,&b);
+	CHECK(b.ll == 0);
+
+	diffticks = dsb_getTicks() - startticks;
+	printf(" small count -- %d avs/s\n", (int)((float)AVS_COUNT_SMALL / ((float)diffticks / (float)TICKS_PER_SECOND)));
+
+	for (i=100; i<200; i++)
+	{
+		dsb_iton(i,&a);
+		dsb_get(&a,&a,&b);
+		CHECK(b.ll == 2*i);
+	}
+
+
 
 	DONE;
 }

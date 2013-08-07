@@ -201,6 +201,29 @@ static int dsb_proc_single()
 	}
 }
 
+static int dsb_proc_active()
+{
+	//Process active queue
+	R_LOCK(qlock);
+	while (dsb_proc_single() == 1);
+	R_UNLOCK(qlock);
+
+	//Wakeup the agent now...
+	LOCK(qmtx);
+	BROADCAST(qagentcond);
+	UNLOCK(qmtx);
+
+	//Wait whilst running, nothing to do in active queue and event isn't complete.
+	LOCK(qmtx);
+	while (procisrunning && queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0)
+	{
+		WAIT(qcond,qmtx);
+	}
+	UNLOCK(qmtx);
+
+	return SUCCESS;
+}
+
 /**
  * Wait for an event to complete.
  * @param evt Event to wait for.
@@ -214,23 +237,7 @@ static int dsb_proc_wait(const Event_t *evt)
 	}
 	while (procisrunning && !(evt->flags & EFLAG_DONE))
 	{
-		//Process active queue
-		R_LOCK(qlock);
-		while (dsb_proc_single() == 1);
-		R_UNLOCK(qlock);
-
-		//printf("PROCWAIT waiting...\n");
-		BROADCAST(qagentcond);
-
-		//Wait whilst running, nothing to do in active queue and event isn't complete.
-		LOCK(qmtx);
-		while (procisrunning && !(evt->flags & EFLAG_DONE) && queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0)
-		{
-			WAIT(qcond,qmtx);
-		}
-		UNLOCK(qmtx);
-
-		//printf("PROCWAIT restart...\n");
+		dsb_proc_active();
 	}
 
 	return SUCCESS;
@@ -247,7 +254,10 @@ int dsb_send(Event_t *evt, bool async)
 		//TODO should really help in event processing...
 
 		//Inform agent thread that we need to do some work.
+		LOCK(qmtx);
 		BROADCAST(qagentcond);
+		UNLOCK(qmtx);
+
 		//Then sleep until we can add
 		LOCK(qmtx);
 		WAIT(qcond,qmtx);
@@ -265,7 +275,9 @@ int dsb_send(Event_t *evt, bool async)
 	{
 		//Wake up other threads...
 		//printf("Broadcasting...\n");
+		LOCK(qmtx);
 		BROADCAST(qagentcond);
+		UNLOCK(qmtx);
 	}
 
 	return ret;
@@ -280,7 +292,9 @@ int dsb_sendACTIVE(Event_t *evt)
 
 	//TODO CHECK RETURN VALUE FOR FULL QUEUES.
 
+	LOCK(qmtx);
 	BROADCAST(qcond);
+	UNLOCK(qmtx);
 
 	return ret;
 }
@@ -325,23 +339,7 @@ static void *dsb_proc_runthread(void *arg)
 
 	while (procisrunning)
 	{
-		//Process active queue
-		R_LOCK(qlock);
-		while (dsb_proc_single() == 1);
-		R_UNLOCK(qlock);
-
-		//printf("Thread waiting...\n");
-		BROADCAST(qagentcond); //TODO MAKE AGENT CONDITION
-
-		//Wait on condition
-		LOCK(qmtx);
-		while (procisrunning && (queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0))
-		{
-			WAIT(qcond,qmtx);
-		}
-		UNLOCK(qmtx);
-
-		//printf("Thread restart...\n");
+		dsb_proc_active();
 	}
 	return SUCCESS;
 }
@@ -380,7 +378,9 @@ int dsb_proc_run(unsigned int maxfreq)
 		move_active();
 		W_UNLOCK(qlock);
 
+		LOCK(qmtx);
 		BROADCAST(qcond);
+		UNLOCK(qmtx);
 	}
 	return SUCCESS;
 }
