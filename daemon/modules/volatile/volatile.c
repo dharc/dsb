@@ -210,6 +210,7 @@ HARC_t *vol_getharc(const NID_t *a, const NID_t *b, int create)
 		//Does this HARC entry match?
 		if ((dsb_nid_eq(a,&(res->harc.t1)) == 1) && (dsb_nid_eq(b, &(res->harc.t2)) == 1))
 		{
+			R_UNLOCK(vlock);
 			return &(res->harc);
 		}
 		//Move to next entry.

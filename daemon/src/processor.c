@@ -86,6 +86,12 @@ static int queue_insert(QUEUE_t q, Event_t *e)
 {
 	LOCK(qmtx);
 
+	//Oops, queue is full.
+	if (queue[q].q[queue[q].wix] != 0)
+	{
+		UNLOCK(qmtx);
+		return ERR_PROC_FULL;
+	}
 	queue[q].q[queue[q].wix] = e;
 	queue[q].wix = (queue[q].wix + 1) % QUEUE_SIZE;
 
@@ -204,24 +210,25 @@ static int dsb_proc_wait(const Event_t *evt)
 	{
 		return ERR_NOTSENT;
 	}
-	while (!(evt->flags & EFLAG_DONE))
+	while (procisrunning && !(evt->flags & EFLAG_DONE))
 	{
 		//Process active queue
 		R_LOCK(qlock);
 		while (dsb_proc_single() == 1);
 		R_UNLOCK(qlock);
 
-		printf("PROCWAIT waiting...\n");
+		//printf("PROCWAIT waiting...\n");
+		BROADCAST(qcond);
 
-		//Wait on condition
+		//Wait whilst running, nothing to do in active queue and event isn't complete.
 		LOCK(qmtx);
-		while (!(evt->flags & EFLAG_DONE) && queue[QUEUE_ACTIVE].rix == queue[QUEUE_ACTIVE].wix)
+		while (procisrunning && !(evt->flags & EFLAG_DONE) && queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0)
 		{
 			WAIT(qcond,qmtx);
 		}
 		UNLOCK(qmtx);
 
-		printf("PROCWAIT restart...\n");
+		//printf("PROCWAIT restart...\n");
 	}
 
 	return SUCCESS;
@@ -232,18 +239,25 @@ int dsb_send(Event_t *evt, bool async)
 	int ret;
 
 	evt->flags |= EFLAG_SENT;
-	ret = queue_insert(QUEUE_AGENT, evt);
+	//Insert and if queue full process and try again
+	while (procisrunning && queue_insert(QUEUE_AGENT, evt))
+	{
+		BROADCAST(qcond);
+		LOCK(qmtx);
+		WAIT(qcond,qmtx);
+		UNLOCK(qmtx);
+	}
 
 	//Need to block until done.
 	if (async == false)
 	{
-		//BROADCAST(qcond);
+		BROADCAST(qcond);
 		ret = dsb_proc_wait(evt);
 	}
 	else
 	{
 		//Wake up other threads...
-		printf("Broadcasting...\n");
+		//printf("Broadcasting...\n");
 		BROADCAST(qcond);
 	}
 
@@ -272,13 +286,21 @@ static void move_active()
 	{
 		type = e->type;
 	}
-	while (queue[QUEUE_AGENT].rix != queue[QUEUE_AGENT].wix)
+
+	while (e)
 	{
 		if (e->type == type)
 		{
-			queue_insert(QUEUE_ACTIVE,e);
+			//If full then stop and go back to processing active queue
+			if (queue_insert(QUEUE_ACTIVE,e))
+			{
+				return;
+			}
+			//Inserted into active queue so remove from agent.
 			queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] = 0;
 			queue[QUEUE_AGENT].rix = (queue[QUEUE_AGENT].rix + 1) % QUEUE_SIZE;
+
+			//Next...
 			e = queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix];
 		}
 		else
@@ -288,29 +310,9 @@ static void move_active()
 	}
 }
 
-/*
- * Get accurate clock time.
- */
-/*static long long getTicks()
-{
-	#ifdef UNIX
-	unsigned long long ticks;
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	ticks = ((unsigned long long)now.tv_sec) * (unsigned long long)1000000 + ((unsigned long long)now.tv_usec);
-	return ticks;
-	#endif
-
-	#ifdef WIN32
-	LARGE_INTEGER tks;
-	QueryPerformanceCounter(&tks);
-	return (((unsigned long long)tks.HighPart << 32) + (unsigned long long)tks.LowPart);
-	#endif
-}*/
-
 static void *dsb_proc_runthread(void *arg)
 {
-	printf("Thread active!\n");
+	//printf("Thread active!\n");
 
 	while (procisrunning)
 	{
@@ -319,18 +321,18 @@ static void *dsb_proc_runthread(void *arg)
 		while (dsb_proc_single() == 1);
 		R_UNLOCK(qlock);
 
-		printf("Thread waiting...\n");
+		//printf("Thread waiting...\n");
 		BROADCAST(qcond); //TODO MAKE AGENT CONDITION
 
 		//Wait on condition
 		LOCK(qmtx);
-		while (procisrunning && (queue[QUEUE_ACTIVE].rix == queue[QUEUE_ACTIVE].wix))
+		while (procisrunning && (queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0))
 		{
 			WAIT(qcond,qmtx);
 		}
 		UNLOCK(qmtx);
 
-		printf("Thread restart...\n");
+		//printf("Thread restart...\n");
 	}
 	return SUCCESS;
 }
@@ -341,7 +343,7 @@ int dsb_proc_run(unsigned int maxfreq)
 	int i;
 
 	procisrunning = 1;
-	printf("Creating threads\n");
+	//printf("Creating threads\n");
 
 	//Make some threads now
 	for (i=0; i<NUM_THREADS; i++)
@@ -356,16 +358,16 @@ int dsb_proc_run(unsigned int maxfreq)
 	{
 		//Wait if no agent events.
 		LOCK(qmtx);
-		while (procisrunning && (queue[QUEUE_AGENT].rix == queue[QUEUE_AGENT].wix))
+		while (procisrunning && (queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] == 0))
 		{
-			printf("Waiting for agent queue...\n");
+			//printf("Waiting for agent queue...\n");
 			WAIT(qcond,qmtx);
 		}
 		UNLOCK(qmtx);
 
 		//Must have write lock to move from agent to active queue
 		W_LOCK(qlock);
-		printf("MOVE ACTIVE\n");
+		//printf("MOVE ACTIVE\n");
 		move_active();
 		W_UNLOCK(qlock);
 

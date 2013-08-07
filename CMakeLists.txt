@@ -51,6 +51,9 @@ target_link_libraries(event-test dsbcommon)
 add_executable(router-test tests/router-test.c daemon/src/router.c)
 target_link_libraries(router-test dsbcommon)
 
+add_executable(system-perf tests/system-perf.c daemon/src/router.c daemon/src/processor.c daemon/src/harc_d.c daemon/modules/persistent/persistent.c daemon/modules/volatile/volatile.c)
+target_link_libraries(system-perf dsbcommon)
+
 add_executable(module-test tests/module-test.c)
 target_link_libraries(module-test dsbcommon dl)
 

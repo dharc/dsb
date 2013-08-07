@@ -33,6 +33,7 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 #include "dsb/common.h"
+#include <sys/time.h>
 
 int dsb_common_init()
 {
@@ -66,5 +67,25 @@ int dsb_common_final()
 	if (ret != SUCCESS) return ret;
 	ret = dsb_nid_final();
 	return ret;
+}
+
+/*
+ * Get accurate clock time.
+ */
+long long dsb_getTicks()
+{
+	#ifdef UNIX
+	unsigned long long ticks;
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	ticks = ((unsigned long long)now.tv_sec) * (unsigned long long)1000000 + ((unsigned long long)now.tv_usec);
+	return ticks;
+	#endif
+
+	#ifdef WIN32
+	LARGE_INTEGER tks;
+	QueryPerformanceCounter(&tks);
+	return (((unsigned long long)tks.HighPart << 32) + (unsigned long long)tks.LowPart);
+	#endif
 }
 

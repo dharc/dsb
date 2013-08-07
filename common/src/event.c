@@ -5,7 +5,7 @@
 #include <string.h>
 #include "dsb/core/thread.h"
 
-#define EVENT_POOL_SIZE	10000
+#define EVENT_POOL_SIZE	30000
 
 static struct Event *event_heap = 0;		//Single block for cache efficiency
 static struct Event **event_pool = 0;		//Free events in the heap
