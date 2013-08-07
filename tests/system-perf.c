@@ -62,7 +62,7 @@ void sigint(int s)
 
 static void test_system_avs()
 {
-	int i;
+	int i,j;
 	long long startticks;
 	long long diffticks;
 	NID_t a,b;
@@ -122,6 +122,26 @@ static void test_system_avs()
 		CHECK(b.ll == 2*i);
 	}
 
+	//----- Now repeat same event
+	startticks = dsb_getTicks();
+
+	dsb_iton(55,&a);
+	for (j=0; j<20; j++)
+	{
+	for (i=0; i<AVS_COUNT_LARGE; i++)
+	{
+		Event_t *e;
+		e = dsb_event(EVENT_SET,&a,&a,0);
+		dsb_iton(i,&e->value);
+		dsb_send(e,true);
+	}
+	}
+
+	dsb_get(&a,&a,&b);
+	CHECK(b.ll == AVS_COUNT_LARGE-1);
+
+	diffticks = dsb_getTicks() - startticks;
+	printf(" same count -- %d avs/s\n", (int)(((float)AVS_COUNT_LARGE*20.0) / ((float)diffticks / (float)TICKS_PER_SECOND)));
 
 
 	DONE;

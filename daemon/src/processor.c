@@ -65,6 +65,7 @@ MUTEX(qmtx);
 RWLOCK(qlock);
 COND(qcond);
 COND(qagentcond);
+COND(qwaitcond);
 
 typedef enum
 {
@@ -227,18 +228,16 @@ static int dsb_proc_wait(const Event_t *evt)
 	{
 		return ERR_NOTSENT;
 	}
-	while (procisrunning && !(evt->flags & EFLAG_DONE))
-	{
-		//printf("Waiting for event\n");
-		dsb_proc_active();
 
-		//Wait whilst running, nothing to do in active queue and event isn't complete.
-		LOCK(qmtx);
-		//while (procisrunning && !(evt->flags & EFLAG_DONE) && queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] == 0)
-		//	WAIT(qcond,qmtx);
-		BROADCAST(qagentcond);
-		UNLOCK(qmtx);
-	}
+	//Make sure agent is prompted.
+	LOCK(qmtx);
+	BROADCAST(qagentcond);
+	UNLOCK(qmtx);
+
+	LOCK(qmtx);
+	while (procisrunning && !(evt->flags & EFLAG_DONE))
+		WAIT(qwaitcond,qmtx);
+	UNLOCK(qmtx);
 
 	return SUCCESS;
 }
@@ -253,16 +252,16 @@ int dsb_send(Event_t *evt, bool async)
 	{
 		//printf("QUEUE FULL... processing\n");
 		dsb_proc_active();
+
 		LOCK(qmtx);
-		while (procisrunning && queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] == 0)
-			WAIT(qcond,qmtx);
+		while (procisrunning && queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].wix] != 0)
+			WAIT(qagentcond,qmtx);
 		UNLOCK(qmtx);
 	}
 
 	//Need to block until done.
 	if (async == false)
 	{
-		//BROADCAST(qagentcond);
 		ret = dsb_proc_wait(evt);
 	}
 	else
@@ -271,6 +270,7 @@ int dsb_send(Event_t *evt, bool async)
 		//printf("Broadcasting...\n");
 		LOCK(qmtx);
 		BROADCAST(qagentcond);
+		//BROADCAST(qcond);
 		UNLOCK(qmtx);
 	}
 
@@ -366,10 +366,15 @@ int dsb_proc_run(unsigned int maxfreq)
 		LOCK(qmtx);
 		while (procisrunning && ((queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] == 0)))
 		{
-			//printf("Waiting for agent queue...\n");
+			//Make sure any blocking sends are checked...
+			BROADCAST(qwaitcond);
 			WAIT(qagentcond,qmtx);
 		}
 		UNLOCK(qmtx);
+
+		//LOCK(qmtx);
+		//BROADCAST(qwaitcond);
+		//UNLOCK(qmtx);
 
 		//Must have write lock to move from agent to active queue
 		W_LOCK(qlock);
