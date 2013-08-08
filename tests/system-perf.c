@@ -54,7 +54,7 @@ extern int dsb_send(Event_t *, bool);
 
 #define AVS_COUNT_SMALL		10000
 #define AVS_COUNT_LARGE		1000000
-#define AVG_COUNT			100000
+#define AVG_COUNT			200000
 
 void sigint(int s)
 {

@@ -44,18 +44,23 @@ either expressed or implied, of the FreeBSD Project.
 #if defined(UNIX) && !defined(NO_THREADS)
 #define R_LOCK(A) pthread_rwlock_rdlock(&A)
 #define W_LOCK(A) pthread_rwlock_wrlock(&A)
+#define TRY_R_LOCK(A) pthread_rwlock_tryrdlock(&A)
+#define TRY_W_LOCK(A) pthread_rwlock_trywrlock(&A)
 #define R_UNLOCK(A) pthread_rwlock_unlock(&A)
 #define W_UNLOCK(A) pthread_rwlock_unlock(&A)
 #define LOCK(A) pthread_mutex_lock(&A)
 #define UNLOCK(A) pthread_mutex_unlock(&A)
 
 #define WAIT(A,B) pthread_cond_wait(&A,&B);
+//#define WAITTIMEOUT(A,B) pthread_cond_wait(&A,&B);
 #define BROADCAST(A) pthread_cond_broadcast(&A);
 #define SIGNAL(A) pthread_cond_signal(&A);
 
 #define RWLOCK(A) static pthread_rwlock_t A = PTHREAD_RWLOCK_INITIALIZER
 #define MUTEX(A) static pthread_mutex_t A = PTHREAD_MUTEX_INITIALIZER
 #define COND(A) static pthread_cond_t A = PTHREAD_COND_INITIALIZER
+
+#define YIELD sched_yield()
 #else
 #define R_LOCK(A)
 #define W_LOCK(A)
