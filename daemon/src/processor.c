@@ -289,7 +289,9 @@ static void move_active(EVENTTYPE_t type, int num)
 {
 	Event_t *e;
 
+	LOCK(queue[QUEUE_AGENT].mtx);
 	e = queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix];
+	UNLOCK(queue[QUEUE_AGENT].mtx);
 
 	while (e)
 	{
@@ -300,12 +302,15 @@ static void move_active(EVENTTYPE_t type, int num)
 			{
 				return;
 			}
+
 			//Inserted into active queue so remove from agent.
+			LOCK(queue[QUEUE_AGENT].mtx);
 			queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] = 0;
 			queue[QUEUE_AGENT].rix = (queue[QUEUE_AGENT].rix + 1) % QUEUE_SIZE;
-
 			//Next...
 			e = queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix];
+			UNLOCK(queue[QUEUE_AGENT].mtx);
+
 			--num;
 		}
 		else
@@ -350,9 +355,9 @@ static void *dsb_proc_runthread(void *arg)
 				type = e->type;
 			}
 			//Remove some events before restarting threads
-			move_active(type,NUM_THREADS*ACTIVE_RESTART_SCALER);
-			W_UNLOCK(qlock);
 			move_active(type,QUEUE_SIZE);
+			W_UNLOCK(qlock);
+			//move_active(type,QUEUE_SIZE);
 
 			LOCK(queue[QUEUE_ACTIVE].mtx);
 			BROADCAST(qcond);
