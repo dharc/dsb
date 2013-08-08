@@ -54,6 +54,7 @@ extern int dsb_send(Event_t *, bool);
 
 #define AVS_COUNT_SMALL		10000
 #define AVS_COUNT_LARGE		1000000
+#define AVG_COUNT			100000
 
 void sigint(int s)
 {
@@ -62,7 +63,7 @@ void sigint(int s)
 
 static void test_system_avs()
 {
-	int i,j;
+	int i;
 	long long startticks;
 	long long diffticks;
 	NID_t a,b;
@@ -87,7 +88,7 @@ static void test_system_avs()
 	CHECK(b.ll == 0);
 
 	diffticks = dsb_getTicks() - startticks;
-	printf(" large count -- %d avs/s\n", (int)((float)AVS_COUNT_LARGE / ((float)diffticks / (float)TICKS_PER_SECOND)));
+	printf(" large count -- %.3f Mavs/s\n", ((float)AVS_COUNT_LARGE / ((float)diffticks / (float)TICKS_PER_SECOND)) / 1000000.0f);
 
 	for (i=100; i<200; i++)
 	{
@@ -113,7 +114,7 @@ static void test_system_avs()
 	CHECK(b.ll == 0);
 
 	diffticks = dsb_getTicks() - startticks;
-	printf(" small count -- %d avs/s\n", (int)((float)AVS_COUNT_SMALL / ((float)diffticks / (float)TICKS_PER_SECOND)));
+	printf(" small count -- %.3f Mavs/s\n", ((float)AVS_COUNT_SMALL / ((float)diffticks / (float)TICKS_PER_SECOND)) / 1000000.0f);
 
 	for (i=100; i<200; i++)
 	{
@@ -122,27 +123,33 @@ static void test_system_avs()
 		CHECK(b.ll == 2*i);
 	}
 
-	//----- Now repeat same event
+	DONE;
+}
+
+static void test_system_avg()
+{
+	int i,j;
+	long long startticks;
+	long long diffticks;
+	NID_t a,b;
 	startticks = dsb_getTicks();
 
 	dsb_iton(55,&a);
-	for (j=0; j<20; j++)
+	for (j=0; j<100; j++)
 	{
-	for (i=0; i<AVS_COUNT_LARGE; i++)
+	for (i=0; i<AVG_COUNT; i++)
 	{
 		Event_t *e;
-		e = dsb_event(EVENT_SET,&a,&a,0);
-		dsb_iton(i,&e->value);
+		e = dsb_event(EVENT_GET,&a,&a,0);
 		dsb_send(e,true);
 	}
 	}
 
 	dsb_get(&a,&a,&b);
-	CHECK(b.ll == AVS_COUNT_LARGE-1);
+	CHECK(b.ll == 2*55);
 
 	diffticks = dsb_getTicks() - startticks;
-	printf(" same count -- %d avs/s\n", (int)(((float)AVS_COUNT_LARGE*20.0) / ((float)diffticks / (float)TICKS_PER_SECOND)));
-
+	printf(" -- %.3f Mavg/s\n", (((float)AVG_COUNT*100.0) / ((float)diffticks / (float)TICKS_PER_SECOND)) / 1000000.0f);
 
 	DONE;
 }
@@ -150,6 +157,7 @@ static void test_system_avs()
 static void *test_thread(void *arg)
 {
 	dsb_test(test_system_avs);
+	dsb_test(test_system_avg);
 
 	dsb_proc_stop();
 
