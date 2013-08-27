@@ -50,7 +50,7 @@ int dsb_proc_debug(void *sock);
  * @param async 0 blocks and 1 returns immediately.
  * @return SUCCESS, ERR_NOROUTE or ERR_INVALIDEVENT
  */
-int dsb_proc_send(Event_t *evt, bool async);
+int dsb_proc_send(Event_t *evt, int q);
 
 /**
  * Main event scheduler. Only returns when explicitly terminated.

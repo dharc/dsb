@@ -64,7 +64,11 @@ struct EventQueue
 MUTEX(qmtx);
 COND(qcond);
 
-static struct EventQueue queue;
+#define QUEUE_AGENT		0
+#define QUEUE_ACTIVE	1
+
+//Two queues, one for agents and one for the active queue
+static struct EventQueue queue[2];
 static int procisrunning;
 static void *debugsock;
 
@@ -74,12 +78,12 @@ static void *dsb_proc_runthread(void *arg);
 /*
  * Thread-safe event queue insertion.
  */
-static int queue_insert(Event_t *e)
+static int queue_insert(Event_t *e, int q)
 {
 	LOCK(qmtx);
 
-	queue.q[queue.wix] = e;
-	queue.wix = (queue.wix + 1) % QUEUE_SIZE;
+	queue[q].q[queue[q].wix] = e;
+	queue[q].wix = (queue[q].wix + 1) % QUEUE_SIZE;
 
 	UNLOCK(qmtx);
 
@@ -87,7 +91,9 @@ static int queue_insert(Event_t *e)
 }
 
 /*
- * Thread-safe event queue removal.
+ * Thread-safe event queue removal. Note that this does not take
+ * a queue number as it always takes from active queue if it can
+ * and then the agent queue if not.
  */
 static Event_t *queue_pop()
 {
@@ -96,12 +102,23 @@ static Event_t *queue_pop()
 	LOCK(qmtx);
 
 	//Are there any events left to read.
-	res = queue.q[queue.rix];
+	res = queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix];
 
 	if (res != 0)
 	{
-		queue.q[queue.rix] = 0;
-		queue.rix = (queue.rix + 1) % QUEUE_SIZE;
+		queue[QUEUE_ACTIVE].q[queue[QUEUE_ACTIVE].rix] = 0;
+		queue[QUEUE_ACTIVE].rix = (queue[QUEUE_ACTIVE].rix + 1) % QUEUE_SIZE;
+	}
+	else
+	{
+		//Need to pop an event from the agent queue.
+		res = queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix];
+
+		if (res != 0)
+		{
+			queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] = 0;
+			queue[QUEUE_AGENT].rix = (queue[QUEUE_AGENT].rix + 1) % QUEUE_SIZE;
+		}
 	}
 
 	UNLOCK(qmtx);
@@ -111,16 +128,21 @@ static Event_t *queue_pop()
 
 int dsb_proc_init()
 {
-	queue.q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
-	memset(queue.q,0,sizeof(Event_t*)*QUEUE_SIZE);
-	queue.rix = 0;
-	queue.wix = 0;
+	queue[0].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
+	queue[1].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
+	memset(queue[0].q,0,sizeof(Event_t*)*QUEUE_SIZE);
+	memset(queue[1].q,0,sizeof(Event_t*)*QUEUE_SIZE);
+	queue[0].rix = 0;
+	queue[0].wix = 0;
+	queue[1].rix = 0;
+	queue[1].wix = 0;
 	return SUCCESS;
 }
 
 int dsb_proc_final()
 {
-	free(queue.q);
+	free(queue[0].q);
+	free(queue[1].q);
 	return SUCCESS;
 }
 
@@ -128,12 +150,6 @@ int dsb_proc_debug(void *sock)
 {
 	debugsock = sock;
 	return SUCCESS;
-}
-
-//Map this to local processor send implementation.
-int dsb_send(Event_t *evt, bool async)
-{
-	return dsb_proc_send(evt,async);
 }
 
 int dsb_proc_stop()
@@ -204,12 +220,10 @@ static int dsb_proc_wait(const Event_t *evt)
 	return SUCCESS;
 }
 
-int dsb_proc_send(Event_t *evt, bool async)
+//Map this to local processor send implementation.
+int dsb_send(Event_t *evt, bool async)
 {
-	int ret;
-
-	evt->flags |= EFLAG_SENT;
-	ret = queue_insert(evt);
+	int ret = dsb_proc_send(evt,QUEUE_AGENT);
 
 	//Need to block until done.
 	if (async == false)
@@ -224,6 +238,12 @@ int dsb_proc_send(Event_t *evt, bool async)
 	}
 
 	return ret;
+}
+
+int dsb_proc_send(Event_t *evt, int q)
+{
+	evt->flags |= EFLAG_SENT;
+	return queue_insert(evt,q);
 }
 
 /*
@@ -299,7 +319,7 @@ static void *dsb_proc_runthread(void *arg)
 
 		//Wait on condition
 		LOCK(qmtx);
-		while (queue.rix == queue.wix)
+		while (queue[QUEUE_ACTIVE].rix == queue[QUEUE_ACTIVE].wix)
 		{
 			WAIT(qcond,qmtx);
 		}
