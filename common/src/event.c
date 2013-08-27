@@ -3,17 +3,15 @@
 #include "dsb/pack.h"
 #include <malloc.h>
 #include <string.h>
+#include "dsb/core/thread.h"
 
-#if defined(UNIX) && !defined(NO_THREADS)
-#include <pthread.h>
-static pthread_mutex_t evt_pool_mtx = PTHREAD_MUTEX_INITIALIZER;
-#endif //LINUX THREADED
-
-#define EVENT_POOL_SIZE	10000
+#define EVENT_POOL_SIZE	30000
 
 static struct Event *event_heap = 0;		//Single block for cache efficiency
 static struct Event **event_pool = 0;		//Free events in the heap
 static unsigned int event_lastalloc = 0;
+
+MUTEX(evt_pool_mtx);
 
 int dsb_event_init()
 {
@@ -154,32 +152,24 @@ Event_t *dsb_event_allocate()
 {
 	struct Event *res;
 
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_lock(&evt_pool_mtx);
-	#endif
+	LOCK(evt_pool_mtx);
 
 	//NOTE: No safety checks
 	res = event_pool[event_lastalloc++];
 
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_unlock(&evt_pool_mtx);
-	#endif
+	UNLOCK(evt_pool_mtx);
 
 	return res;
 }
 
 void dsb_event_free(struct Event *evt)
 {
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_lock(&evt_pool_mtx);
-	#endif
+	LOCK(evt_pool_mtx);
 
 	//NOTE: No safety checks
 	event_pool[--event_lastalloc] = evt;
 
-	#if defined(UNIX) && !defined(NO_THREADS)
-	pthread_mutex_unlock(&evt_pool_mtx);
-	#endif
+	UNLOCK(evt_pool_mtx);
 }
 
 

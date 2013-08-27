@@ -47,7 +47,7 @@ void test_proc_send()
 
 	evt.type = EVENT_GET;
 	evt.value.ll = 555;
-	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
+	CHECK(dsb_sendACTIVE(&evt) == SUCCESS);
 	t = queue_pop(1);
 	CHECK(t != 0);
 	if (t != 0)
@@ -57,8 +57,8 @@ void test_proc_send()
 
 	evt.type = EVENT_DEFINE;
 	evt.value.ll = 777;
-	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
-	t = queue_pop(0);
+	CHECK(dsb_sendACTIVE(&evt) == SUCCESS);
+	t = queue_pop(1);
 	CHECK(t != 0);
 	if (t != 0)
 	{
@@ -67,8 +67,8 @@ void test_proc_send()
 
 	evt.type = EVENT_DEP;
 	evt.value.ll = 888;
-	CHECK(dsb_proc_send(&evt,true) == SUCCESS);
-	t = queue_pop(2);
+	CHECK(dsb_sendACTIVE(&evt) == SUCCESS);
+	t = queue_pop(1);
 	CHECK(t != 0);
 	if (t != 0)
 	{

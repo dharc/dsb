@@ -44,6 +44,8 @@ either expressed or implied, of the FreeBSD Project.
 #include "dsb/names.h"
 #include "dsb/xfunc.h"
 
+#define TICKS_PER_SECOND	1000000
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -51,6 +53,8 @@ extern "C"
 
 int dsb_common_init();
 int dsb_common_final();
+
+long long dsb_getTicks();
 
 #ifdef __cplusplus
 }

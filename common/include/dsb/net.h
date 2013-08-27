@@ -99,6 +99,8 @@ int dsb_net_send(void *sock, int msgtype, void *msg, int size);
  */
 int dsb_net_poll(unsigned int ms);
 
+int dsb_net_listen(int port);
+
 /**
  * Register a callback for a particular message type. The callback is called
  * when a message of that type is received (by dsb_net_poll).

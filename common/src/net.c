@@ -84,6 +84,7 @@ struct DSBNetConnection
 static struct DSBNetConnection *connections[MAX_CONNECTIONS];
 static fd_set fdread;
 static fd_set fderror;
+static int ssock = INVALID_SOCKET;
 
 struct NetMessages
 {
@@ -117,7 +118,82 @@ int dsb_net_init()
 
 int dsb_net_final()
 {
+	if (ssock)
+	{
+		close(ssock);
+	}
+	//TODO CLOSE ALL CONNECTIONS.
 	return 0;
+}
+
+#pragma GCC diagnostic ignored "-Wunused-value"
+static int net_accept()
+{
+	struct sockaddr_in remote;
+	int csock;
+	int rsize = sizeof(struct sockaddr_in);
+
+	csock = accept(ssock, (struct sockaddr*)&remote, (socklen_t*)&rsize);
+
+	if (csock == INVALID_SOCKET)
+	{
+		return DSB_ERROR(ERR_NETACCEPT, 0);
+	}
+
+	//Non-block from here.
+	#ifdef UNIX
+	fcntl(csock, F_SETFL, O_NONBLOCK);
+	#endif
+
+	DSB_INFO(INFO_NETACCEPT, 0);
+	dsb_net_add(csock);
+	return SUCCESS;
+}
+
+#pragma GCC diagnostic ignored "-Wunused-value"
+int dsb_net_listen(int port)
+{
+	struct sockaddr_in localAddr;
+	int rc;
+
+	ssock = socket(AF_INET, SOCK_STREAM, 0);
+	if (ssock == INVALID_SOCKET) {
+		return DSB_ERROR(ERR_NET,0);
+	}
+
+	//Specify listen port and address
+	//memset(&s_localAddr, 0, sizeof(s_localAddr));
+	localAddr.sin_family = AF_INET;
+	localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	localAddr.sin_port = htons(port);
+
+	rc = bind(ssock, (struct sockaddr*)&localAddr, sizeof(localAddr));
+
+	if (rc == SOCKET_ERROR) {
+		#ifndef WIN32
+		close(ssock);
+		#else
+		closesocket(ssock);
+		#endif
+		ssock = INVALID_SOCKET;
+		return DSB_ERROR(ERR_NETLISTEN,0);
+	}
+
+	//Attempt to start listening for connection requests.
+	rc = listen(ssock, 1);
+
+	if (rc == SOCKET_ERROR) {
+		#ifndef WIN32
+		close(ssock);
+		#else
+		closesocket(ssock);
+		#endif
+		ssock = INVALID_SOCKET;
+		return DSB_ERROR(ERR_NETLISTEN,0);
+	}
+
+	DSB_INFO(INFO_NETLISTEN,0);
+	return SUCCESS;
 }
 
 void *dsb_net_connect(const char *url)
@@ -222,6 +298,13 @@ static int set_descriptors()
 	//Reset all file descriptors
 	FD_ZERO(&fdread);
 	FD_ZERO(&fderror);
+
+	if (ssock)
+	{
+		FD_SET(ssock, &fdread);
+		FD_SET(ssock, &fderror);
+		n = ssock;
+	}
 
 	//Set the file descriptors for each client
 	for (i=0; i<MAX_CONNECTIONS; i++) {
@@ -379,6 +462,15 @@ int dsb_net_poll(unsigned int ms)
 		return SUCCESS;
 	}
 
+	if (ssock)
+	{
+		//Do we have a connection request?
+		if (FD_ISSET(ssock, &fdread))
+		{
+			net_accept();
+		}
+	}
+
 	//Also check each clients socket to see if any messages or errors are waiting
 	for (i=0; i<MAX_CONNECTIONS; i++) {
 		#ifdef WIN32
@@ -386,6 +478,7 @@ int dsb_net_poll(unsigned int ms)
 		#else
 		if ((connections[i] != 0) && (connections[i]->sockfd >= 0)) {
 		#endif
+
 			//If message received from this client then deal with it
 			if (FD_ISSET(connections[i]->sockfd, &fdread)) {
 				//Loop until no more messages to read.

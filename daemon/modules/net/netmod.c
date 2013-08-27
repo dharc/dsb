@@ -65,84 +65,21 @@ typedef int socklen_t;
 #include <stdio.h>
 
 Module_t netmod;
-static int ssock = INVALID_SOCKET;
-static fd_set fdread;
-static fd_set fderror;
 
 int net_msg_event(int sock, void *data);
 int net_cb_base(void *sock, void *data);
 //int net_debug_request(void *sock, void *data);
 int net_handler(Event_t *evt);
 
-
-#pragma GCC diagnostic ignored "-Wunused-value"
-static int net_accept()
+static void *net_update(void *arg)
 {
-	struct sockaddr_in remote;
-	int csock;
-	int rsize = sizeof(struct sockaddr_in);
-
-	csock = accept(ssock, (struct sockaddr*)&remote, (socklen_t*)&rsize);
-
-	if (csock == INVALID_SOCKET)
+	while (1)
 	{
-		return DSB_ERROR(ERR_NETACCEPT, 0);
+		//Poll all connection sockets.
+		dsb_net_poll(1000);
 	}
 
-	//Non-block from here.
-	#ifdef UNIX
-	fcntl(csock, F_SETFL, O_NONBLOCK);
-	#endif
-
-	DSB_INFO(INFO_NETACCEPT, 0);
-	dsb_net_add(csock);
-	return SUCCESS;
-}
-
-#pragma GCC diagnostic ignored "-Wunused-value"
-static int net_listen(int port)
-{
-	struct sockaddr_in localAddr;
-	int rc;
-
-	ssock = socket(AF_INET, SOCK_STREAM, 0);
-	if (ssock == INVALID_SOCKET) {
-		return DSB_ERROR(ERR_NET,0);
-	}
-
-	//Specify listen port and address
-	//memset(&s_localAddr, 0, sizeof(s_localAddr));
-	localAddr.sin_family = AF_INET;
-	localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	localAddr.sin_port = htons(port);
-
-	rc = bind(ssock, (struct sockaddr*)&localAddr, sizeof(localAddr));
-
-	if (rc == SOCKET_ERROR) {
-		#ifndef WIN32
-		close(ssock);
-		#else
-		closesocket(ssock);
-		#endif
-		ssock = INVALID_SOCKET;
-		return DSB_ERROR(ERR_NETLISTEN,0);
-	}
-
-	//Attempt to start listening for connection requests.
-	rc = listen(ssock, 1);
-
-	if (rc == SOCKET_ERROR) {
-		#ifndef WIN32
-		close(ssock);
-		#else
-		closesocket(ssock);
-		#endif
-		ssock = INVALID_SOCKET;
-		return DSB_ERROR(ERR_NETLISTEN,0);
-	}
-
-	DSB_INFO(INFO_NETLISTEN,0);
-	return SUCCESS;
+	return 0;
 }
 
 int net_init(const NID_t *base)
@@ -156,51 +93,17 @@ int net_init(const NID_t *base)
 	//dsb_net_callback(DSBNET_DEBUGGER,net_debug_request);
 
 	//Set up listener socket.
-	net_listen(5555);
+	dsb_net_listen(5555);
+
+	pthread_t nett;
+	pthread_create(&nett,0,net_update,0);
 
 	return SUCCESS;
 }
 
 int net_final()
 {
-	//Close listener socket.
-	close(ssock);
-
 	dsb_net_final();
-	return SUCCESS;
-}
-
-int net_update()
-{
-	int selres;
-	struct timeval block;
-
-	//Are we listening
-	if (ssock != INVALID_SOCKET)
-	{
-		//Poll listener socket
-		FD_ZERO(&fdread);
-		FD_ZERO(&fderror);
-		FD_SET(ssock, &fdread);
-		FD_SET(ssock, &fderror);
-
-		block.tv_sec = 0;
-		block.tv_usec = 0;
-		selres = select(ssock+1, &fdread, 0, &fderror, &block);
-
-		if (selres == 1)
-		{
-			//Do we have a connection request?
-			if (FD_ISSET(ssock, &fdread))
-			{
-				net_accept();
-			}
-		}
-	}
-
-	//Poll all connection sockets.
-	dsb_net_poll(0);
-
 	return SUCCESS;
 }
 
@@ -210,7 +113,7 @@ int net_update()
 Module_t *dsb_network_module()
 {
 	netmod.init = net_init;
-	netmod.update = net_update;
+	netmod.update = 0;
 	netmod.final = net_final;
 	netmod.ups = 1000;
 	return &netmod;
