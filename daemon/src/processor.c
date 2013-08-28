@@ -47,6 +47,7 @@ either expressed or implied, of the FreeBSD Project.
 #include <string.h>
 
 #define QUEUE_SIZE					10000
+#define QUEUE_COUNT					3
 #define NUM_THREADS					2
 #define ACTIVE_RESTART_SCALER		100
 
@@ -64,19 +65,18 @@ struct EventQueue
 };
 
 MUTEX(qwaitmtx);
+MUTEX(qactivelock);
+MUTEX(qagentlock);
 RWLOCK(qlock);
-COND(qcond);
+COND(qactivecond);
 COND(qagentcond);
 COND(qwaitcond);
 
-typedef enum
-{
-	QUEUE_AGENT=0,
-	QUEUE_ACTIVE,
-	QUEUE_END
-} QUEUE_t;
+static int q_current;
+static int q_read;
+static int q_write;
 
-static struct EventQueue queue[QUEUE_END];
+static struct EventQueue queue[QUEUE_COUNT];
 static int procisrunning;
 static void *debugsock;
 
@@ -86,7 +86,7 @@ static void *dsb_proc_runthread(void *arg);
 /*
  * Thread-safe event queue insertion.
  */
-static int queue_insert(QUEUE_t q, Event_t *e)
+static int queue_insert(int q, Event_t *e)
 {
 	LOCK(queue[q].mtx);
 
@@ -107,7 +107,7 @@ static int queue_insert(QUEUE_t q, Event_t *e)
 /*
  * Thread-safe event queue removal.
  */
-static Event_t *queue_pop(QUEUE_t q)
+static Event_t *queue_pop(int q)
 {
 	Event_t *res = 0;
 
@@ -129,24 +129,25 @@ static Event_t *queue_pop(QUEUE_t q)
 
 int dsb_proc_init()
 {
-	queue[QUEUE_AGENT].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
-	memset(queue[QUEUE_AGENT].q,0,sizeof(Event_t*)*QUEUE_SIZE);
-	queue[QUEUE_AGENT].rix = 0;
-	queue[QUEUE_AGENT].wix = 0;
-	pthread_mutex_init(&queue[QUEUE_AGENT].mtx,0);
+	int i;
 
-	queue[QUEUE_ACTIVE].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
-	memset(queue[QUEUE_ACTIVE].q,0,sizeof(Event_t*)*QUEUE_SIZE);
-	queue[QUEUE_ACTIVE].rix = 0;
-	queue[QUEUE_ACTIVE].wix = 0;
-	pthread_mutex_init(&queue[QUEUE_ACTIVE].mtx,0);
+	for (i=0; i<QUEUE_COUNT; ++i)
+	{
+		queue[i].q = malloc(sizeof(Event_t*) * QUEUE_SIZE);
+		memset(queue[i].q,0,sizeof(Event_t*)*QUEUE_SIZE);
+		queue[i].rix = 0;
+		queue[i].wix = 0;
+		pthread_mutex_init(&queue[i].mtx,0);
+	}
+
 	return SUCCESS;
 }
 
 int dsb_proc_final()
 {
-	free(queue[QUEUE_AGENT].q);
-	free(queue[QUEUE_ACTIVE].q);
+	free(queue[0].q);
+	free(queue[1].q);
+	free(queue[2].q);
 	return SUCCESS;
 }
 
@@ -159,7 +160,7 @@ int dsb_proc_debug(void *sock)
 int dsb_proc_stop()
 {
 	procisrunning = 0;
-	BROADCAST(qcond);
+	BROADCAST(qactivecond);
 	BROADCAST(qagentcond);
 	return SUCCESS;
 }
@@ -171,7 +172,9 @@ static int dsb_proc_single()
 	Event_t *e;
 
 	//Choose an event
-	e = queue_pop(QUEUE_ACTIVE);
+	LOCK(qactivelock);
+	e = queue_pop(q_current);
+	UNLOCK(qactivelock);
 	if (e == 0)
 	{
 		return 0;
@@ -229,36 +232,26 @@ static int dsb_proc_wait(const Event_t *evt)
 int dsb_send(Event_t *evt, bool async)
 {
 	int ret = 0;
+	int q = (evt->type >> 8) ? q_read : q_write;
 
 	evt->flags |= EFLAG_SENT;
+
+	LOCK(qagentlock);
+
 	//Insert and if queue full process and try again
-	while (procisrunning && queue_insert(QUEUE_AGENT, evt))
+	while (procisrunning && queue_insert(q, evt))
 	{
-		//printf("QUEUE FULL... processing\n");
-		//dsb_proc_active();
+		UNLOCK(qagentlock);
 
-		LOCK(queue[QUEUE_ACTIVE].mtx);
-		WAIT(qcond,queue[QUEUE_ACTIVE].mtx);
-		UNLOCK(queue[QUEUE_ACTIVE].mtx);
+		LOCK(qwaitmtx);
+		WAIT(qwaitcond,qwaitmtx);
+		UNLOCK(qwaitmtx);
 
-		//LOCK(queue[QUEUE_AGENT].mtx);
-		//while (procisrunning && queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].wix] != 0)
-		//	WAIT(qagentcond,queue[QUEUE_AGENT].mtx);
-		//UNLOCK(queue[QUEUE_AGENT].mtx);
+		LOCK(qagentlock);
 	}
 
-	//Check if agent thread has write lock
-	//if (TRY_R_LOCK(qlock))
-	//{
-		//If yes then signal the agent.
-		LOCK(queue[QUEUE_AGENT].mtx);
-		SIGNAL(qagentcond);
-		UNLOCK(queue[QUEUE_AGENT].mtx);
-	//}
-	//else
-	//{
-	//	R_UNLOCK(qlock);
-	//}
+	SIGNAL(qagentcond);
+	UNLOCK(qagentlock);
 
 	//Need to block until done.
 	if (async == false)
@@ -274,7 +267,7 @@ int dsb_sendACTIVE(Event_t *evt)
 	int ret;
 
 	evt->flags |= EFLAG_SENT;
-	ret = queue_insert(QUEUE_ACTIVE, evt);
+	ret = queue_insert(q_current, evt);
 
 	//TODO CHECK RETURN VALUE FOR FULL QUEUES.
 
@@ -285,48 +278,16 @@ int dsb_sendACTIVE(Event_t *evt)
 	return ret;
 }
 
-static void move_active(EVENTTYPE_t type, int num)
+static void swap_queues()
 {
-	Event_t *e;
-
-	LOCK(queue[QUEUE_AGENT].mtx);
-	e = queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix];
-	UNLOCK(queue[QUEUE_AGENT].mtx);
-
-	while (e)
-	{
-		if (e->type == type)
-		{
-			//If full then stop and go back to processing active queue
-			if (queue_insert(QUEUE_ACTIVE,e))
-			{
-				return;
-			}
-
-			//Inserted into active queue so remove from agent.
-			LOCK(queue[QUEUE_AGENT].mtx);
-			queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] = 0;
-			queue[QUEUE_AGENT].rix = (queue[QUEUE_AGENT].rix + 1) % QUEUE_SIZE;
-			//Next...
-			e = queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix];
-			UNLOCK(queue[QUEUE_AGENT].mtx);
-
-			--num;
-		}
-		else
-		{
-			break;
-		}
-
-		if (num <= 0) return;
-	}
+	int q = q_current;
+	q_current = (q_current + 1) % QUEUE_COUNT;
+	if (q_read == q_current) q_read = q;
+	else q_write = q;
 }
 
 static void *dsb_proc_runthread(void *arg)
 {
-	Event_t *e;
-	EVENTTYPE_t type = EVENT_INVALID;
-
 	while (procisrunning)
 	{
 		//Process active queue
@@ -342,30 +303,37 @@ static void *dsb_proc_runthread(void *arg)
 			UNLOCK(qwaitmtx);
 
 			//Wait for agent events......
-			LOCK(queue[QUEUE_AGENT].mtx);
-			while (procisrunning
-					&& ((queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix] == 0)))
-				WAIT(qagentcond,queue[QUEUE_AGENT].mtx);
-			UNLOCK(queue[QUEUE_AGENT].mtx);
-
-			//Select next type of agent event
-			e = queue[QUEUE_AGENT].q[queue[QUEUE_AGENT].rix];
-			if (e)
+			LOCK(qagentlock);
+			while (procisrunning)
 			{
-				type = e->type;
+				//Swap and swap again if still empty.
+				swap_queues();
+				if (queue[q_current].q[queue[q_current].rix] == 0)
+				{
+					swap_queues();
+				} else break;
+				if (queue[q_current].q[queue[q_current].rix] == 0)
+				{
+					WAIT(qagentcond,qagentlock);
+				} else break;
 			}
-			//Remove some events before restarting threads
-			move_active(type,QUEUE_SIZE);
-			W_UNLOCK(qlock);
-			//move_active(type,QUEUE_SIZE);
+			UNLOCK(qagentlock);
 
-			LOCK(queue[QUEUE_ACTIVE].mtx);
-			BROADCAST(qcond);
-			UNLOCK(queue[QUEUE_ACTIVE].mtx);
+
+			W_UNLOCK(qlock);
+
+			//Wake up all other queue threads.
+			LOCK(qactivelock);
+			BROADCAST(qactivecond);
+			UNLOCK(qactivelock);
 		}
 		else
 		{
-			YIELD;
+			LOCK(qactivelock);
+			//while (procisrunning
+			//		&& ((queue[q_current].q[queue[q_current].rix] == 0)))
+			WAIT(qactivecond,qactivelock);
+			UNLOCK(qactivelock);
 		}
 	}
 	return SUCCESS;
