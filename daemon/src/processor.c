@@ -48,7 +48,7 @@ either expressed or implied, of the FreeBSD Project.
 
 #define QUEUE_SIZE					10000
 #define QUEUE_COUNT					3
-#define NUM_THREADS					2
+#define NUM_THREADS					3
 #define ACTIVE_RESTART_SCALER		100
 
 //TODO Need to properly support rix and wix.
@@ -172,9 +172,9 @@ static int dsb_proc_single()
 	Event_t *e;
 
 	//Choose an event
-	LOCK(qactivelock);
+	//LOCK(qactivelock);
 	e = queue_pop(q_current);
-	UNLOCK(qactivelock);
+	//UNLOCK(qactivelock);
 	if (e == 0)
 	{
 		return 0;
@@ -232,22 +232,25 @@ static int dsb_proc_wait(const Event_t *evt)
 int dsb_send(Event_t *evt, bool async)
 {
 	int ret = 0;
-	int q = (evt->type >> 8) ? q_read : q_write;
+	int q;
 
 	evt->flags |= EFLAG_SENT;
 
-	LOCK(qagentlock);
+	//R_LOCK(qlock);
 
 	//Insert and if queue full process and try again
-	while (procisrunning && queue_insert(q, evt))
+	LOCK(qagentlock);
+
+	while (procisrunning)
 	{
-		UNLOCK(qagentlock);
-
-		LOCK(qwaitmtx);
-		WAIT(qwaitcond,qwaitmtx);
-		UNLOCK(qwaitmtx);
-
-		LOCK(qagentlock);
+		q = (evt->type >> 8) ? q_read : q_write;
+		if (queue_insert(q, evt))
+		{
+			UNLOCK(qagentlock);
+			YIELD;
+			LOCK(qagentlock);
+		}
+		else break;
 	}
 
 	SIGNAL(qagentcond);
@@ -303,6 +306,7 @@ static void *dsb_proc_runthread(void *arg)
 			UNLOCK(qwaitmtx);
 
 			//Wait for agent events......
+
 			LOCK(qagentlock);
 			while (procisrunning)
 			{
@@ -314,9 +318,14 @@ static void *dsb_proc_runthread(void *arg)
 				} else break;
 				if (queue[q_current].q[queue[q_current].rix] == 0)
 				{
+					swap_queues();
+				} else break;
+				if (queue[q_current].q[queue[q_current].rix] == 0)
+				{
 					WAIT(qagentcond,qagentlock);
 				} else break;
 			}
+
 			UNLOCK(qagentlock);
 
 
@@ -330,8 +339,6 @@ static void *dsb_proc_runthread(void *arg)
 		else
 		{
 			LOCK(qactivelock);
-			//while (procisrunning
-			//		&& ((queue[q_current].q[queue[q_current].rix] == 0)))
 			WAIT(qactivecond,qactivelock);
 			UNLOCK(qactivelock);
 		}

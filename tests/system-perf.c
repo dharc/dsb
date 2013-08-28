@@ -55,6 +55,7 @@ extern int dsb_send(Event_t *, bool);
 #define AVS_COUNT_SMALL		10000
 #define AVS_COUNT_LARGE		1000000
 #define AVG_COUNT			200000
+#define AVG_COUNT_SMALL		10000
 
 void sigint(int s)
 {
@@ -150,6 +151,22 @@ static void test_system_avg()
 
 	diffticks = dsb_getTicks() - startticks;
 	printf(" -- %.3f Mavg/s\n", (((float)AVG_COUNT*100.0) / ((float)diffticks / (float)TICKS_PER_SECOND)) / 1000000.0f);
+
+	startticks = dsb_getTicks();
+
+	dsb_iton(55,&a);
+	for (i=0; i<AVG_COUNT_SMALL; i++)
+	{
+		Event_t *e;
+		e = dsb_event(EVENT_GET,&a,&a,0);
+		dsb_send(e,true);
+	}
+
+	dsb_get(&a,&a,&b);
+	CHECK(b.ll == 2*55);
+
+	diffticks = dsb_getTicks() - startticks;
+	printf(" small count -- %.3f Mavg/s\n", (((float)AVG_COUNT_SMALL) / ((float)diffticks / (float)TICKS_PER_SECOND)) / 1000000.0f);
 
 	DONE;
 }
